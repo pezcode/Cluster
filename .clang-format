@@ -1,0 +1,11 @@
+---
+# https://zed0.co.uk/clang-format-configurator/
+# http://clang.llvm.org/docs/ClangFormatStyleOptions.html
+BasedOnStyle: Google
+IndentWidth: '4'
+TabWidth: '4'
+Language: Cpp
+Standard: Cpp11
+BreakBeforeBraces: Allman
+ColumnLimit: 120
+AccessModifierOffset: -4
