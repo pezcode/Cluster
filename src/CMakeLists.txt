@@ -2,6 +2,20 @@ set(SOURCES
 	main.cpp
 	Cluster.h
 	Cluster.cpp
+	Config.h
+	Config.cpp
+	UI.h
+	UI.cpp
+	Scene.h
+	Scene.cpp
+	Renderer.h
+	Renderer.cpp
+	ForwardRenderer.h
+	ForwardRenderer.cpp
+	DeferredRenderer.h
+	DeferredRenderer.cpp
+	ClusteredRenderer.h
+	ClusteredRenderer.cpp
 	vs_cubes.sc
 	fs_cubes.sc
 )
