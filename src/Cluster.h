@@ -6,52 +6,49 @@
 class Cluster : public bigg::Application
 {
 public:
-
     Cluster();
 
     void initialize(int _argc, char* _argv[]) override;
     void onReset() override;
-	void onChar(unsigned int codepoint) override;
+    void onChar(unsigned int codepoint) override;
     void update(float dt) override;
 
 private:
-
-	struct TextureBuffer
+    struct TextureBuffer
     {
         bgfx::TextureHandle handle;
         const char* name;
     };
 
-	struct Config
+    struct Config
     {
-		bool showUI;
+        bool showUI;
         bool showConfigWindow;
-		bool showPerfOverlay;
+        bool showPerfOverlay;
         struct
         {
-			bool fps;
-			bool frameTime;
-			bool gpuMemory;
+            bool fps;
+            bool frameTime;
+            bool gpuMemory;
         } overlays;
-		bool showBuffers;
+        bool showBuffers;
     };
 
-	class UI
+    class UI
     {
     public:
+        UI(Config& config, const TextureBuffer* buffers) : config(config), buffers(buffers) {}
 
-        UI(Config& config, const TextureBuffer* buffers) : config(config), buffers(buffers) { }
-
-		void initialize();
-		void update(float time);
+        void initialize();
+        void update(float time);
         void imageTooltip(ImTextureID tex, ImVec2 tex_size, float region_size);
 
-		Config& config;
+        Config& config;
         const TextureBuffer* buffers;
     };
 
-	Config config;
-	UI ui;
+    Config config;
+    UI ui;
 
     bgfx::ProgramHandle mProgram;
     bgfx::VertexBufferHandle mVbh;
@@ -61,6 +58,6 @@ private:
 
     float mTime;
 
-	float fps;
-	float frameTime;
+    float fps;
+    float frameTime;
 };
