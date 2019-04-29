@@ -74,7 +74,7 @@ void ClusterUI::update(float dt)
         ImGui::SameLine();
         // disabled look
         ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().Alpha * 0.4f);
-        ImGui::Text("R to restore");
+        ImGui::Text("%s to restore", glfwGetKeyName(GLFW_KEY_R, 0));
         ImGui::PopStyleVar();
         ImGui::End();
     }

@@ -15,7 +15,7 @@ Cluster::Cluster() :
 {
 }
 
-int Cluster::run(int argc, char** argv)
+int Cluster::run(int argc, char* argv[])
 {
     config.readArgv(argc, argv);
     return Application::run(argc, argv, bgfx::RendererType::Count, BGFX_PCI_ID_NONE, 0, &callbacks, nullptr);
@@ -23,20 +23,50 @@ int Cluster::run(int argc, char** argv)
 
 void Cluster::initialize(int _argc, char* _argv[])
 {
+    // TODO read from config
     reset(BGFX_RESET_VSYNC | BGFX_RESET_MSAA_X8 | BGFX_RESET_MAXANISOTROPY);
     bgfx::setDebug(BGFX_DEBUG_TEXT);
 
-    renderer->initialize();
+    // TODO load app icon
+    // not working
+    // https://github.com/bkaradzic/bgfx/blob/4cd8e574e826dc3b6998790052f7aefac6cc1164/examples/common/bgfx_utils.cpp#L168
 
-    // TESTING
-    if(renderer->buffers)
+    /*
+    bx::Error err;
+    bx::FileReader reader;
+    if(bx::open(&reader, "assets/icons/cube.dds", &err))
     {
-        for(size_t i = 0; renderer->buffers[i].name != nullptr; i++)
-        {
-            renderer->buffers[i].handle = bgfx::createTexture2D(bgfx::BackbufferRatio::Equal, false, 1, bgfx::TextureFormat::RGBA8);
-        }
-    }
+        bx::DefaultAllocator allocator;
 
+        uint32_t size = (uint32_t)bx::getSize(&reader);
+        void* data = BX_ALLOC(&allocator, size);
+        bx::read(&reader, data, size);
+        bx::close(&reader);
+
+        bimg::ImageContainer image;
+        if(bimg::imageParse(image, data, size, &err))
+        {
+            bimg::ImageContainer* converted = bimg::imageConvert(&allocator, bimg::TextureFormat::RGBA8, image, false);
+            if(converted)
+            {
+                if(converted->m_data)
+                {
+                    GLFWimage icon;
+                    icon.width = converted->m_width;
+                    icon.height = converted->m_height;
+                    icon.pixels = (unsigned char*)converted->m_data;
+                
+                    glfwSetWindowIcon(nullptr, 1, &icon);
+                }
+                bimg::imageFree(converted);
+            }
+        }
+
+        BX_FREE(&allocator, data);
+    }
+    */
+
+    renderer->initialize();
     ui.initialize();
 }
 
@@ -49,31 +79,23 @@ void Cluster::onReset()
     bgfx::setViewRect(0, 0, 0, uint16_t(getWidth()), uint16_t(getHeight()));
 }
 
-void Cluster::onChar(unsigned int codepoint)
+void Cluster::onKey(int key, int scancode, int action, int mods)
 {
-    switch(codepoint)
+    if(action == GLFW_RELEASE)
     {
-        case 'r':
-            config.showUI = true;
-            config.showConfigWindow = true;
-            break;
+        switch(key)
+        {
+            case GLFW_KEY_R:
+                config.showUI = true;
+                config.showConfigWindow = true;
+                break;
+        }
     }
 }
 
 void Cluster::update(float dt)
 {
     renderer->render(dt);
-
-    if(renderer->buffers)
-    {
-        for(size_t i = 0; renderer->buffers[i].name != nullptr; i++)
-        {
-            //buffers[i].handle = bgfx::createTexture2D(bgfx::BackbufferRatio::Equal, false, 1, bgfx::TextureFormat::RGBA8);
-
-            //bgfx::updateTexture2D(buffers[i].handle, 0, 0, 0, 0, )
-        }
-    }
-
     ui.update(dt);
 }
 

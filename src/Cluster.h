@@ -14,13 +14,13 @@ class Cluster : public bigg::Application
 public:
     Cluster();
 
-    int run(int argc, char** argv);
+    int run(int argc, char* argv[]);
 
     // bigg callbacks
 
     void initialize(int _argc, char* _argv[]) override;
     void onReset() override;
-    void onChar(unsigned int codepoint) override;
+    void onKey(int key, int scancode, int action, int mods) override;
     void update(float dt) override;
     int shutdown() override;
 
