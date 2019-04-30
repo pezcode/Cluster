@@ -43,15 +43,18 @@ void ForwardRenderer::reset(uint16_t width, uint16_t height)
 
 void ForwardRenderer::render(float dt)
 {
+    bgfx::ViewId vDefault = 0;
+    bgfx::ViewId vBlitToScreen = 1; // imgui in bigg is 200
+
     mTime += dt;
     glm::mat4 view =
         glm::lookAt(glm::vec3(0.0f, 0.0f, -25.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
     glm::mat4 proj = bigg::perspective(glm::radians(scene->camera.fov), float(width) / height, 0.1f, 100.0f);
-    bgfx::setViewTransform(0, &view[0][0], &proj[0][0]);
+    bgfx::setViewTransform(vDefault, &view[0][0], &proj[0][0]);
 
-    bgfx::setViewClear(0, BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH, 0x303030FF, 1.0f, 0);
-    bgfx::setViewRect(0, 0, 0, width, height);
-    //bgfx::setViewFrameBuffer(0, frameBuffer);
+    bgfx::setViewClear(vDefault, BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH, 0x303030FF, 1.0f, 0);
+    bgfx::setViewRect(vDefault, 0, 0, width, height);
+    bgfx::setViewFrameBuffer(vDefault, BGFX_INVALID_HANDLE/*frameBuffer*/);
     //bgfx::touch(0);
 
     for(uint32_t yy = 0; yy < 11; ++yy)
@@ -65,9 +68,16 @@ void ForwardRenderer::render(float dt)
             bgfx::setVertexBuffer(0, mVbh);
             bgfx::setIndexBuffer(mIbh);
             bgfx::setState(BGFX_STATE_DEFAULT);
-            bgfx::submit(0, mProgram);
+            bgfx::submit(vDefault, mProgram);
         }
     }
+
+    // The Pixel Shader unit expects a Shader Resource View at Slot 0, but none is bound.
+    // This is OK, as reads of an unbound Shader Resource View are defined to return 0.
+    // It is also possible the developer knows the data will not be used anyway.
+    // This is only a problem if the developer actually intended to bind a Shader Resource View here.
+
+    //blitToScreen(vBlitToScreen);
 }
 
 void ForwardRenderer::shutdown()

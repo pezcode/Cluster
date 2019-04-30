@@ -36,7 +36,7 @@ void ClusterUI::initialize()
     ImFontConfig iconsConfig;
     iconsConfig.MergeMode = true;
     iconsConfig.PixelSnapH = true;
-    ImFont* iconFont = io.Fonts->AddFontFromFileTTF(iconFontFile, 14.0f, &iconsConfig, iconsRanges);
+    ImFont* iconFont = io.Fonts->AddFontFromFileTTF(iconFontFile, 13.0f, &iconsConfig, iconsRanges);
 
     // Generate font texture
 
@@ -72,16 +72,17 @@ void ClusterUI::update(float dt)
         ImGui::Checkbox("Show stats", &app.config.showStatsOverlay);
         if(buffers)
             ImGui::Checkbox("Show buffers", &app.config.showBuffers);
-        if(ImGui::Button(ICON_FK_CAMERA " Screenshot"))
+        if(ImGui::Button(ICON_FK_CAMERA "  Screenshot"))
         {
             static unsigned int count = 0;
             count++;
-            char name[32] = "screenshots/";
+            char name[32];// = "screenshots/";
             bx::toString(name, BX_COUNTOF(name), count);
             app.saveFrameBuffer(app.renderer->frameBuffer, name);
-            //bgfx::requestScreenShot(BGFX_INVALID_HANDLE, name);
+            // this takes a screenshot of the OS window framebuffer, UI included
+            // bgfx::requestScreenShot(BGFX_INVALID_HANDLE, name);
         }
-        if(ImGui::Button("Hide UI"))
+        if(ImGui::Button(ICON_FK_EYE_SLASH "  Hide UI"))
             app.config.showUI = false;
         ImGui::SameLine();
         // disabled look
