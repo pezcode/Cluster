@@ -72,11 +72,7 @@ void Cluster::initialize(int _argc, char* _argv[])
 
 void Cluster::onReset()
 {
-    // TODO destroy buffers etc
     renderer->reset(uint16_t(getWidth()), uint16_t(getHeight()));
-
-    bgfx::setViewClear(0, BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH, 0x303030FF, 1.0f, 0);
-    bgfx::setViewRect(0, 0, 0, uint16_t(getWidth()), uint16_t(getHeight()));
 }
 
 void Cluster::onKey(int key, int scancode, int action, int mods)
@@ -95,6 +91,14 @@ void Cluster::onKey(int key, int scancode, int action, int mods)
 
 void Cluster::update(float dt)
 {
+    if(mFrameNumber > 0 && mFrameNumber == saveFrame)
+    {
+        // TODO create thread
+        callbacks.screenShot("hehe", getWidth(), getHeight(), 0, saveData, 0, false);
+        saveFrame = 0;
+        BX_FREE(&allocator, saveData);
+        saveData = nullptr;
+    }
     renderer->render(dt);
     ui.update(dt);
 }
@@ -128,6 +132,24 @@ void Cluster::BgfxCallbacks::screenShot(const char* name,
             // write uncompressed PNG
             bimg::imageWritePng(&writer, width, height, pitch, data, bimg::TextureFormat::BGRA8, yflip, &err);
             bx::close(&writer);
+        }
+    }
+}
+
+void Cluster::saveFrameBuffer(bgfx::FrameBufferHandle frameBuffer, const char* name)
+{
+    if(saveData)
+        return;
+
+    if(bgfx::getCaps()->supported & BGFX_CAPS_TEXTURE_READ_BACK)
+    {
+        bgfx::TextureHandle texture = bgfx::getTexture(frameBuffer);
+        if(isValid(texture))
+        {
+            bgfx::TextureInfo info;
+            bgfx::calcTextureSize(info, getWidth(), getHeight(), 1, false, false, 1, bgfx::TextureFormat::BGRA8);
+            saveData = BX_ALLOC(&allocator, info.storageSize);
+            saveFrame = bgfx::readTexture(texture, saveData);
         }
     }
 }

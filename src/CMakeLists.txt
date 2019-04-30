@@ -8,6 +8,8 @@ set(SOURCES
 	UI.cpp
 	Scene.h
 	Scene.cpp
+	Camera.h
+	Camera.cpp
 	Renderer.h
 	Renderer.cpp
 	ForwardRenderer.h
@@ -22,7 +24,7 @@ set(SOURCES
 
 add_executable(Cluster ${SOURCES})
 target_include_directories(Cluster PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
-target_link_libraries(Cluster PRIVATE bigg)
+target_link_libraries(Cluster PRIVATE bigg IconFontCppHeaders)
 
 set_target_properties(Cluster PROPERTIES
 	RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}"

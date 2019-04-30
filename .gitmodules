@@ -2,3 +2,6 @@
 	path = 3rdparty/bigg
 	url = https://github.com/JoshuaBrookover/bigg.git
 	branch = master
+[submodule "3rdparty/IconFontCppHeaders"]
+	path = 3rdparty/IconFontCppHeaders
+	url = https://github.com/juliettef/IconFontCppHeaders.git

@@ -24,6 +24,10 @@ public:
     void update(float dt) override;
     int shutdown() override;
 
+    //
+
+    void saveFrameBuffer(bgfx::FrameBufferHandle frameBuffer, const char* path);
+
 private:
     class BgfxCallbacks : public bgfx::CallbackI
     {
@@ -49,6 +53,12 @@ private:
                                 uint32_t /*_size*/,
                                 bool _yflip) override;
     };
+
+    bx::DefaultAllocator allocator;
+
+    // screenshots
+    uint32_t saveFrame = 0;
+    void* saveData = nullptr;
 
     BgfxCallbacks callbacks;
 

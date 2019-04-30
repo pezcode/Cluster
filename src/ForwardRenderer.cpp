@@ -43,13 +43,15 @@ void ForwardRenderer::reset(uint16_t width, uint16_t height)
 
 void ForwardRenderer::render(float dt)
 {
-    float fovy = 73.74f;
     mTime += dt;
     glm::mat4 view =
-        glm::lookAt(glm::vec3(0.0f, 0.0f, -35.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-    glm::mat4 proj = bigg::perspective(glm::radians(60.0f), float(width) / height, 0.1f, 100.0f);
+        glm::lookAt(glm::vec3(0.0f, 0.0f, -25.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+    glm::mat4 proj = bigg::perspective(glm::radians(scene->camera.fov), float(width) / height, 0.1f, 100.0f);
     bgfx::setViewTransform(0, &view[0][0], &proj[0][0]);
+
+    bgfx::setViewClear(0, BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH, 0x303030FF, 1.0f, 0);
     bgfx::setViewRect(0, 0, 0, width, height);
+    //bgfx::setViewFrameBuffer(0, frameBuffer);
     //bgfx::touch(0);
 
     for(uint32_t yy = 0; yy < 11; ++yy)
@@ -72,5 +74,7 @@ void ForwardRenderer::shutdown()
 {
     Renderer::shutdown();
 
-    // TODO clean up bgfx objects
+    bgfx::destroy(mProgram);
+    bgfx::destroy(mIbh);
+    bgfx::destroy(mVbh);
 }

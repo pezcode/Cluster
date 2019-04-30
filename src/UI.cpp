@@ -2,6 +2,7 @@
 
 #include "Cluster.h"
 #include <bx/string.h>
+#include <IconsForkAwesome.h>
 
 void ClusterUI::initialize()
 {
@@ -19,13 +20,23 @@ void ClusterUI::initialize()
     style.PopupRounding = 0.0f;
     style.ScrollbarRounding = 0.0f;
 
-    // Load font
-
     io.Fonts->Clear();
+
+    // Load text font
+
     const char* fontFile = "assets/fonts/Roboto/Roboto-Medium.ttf";
     ImFont* font = io.Fonts->AddFontFromFileTTF(fontFile, 14.0f);
     if(!font)
         io.Fonts->AddFontDefault();
+
+    // Load and merge icon font
+
+    const char* iconFontFile = "assets/fonts/ForkAwesome/forkawesome-webfont.ttf";
+    const ImWchar iconsRanges[] = { ICON_MIN_FK, ICON_MAX_FK, 0 };
+    ImFontConfig iconsConfig;
+    iconsConfig.MergeMode = true;
+    iconsConfig.PixelSnapH = true;
+    ImFont* iconFont = io.Fonts->AddFontFromFileTTF(iconFontFile, 14.0f, &iconsConfig, iconsRanges);
 
     // Generate font texture
 
@@ -61,13 +72,14 @@ void ClusterUI::update(float dt)
         ImGui::Checkbox("Show stats", &app.config.showStatsOverlay);
         if(buffers)
             ImGui::Checkbox("Show buffers", &app.config.showBuffers);
-        if(ImGui::Button("Screenshot"))
+        if(ImGui::Button(ICON_FK_CAMERA " Screenshot"))
         {
             static unsigned int count = 0;
             count++;
             char name[32] = "screenshots/";
             bx::toString(name, BX_COUNTOF(name), count);
-            bgfx::requestScreenShot(app.renderer->frameBuffer, name);
+            app.saveFrameBuffer(app.renderer->frameBuffer, name);
+            //bgfx::requestScreenShot(BGFX_INVALID_HANDLE, name);
         }
         if(ImGui::Button("Hide UI"))
             app.config.showUI = false;

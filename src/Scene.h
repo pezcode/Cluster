@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Camera.h"
 #include <bgfx/bgfx.h>
 
 struct PosColorVertex
@@ -25,4 +26,5 @@ public:
 
     PosColorVertex s_cubeVertices[8];
     const uint16_t s_cubeTriList[36];
+    Camera camera;
 };

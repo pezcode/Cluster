@@ -29,6 +29,8 @@ public:
 
 protected:
 
+    void renderQuad();
+
     static const char* shaderDir();
 
     const Scene* scene;
