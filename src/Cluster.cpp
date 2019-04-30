@@ -8,6 +8,8 @@
 #include <bx/string.h>
 #include <bimg/bimg.h>
 
+#include <thread>
+
 Cluster::Cluster() :
     bigg::Application("Cluster", 1024, 768),
     ui(*this),
@@ -91,13 +93,17 @@ void Cluster::onKey(int key, int scancode, int action, int mods)
 
 void Cluster::update(float dt)
 {
+    // screenshot texture data is ready, save in a new thread
     if(mFrameNumber > 0 && mFrameNumber == saveFrame)
     {
-        // TODO create thread
-        callbacks.screenShot("hehe", getWidth(), getHeight(), 0, saveData, 0, false);
-        saveFrame = 0;
-        BX_FREE(&allocator, saveData);
-        saveData = nullptr;
+        // async destructor blocks, even if not assigned
+        // thread also blocks, unless detached
+        std::thread([this]() {
+            callbacks.screenShot("hehe", getWidth(), getHeight(), 0, saveData, 0, false);
+            saveFrame = 0;
+            BX_FREE(&allocator, saveData);
+            saveData = nullptr;
+        }).detach();
     }
     renderer->render(dt);
     ui.update(dt);
