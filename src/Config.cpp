@@ -5,6 +5,7 @@ Config::Config() :
     fullscreen(false),
     showUI(true),
     showConfigWindow(true),
+    showLog(true),
     showStatsOverlay(true),
     overlays({true, true, true}),
     showBuffers(true)

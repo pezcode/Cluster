@@ -78,6 +78,7 @@ void ClusterUI::update(float dt)
     if(app.config.showConfigWindow)
     {
         ImGui::Begin("Settings", &app.config.showConfigWindow, ImGuiWindowFlags_AlwaysAutoResize);
+        ImGui::Checkbox("Show log", &app.config.showLog);
         ImGui::Checkbox("Show stats", &app.config.showStatsOverlay);
         if(buffers)
             ImGui::Checkbox("Show buffers", &app.config.showBuffers);
@@ -102,6 +103,17 @@ void ClusterUI::update(float dt)
         ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().Alpha * 0.4f);
         ImGui::Text("%s to restore", glfwGetKeyName(GLFW_KEY_R, 0));
         ImGui::PopStyleVar();
+        ImGui::End();
+    }
+
+    // log
+    if(app.config.showLog)
+    {
+        ImGui::Begin("Log", &app.config.showLog, ImGuiWindowFlags_HorizontalScrollbar);
+        ImGui::TextUnformatted(app.log.getPtr());
+        // only scroll down if it's currently at the bottom
+        if(ImGui::GetScrollY() >= ImGui::GetScrollMaxY())
+            ImGui::SetScrollHereY(1.0f);
         ImGui::End();
     }
 

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <bigg.hpp>
+#include <bx/string.h>
 #include "UI.h"
 #include "Config.h"
 #include "Scene.h"
@@ -33,9 +34,10 @@ private:
     class BgfxCallbacks : public bgfx::CallbackI
     {
     public:
+        BgfxCallbacks(Cluster& app) : app(app) {}
         virtual ~BgfxCallbacks() {}
-        virtual void fatal(const char*, uint16_t, bgfx::Fatal::Enum, const char*) override {}
-        virtual void traceVargs(const char*, uint16_t, const char*, va_list) override {}
+        virtual void fatal(const char*, uint16_t, bgfx::Fatal::Enum, const char*) override;
+        virtual void traceVargs(const char*, uint16_t, const char*, va_list) override;
         virtual void profilerBegin(const char*, uint32_t, const char*, uint16_t) override {}
         virtual void profilerBeginLiteral(const char*, uint32_t, const char*, uint16_t) override {}
         virtual void profilerEnd() override {}
@@ -53,9 +55,16 @@ private:
                                 const void* _data,
                                 uint32_t /*_size*/,
                                 bool _yflip) override;
+
+    private:
+        Cluster& app;
     };
 
-    bx::DefaultAllocator allocator;
+    static bx::DefaultAllocator allocator;
+    static bx::AllocatorI * iAlloc;
+
+    typedef bx::StringT<&iAlloc> String;
+    String log;
 
     // screenshots
     uint32_t saveFrame = 0;

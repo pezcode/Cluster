@@ -12,6 +12,7 @@ public:
     bool fullscreen;
     bool showUI;
     bool showConfigWindow;
+    bool showLog;
     bool showStatsOverlay;
     struct
     {

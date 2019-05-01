@@ -10,9 +10,13 @@
 
 #include <thread>
 
+bx::DefaultAllocator Cluster::allocator;
+bx::AllocatorI* Cluster::iAlloc = &allocator;
+
 Cluster::Cluster() :
     bigg::Application("Cluster", 1024, 768),
     ui(*this),
+    callbacks(*this),
     renderer(std::make_unique<ForwardRenderer>(&scene))
 {
 }
@@ -113,6 +117,20 @@ int Cluster::shutdown()
 {
     renderer->shutdown();
     return 0;
+}
+
+void Cluster::BgfxCallbacks::fatal(const char* _filePath, uint16_t _line, bgfx::Fatal::Enum _code, const char* _str)
+{
+
+}
+
+void Cluster::BgfxCallbacks::traceVargs(const char* _filePath, uint16_t _line, const char* _format, va_list _argList)
+{
+    char out[1024+2];
+    bx::vsnprintf(out, BX_COUNTOF(out)-2, _format, _argList);
+    //bx::strCat(out, BX_COUNTOF(out), "\n");
+    app.log.append(out);
+    //app.log.append("\n");
 }
 
 void Cluster::BgfxCallbacks::screenShot(const char* name,
