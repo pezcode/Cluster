@@ -62,6 +62,10 @@ void ClusterUI::update(float dt)
 
     const Renderer::TextureBuffer* buffers = app.renderer->buffers;
 
+    // test
+    Renderer::TextureBuffer temp[2] = { { bgfx::getTexture(app.renderer->frameBuffer), "Output" }, { 0, nullptr } };
+    buffers = temp;
+
     //ImGui::ShowDemoWindow();
 
     ImVec2 padding = { 5.0f, 5.0f };
@@ -149,10 +153,17 @@ void ClusterUI::update(float dt)
             float max = float(stats->gpuMemoryMax) / 1000 / 1000;
 
             ImGui::Separator();
-            ImGui::Text("GPU memory");
-            ImGui::PlotLines(
-                "", gpuMemoryValues, IM_ARRAYSIZE(gpuMemoryValues), offset + 1, nullptr, 0.0f, max, ImVec2(150, 50));
-            ImGui::Text("%.0f / %.0f MB", used, max);
+            if(used > 0.0f && max > 0.0f)
+            {
+                ImGui::Text("GPU memory");
+                ImGui::PlotLines(
+                    "", gpuMemoryValues, IM_ARRAYSIZE(gpuMemoryValues), offset + 1, nullptr, 0.0f, max, ImVec2(150, 50));
+                ImGui::Text("%.0f / %.0f MB", used, max);
+            }
+            else
+            {
+                ImGui::TextWrapped(ICON_FK_EXCLAMATION_TRIANGLE " GPU memory data unavailable");
+            }
         }
 
         // update after drawing so offset is the current value

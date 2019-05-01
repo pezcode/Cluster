@@ -1,3 +1,4 @@
+add_compile_definitions(BGFX_CONFIG_RENDERER_OPENGL=43)
 set(BIGG_EXAMPLES OFF CACHE INTERNAL "")
 add_subdirectory(bigg)
 

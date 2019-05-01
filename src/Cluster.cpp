@@ -20,7 +20,7 @@ Cluster::Cluster() :
 int Cluster::run(int argc, char* argv[])
 {
     config.readArgv(argc, argv);
-    return Application::run(argc, argv, bgfx::RendererType::Count, BGFX_PCI_ID_NONE, 0, &callbacks, nullptr);
+    return Application::run(argc, argv, config.renderer, BGFX_PCI_ID_NONE, 0, &callbacks, nullptr);
 }
 
 void Cluster::initialize(int _argc, char* _argv[])
@@ -149,6 +149,8 @@ void Cluster::saveFrameBuffer(bgfx::FrameBufferHandle frameBuffer, const char* n
 
     if((bgfx::getCaps()->supported & BGFX_CAPS_TEXTURE_READ_BACK) == BGFX_CAPS_TEXTURE_READ_BACK)
     {
+        // this isn't working for frame buffers (textures with render target flag)
+        // TODO blit to separate texture and then read that
         bgfx::TextureHandle texture = bgfx::getTexture(frameBuffer);
         if(isValid(texture))
         {

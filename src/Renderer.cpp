@@ -18,43 +18,6 @@ Renderer::Renderer(const Scene* scene) :
 
 void Renderer::initialize()
 {
-    //frameBuffer = BGFX_INVALID_HANDLE;
-    /*
-    //frameBuffer = bgfx::createFrameBuffer(bgfx::BackbufferRatio::Equal, bgfx::TextureFormat::BGRA8,
-    //                                      BGFX_TEXTURE_RT | BGFX_SAMPLER_UVW_CLAMP | BGFX_TEXTURE_READ_BACK);
-
-    uint32_t msaa = = ; //(m_reset & BGFX_RESET_MSAA_MASK) >> BGFX_RESET_MSAA_SHIFT;
-
-    //if(bgfx::isValid(m_fbh))
-    //{
-    //    bgfx::destroy(m_fbh);
-    //}
-
-    bgfx::TextureHandle m_fbtextures[2];
-
-    m_fbtextures[0] = bgfx::createTexture2D(uint16_t(m_width),
-                                            uint16_t(m_height),
-                                            false,
-                                            1,
-                                            bgfx::TextureFormat::BGRA8,
-                                            (uint64_t(msaa + 1) << BGFX_TEXTURE_RT_MSAA_SHIFT) | BGFX_SAMPLER_U_CLAMP |
-                                                BGFX_SAMPLER_V_CLAMP);
-
-    const uint64_t textureFlags = BGFX_TEXTURE_RT_WRITE_ONLY | (uint64_t(msaa + 1) << BGFX_TEXTURE_RT_MSAA_SHIFT);
-
-    bgfx::TextureFormat::Enum depthFormat =
-        bgfx::isTextureValid(0, false, 1, bgfx::TextureFormat::D16, textureFlags)
-            ? bgfx::TextureFormat::D16
-            : bgfx::isTextureValid(0, false, 1, bgfx::TextureFormat::D24S8, textureFlags) ? bgfx::TextureFormat::D24S8
-                                                                                          : bgfx::TextureFormat::D32;
-
-    m_fbtextures[1] = bgfx::createTexture2D(uint16_t(m_width), uint16_t(m_height), false, 1, depthFormat, textureFlags);
-
-    m_fbh = bgfx::createFrameBuffer(BX_COUNTOF(m_fbtextures), m_fbtextures, true);
-    */
-
-    // ---
-
     PosVertex::init();
 
     char vsName[32];
@@ -82,22 +45,16 @@ void Renderer::reset(uint16_t width, uint16_t height)
             bgfx::destroy(frameBuffer);
         }
 
-        //frameBuffer =
-        //    bgfx::createFrameBuffer(bgfx::BackbufferRatio::Equal, bgfx::TextureFormat::BGRA8, BGFX_TEXTURE_READ_BACK);
-
-        //bgfx::TextureHandle m_gbufferTex[3];
-        //bgfx::Attachment gbufferAt[3];
-
         bgfx::TextureHandle textures[2];
         uint64_t flags = BGFX_TEXTURE_RT | BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP;
 
-        // BGFX_TEXTURE_READ_BACK ??
+        // BGFX_TEXTURE_READ_BACK is not supported for render targets?
+        // TODO try blitting for screenshots (new texture with BGFX_TEXTURE_BLIT_DST and BGFX_TEXTURE_READ_BACK)
         if(bgfx::isTextureValid(0, false, 1, bgfx::TextureFormat::BGRA8, flags))
         {
-            // not valid???
-        textures[0] =
-            bgfx::createTexture2D(width, height, false, 1, bgfx::TextureFormat::BGRA8, flags);
+            textures[0] = bgfx::createTexture2D(width, height, false, 1, bgfx::TextureFormat::BGRA8, flags);
         }
+        // TODO error out
 
         flags = BGFX_TEXTURE_RT_WRITE_ONLY;
 
@@ -111,7 +68,9 @@ void Renderer::reset(uint16_t width, uint16_t height)
 
         frameBuffer = bgfx::createFrameBuffer(BX_COUNTOF(textures), textures, true);
 
-        //frameBuffer = bgfx::createFrameBuffer(bgfx::BackbufferRatio::Equal, bgfx::TextureFormat::BGRA8);
+        // this creates no depth buffer
+        // will spam the debug output with D3D warnings
+        // frameBuffer = bgfx::createFrameBuffer(bgfx::BackbufferRatio::Equal, bgfx::TextureFormat::BGRA8);
     }
     this->width = width;
     this->height = height;
@@ -126,14 +85,12 @@ void Renderer::shutdown()
 
 void Renderer::blitToScreen(bgfx::ViewId view)
 {
-    //bgfx::setViewClear(view, BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH, 0x303030FF, 1.0f, 0);
-    bgfx::setViewClear(view, BGFX_CLEAR_DISCARD_DEPTH | BGFX_CLEAR_DISCARD_STENCIL);
+    bgfx::setViewClear(view, BGFX_CLEAR_NONE);
     bgfx::setViewRect(view, 0, 0, width, height);
     bgfx::setViewFrameBuffer(view, BGFX_INVALID_HANDLE);
-
-    bgfx::TextureHandle frameBufferTexture = bgfx::getTexture(frameBuffer); // no need to destroy (see example 09)
+    bgfx::setState(BGFX_STATE_WRITE_RGB | BGFX_STATE_WRITE_A | BGFX_STATE_CULL_CW);
+    bgfx::TextureHandle frameBufferTexture = bgfx::getTexture(frameBuffer);
     bgfx::setTexture(0, blitSampler, frameBufferTexture);
-    bgfx::setState(BGFX_STATE_WRITE_RGB | BGFX_STATE_WRITE_A);
     screenQuad();
     bgfx::submit(view, blitProgram);
 }
@@ -142,9 +99,12 @@ void Renderer::screenQuad()
 {
     constexpr uint32_t vCount = 6;
     constexpr uint32_t iCount = 6;
-    static const PosVertex vertices[vCount] = { { 0.0f, 0.0f, 0.0f }, { 1.0f, 0.0f, 0.0f }, { 1.0f, 1.0f, 0.0f },
-                                           { 0.0f, 0.0f, 0.0f }, { 1.0f, 1.0f, 0.0f }, { 0.0f, 1.0f, 0.0f } };
-    static const uint32_t indices[6] = { 0, 1, 2, 3, 4, 5 };
+    constexpr float BOTTOM = -1.0f, TOP = 1.0f;
+    constexpr float LEFT = -1.0f, RIGHT = 1.0f;
+    static const PosVertex vertices[vCount] = { { BOTTOM, LEFT, 0.0f }, { TOP, LEFT,  0.0f }, { TOP,    RIGHT, 0.0f },
+                                                { BOTTOM, LEFT, 0.0f }, { TOP, RIGHT, 0.0f }, { BOTTOM, RIGHT, 0.0f } };
+    // clock-wise winding (bgfx default)
+    static const uint16_t indices[iCount] = { 0, 1, 2, 3, 4, 5 };
 
     if(vCount == bgfx::getAvailTransientVertexBuffer(vCount, PosVertex::ms_decl) &&
        iCount == bgfx::getAvailTransientIndexBuffer(iCount))
@@ -155,73 +115,15 @@ void Renderer::screenQuad()
 
         bgfx::TransientIndexBuffer ib;
         bgfx::allocTransientIndexBuffer(&ib, iCount);
-        uint32_t* iData = (uint32_t*)ib.data;
+        uint16_t* iData = (uint16_t*)ib.data;
 
         bx::memCopy(vData, vertices, sizeof(vertices));
         bx::memCopy(iData, indices, sizeof(indices));
 
-        /*
-        bgfx::TransientIndexBuffer ib;
-        bgfx::allocTransientIndexBuffer(&ib, 6);
-
-        const float zz = 0.0f;
-
-        float _textureWidth = width;
-        float _textureHeight = height;
-
-        float _width = 1.0f;
-        float _height = 1.0f;
-
-        const float minx = -_width;
-        const float maxx = _width;
-        const float miny = 0.0f;
-        const float maxy = _height * 2.0f;
-
-        float s_texelHalf = bgfx::RendererType::Direct3D9 == bgfx::getCaps()->rendererType ? 0.5f : 0.0f;
-
-        const float texelHalfW = s_texelHalf / _textureWidth;
-        const float texelHalfH = s_texelHalf / _textureHeight;
-        const float minu = -1.0f + texelHalfW;
-        const float maxu = 1.0f + texelHalfW;
-
-        float minv = texelHalfH;
-        float maxv = 2.0f + texelHalfH;
-
-        if(bgfx::getCaps()->originBottomLeft)
-        {
-            float temp = minv;
-            minv = maxv;
-            maxv = temp;
-
-            minv -= 1.0f;
-            maxv -= 1.0f;
-        }
-
-        vertex[0].m_x = minx;
-        vertex[0].m_y = miny;
-        vertex[0].m_z = zz;
-        vertex[0].m_rgba = 0xffffffff;
-        vertex[0].m_u = minu;
-        vertex[0].m_v = minv;
-
-        vertex[1].m_x = maxx;
-        vertex[1].m_y = miny;
-        vertex[1].m_z = zz;
-        vertex[1].m_rgba = 0xffffffff;
-        vertex[1].m_u = maxu;
-        vertex[1].m_v = minv;
-
-        vertex[2].m_x = maxx;
-        vertex[2].m_y = maxy;
-        vertex[2].m_z = zz;
-        vertex[2].m_rgba = 0xffffffff;
-        vertex[2].m_u = maxu;
-        vertex[2].m_v = maxv;
-        */
-
         bgfx::setVertexBuffer(0, &vb);
         bgfx::setIndexBuffer(&ib);
     }
+    // TODO error out
 }
 
 const char* Renderer::shaderDir()

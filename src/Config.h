@@ -1,8 +1,14 @@
 #pragma once
 
+#include <bgfx/bgfx.h>
+
 class Config
 {
 public:
+    Config();
+
+    bgfx::RendererType::Enum renderer;
+
     bool showUI;
     bool showConfigWindow;
     bool showStatsOverlay;
