@@ -26,7 +26,7 @@ int Cluster::run(int argc, char* argv[])
 void Cluster::initialize(int _argc, char* _argv[])
 {
     // TODO read from config
-    reset(BGFX_RESET_VSYNC | BGFX_RESET_MSAA_X8 | BGFX_RESET_MAXANISOTROPY);
+    //reset(BGFX_RESET_VSYNC | BGFX_RESET_MSAA_X8 | BGFX_RESET_MAXANISOTROPY);
     bgfx::setDebug(BGFX_DEBUG_TEXT);
 
     // TODO load app icon
@@ -147,7 +147,7 @@ void Cluster::saveFrameBuffer(bgfx::FrameBufferHandle frameBuffer, const char* n
     if(saveData)
         return;
 
-    if(bgfx::getCaps()->supported & BGFX_CAPS_TEXTURE_READ_BACK)
+    if((bgfx::getCaps()->supported & BGFX_CAPS_TEXTURE_READ_BACK) == BGFX_CAPS_TEXTURE_READ_BACK)
     {
         bgfx::TextureHandle texture = bgfx::getTexture(frameBuffer);
         if(isValid(texture))

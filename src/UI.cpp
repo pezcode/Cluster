@@ -123,7 +123,7 @@ void ClusterUI::update(float dt)
         static float fpsValues[GRAPH_HISTORY] = { 0 };
         static float frameTimeValues[GRAPH_HISTORY] = { 0 };
         static float gpuMemoryValues[GRAPH_HISTORY] = { 0 };
-        static size_t offset = 0;
+        static int offset = 0;
 
         if(app.config.overlays.fps)
         {

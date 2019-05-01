@@ -33,7 +33,7 @@ private:
     {
     public:
         virtual ~BgfxCallbacks() {}
-        virtual void fatal(bgfx::Fatal::Enum, const char*) override {}
+        virtual void fatal(const char*, uint16_t, bgfx::Fatal::Enum, const char*) override {}
         virtual void traceVargs(const char*, uint16_t, const char*, va_list) override {}
         virtual void profilerBegin(const char*, uint32_t, const char*, uint16_t) override {}
         virtual void profilerBeginLiteral(const char*, uint32_t, const char*, uint16_t) override {}

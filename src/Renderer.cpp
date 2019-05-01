@@ -6,9 +6,55 @@
 
 bgfx::VertexDecl PosVertex::ms_decl;
 
+Renderer::Renderer(const Scene* scene) :
+    scene(scene),
+    width(0),
+    height(0),
+    frameBuffer(BGFX_INVALID_HANDLE),
+    blitProgram(BGFX_INVALID_HANDLE),
+    blitSampler(BGFX_INVALID_HANDLE)
+{
+}
+
 void Renderer::initialize()
 {
-    frameBuffer = bgfx::createFrameBuffer(bgfx::BackbufferRatio::Equal, bgfx::TextureFormat::BGRA8, BGFX_TEXTURE_READ_BACK);
+    //frameBuffer = BGFX_INVALID_HANDLE;
+    /*
+    //frameBuffer = bgfx::createFrameBuffer(bgfx::BackbufferRatio::Equal, bgfx::TextureFormat::BGRA8,
+    //                                      BGFX_TEXTURE_RT | BGFX_SAMPLER_UVW_CLAMP | BGFX_TEXTURE_READ_BACK);
+
+    uint32_t msaa = = ; //(m_reset & BGFX_RESET_MSAA_MASK) >> BGFX_RESET_MSAA_SHIFT;
+
+    //if(bgfx::isValid(m_fbh))
+    //{
+    //    bgfx::destroy(m_fbh);
+    //}
+
+    bgfx::TextureHandle m_fbtextures[2];
+
+    m_fbtextures[0] = bgfx::createTexture2D(uint16_t(m_width),
+                                            uint16_t(m_height),
+                                            false,
+                                            1,
+                                            bgfx::TextureFormat::BGRA8,
+                                            (uint64_t(msaa + 1) << BGFX_TEXTURE_RT_MSAA_SHIFT) | BGFX_SAMPLER_U_CLAMP |
+                                                BGFX_SAMPLER_V_CLAMP);
+
+    const uint64_t textureFlags = BGFX_TEXTURE_RT_WRITE_ONLY | (uint64_t(msaa + 1) << BGFX_TEXTURE_RT_MSAA_SHIFT);
+
+    bgfx::TextureFormat::Enum depthFormat =
+        bgfx::isTextureValid(0, false, 1, bgfx::TextureFormat::D16, textureFlags)
+            ? bgfx::TextureFormat::D16
+            : bgfx::isTextureValid(0, false, 1, bgfx::TextureFormat::D24S8, textureFlags) ? bgfx::TextureFormat::D24S8
+                                                                                          : bgfx::TextureFormat::D32;
+
+    m_fbtextures[1] = bgfx::createTexture2D(uint16_t(m_width), uint16_t(m_height), false, 1, depthFormat, textureFlags);
+
+    m_fbh = bgfx::createFrameBuffer(BX_COUNTOF(m_fbtextures), m_fbtextures, true);
+    */
+
+    // ---
+
     PosVertex::init();
 
     char vsName[32];
@@ -24,7 +70,7 @@ void Renderer::initialize()
 
     blitProgram = bigg::loadProgram(vsName, fsName);
 
-    blitSampler = bgfx::createUniform("s_texColor", bgfx::UniformType::Int1);
+    blitSampler = bgfx::createUniform("s_texColor", bgfx::UniformType::Sampler);
 }
 
 void Renderer::reset(uint16_t width, uint16_t height)
@@ -33,18 +79,37 @@ void Renderer::reset(uint16_t width, uint16_t height)
     {
         if(bgfx::isValid(frameBuffer))
         {
-            //bgfx::destroy(frameBuffer);
+            bgfx::destroy(frameBuffer);
         }
 
         //frameBuffer =
         //    bgfx::createFrameBuffer(bgfx::BackbufferRatio::Equal, bgfx::TextureFormat::BGRA8, BGFX_TEXTURE_READ_BACK);
 
-        //bgfx::TextureHandle textures[2];
-        //uint32_t flags = 0;
+        //bgfx::TextureHandle m_gbufferTex[3];
+        //bgfx::Attachment gbufferAt[3];
 
-        //textures[0] = bgfx::createTexture2D(width, height, false, 1, bgfx::TextureFormat::BGRA8, flags);
+        bgfx::TextureHandle textures[2];
+        uint64_t flags = BGFX_TEXTURE_RT | BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP;
 
-        //frameBuffer = bgfx::createFrameBuffer(BX_COUNTOF(textures), textures, true);
+        // BGFX_TEXTURE_READ_BACK ??
+        if(bgfx::isTextureValid(0, false, 1, bgfx::TextureFormat::BGRA8, flags))
+        {
+            // not valid???
+        textures[0] =
+            bgfx::createTexture2D(width, height, false, 1, bgfx::TextureFormat::BGRA8, flags);
+        }
+
+        flags = BGFX_TEXTURE_RT_WRITE_ONLY;
+
+        bgfx::TextureFormat::Enum depthFormat =
+            bgfx::isTextureValid(0, false, 1, bgfx::TextureFormat::D16, flags)
+                ? bgfx::TextureFormat::D16
+                : bgfx::isTextureValid(0, false, 1, bgfx::TextureFormat::D24S8, flags) ? bgfx::TextureFormat::D24S8
+                                                                                       : bgfx::TextureFormat::D32;
+
+        textures[1] = bgfx::createTexture2D(width, height, false, 1, depthFormat, flags);
+
+        frameBuffer = bgfx::createFrameBuffer(BX_COUNTOF(textures), textures, true);
 
         //frameBuffer = bgfx::createFrameBuffer(bgfx::BackbufferRatio::Equal, bgfx::TextureFormat::BGRA8);
     }
@@ -61,8 +126,8 @@ void Renderer::shutdown()
 
 void Renderer::blitToScreen(bgfx::ViewId view)
 {
-    bgfx::setViewClear(view, BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH, 0x303030FF, 1.0f, 0);
-    //bgfx::setViewClear(view, BGFX_CLEAR_DISCARD_DEPTH | BGFX_CLEAR_DISCARD_STENCIL);
+    //bgfx::setViewClear(view, BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH, 0x303030FF, 1.0f, 0);
+    bgfx::setViewClear(view, BGFX_CLEAR_DISCARD_DEPTH | BGFX_CLEAR_DISCARD_STENCIL);
     bgfx::setViewRect(view, 0, 0, width, height);
     bgfx::setViewFrameBuffer(view, BGFX_INVALID_HANDLE);
 
@@ -75,18 +140,11 @@ void Renderer::blitToScreen(bgfx::ViewId view)
 
 void Renderer::screenQuad()
 {
-    static const PosVertex vertices[6] = {
-        { 0.0f, 0.0f, 1.0f },
-        { 1.0f, 0.0f, 1.0f },
-        { 1.0f, 1.0f, 1.0f },
-        { 0.0f, 0.0f, 1.0f },
-        { 1.0f, 1.0f, 1.0f },
-        { 0.0f, 1.0f, 1.0f }
-    };
+    constexpr uint32_t vCount = 6;
+    constexpr uint32_t iCount = 6;
+    static const PosVertex vertices[vCount] = { { 0.0f, 0.0f, 0.0f }, { 1.0f, 0.0f, 0.0f }, { 1.0f, 1.0f, 0.0f },
+                                           { 0.0f, 0.0f, 0.0f }, { 1.0f, 1.0f, 0.0f }, { 0.0f, 1.0f, 0.0f } };
     static const uint32_t indices[6] = { 0, 1, 2, 3, 4, 5 };
-
-    size_t vCount = BX_COUNTOF(vertices);
-    size_t iCount = BX_COUNTOF(indices);
 
     if(vCount == bgfx::getAvailTransientVertexBuffer(vCount, PosVertex::ms_decl) &&
        iCount == bgfx::getAvailTransientIndexBuffer(iCount))
@@ -97,7 +155,7 @@ void Renderer::screenQuad()
 
         bgfx::TransientIndexBuffer ib;
         bgfx::allocTransientIndexBuffer(&ib, iCount);
-        uint32_t* iData = (uint32_t*)ib.data;        
+        uint32_t* iData = (uint32_t*)ib.data;
 
         bx::memCopy(vData, vertices, sizeof(vertices));
         bx::memCopy(iData, indices, sizeof(indices));

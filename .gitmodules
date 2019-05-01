@@ -5,3 +5,6 @@
 [submodule "3rdparty/IconFontCppHeaders"]
 	path = 3rdparty/IconFontCppHeaders
 	url = https://github.com/juliettef/IconFontCppHeaders.git
+[submodule "3rdparty/assimp"]
+	path = 3rdparty/assimp
+	url = https://github.com/assimp/assimp.git

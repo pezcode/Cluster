@@ -1,5 +1,7 @@
 #include "Scene.h"
 
+#include <assimp/Importer.hpp>
+
 bgfx::VertexDecl PosColorVertex::ms_decl;
 
 Scene::Scene() :
@@ -14,4 +16,10 @@ Scene::Scene() :
     }
 {
     //std::run_once();
+}
+
+void Scene::load(const char* path)
+{
+    Assimp::Importer importer;
+    //const aiScene* scene;
 }

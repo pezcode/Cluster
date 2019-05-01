@@ -27,7 +27,7 @@ set(SOURCES
 
 add_executable(Cluster ${SOURCES})
 target_include_directories(Cluster PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
-target_link_libraries(Cluster PRIVATE bigg IconFontCppHeaders)
+target_link_libraries(Cluster PRIVATE bigg IconFontCppHeaders assimp)
 
 set_target_properties(Cluster PROPERTIES
 	RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}"

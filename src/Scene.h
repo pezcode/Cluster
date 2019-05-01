@@ -24,6 +24,8 @@ class Scene
 public:
     Scene();
 
+    void load(const char* path);
+
     PosColorVertex s_cubeVertices[8];
     const uint16_t s_cubeTriList[36];
     Camera camera;

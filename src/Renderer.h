@@ -23,7 +23,7 @@ class Renderer
 {
 public:
 
-    Renderer(const Scene* scene) : scene(scene) {}
+    Renderer(const Scene* scene);
 
     virtual void initialize();
     virtual void reset(uint16_t width, uint16_t height);
