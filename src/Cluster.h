@@ -26,6 +26,7 @@ public:
 
     //
 
+    void toggleFullscreen();
     void saveFrameBuffer(bgfx::FrameBufferHandle frameBuffer, const char* path);
 
 private:

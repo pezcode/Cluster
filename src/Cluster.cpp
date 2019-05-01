@@ -142,6 +142,32 @@ void Cluster::BgfxCallbacks::screenShot(const char* name,
     }
 }
 
+void Cluster::toggleFullscreen()
+{
+    static int oldX = 0, oldY = 0;
+    static int oldWidth = 0, oldHeight = 0;
+
+    GLFWwindow* window = mWindow; //glfwGetCurrentContext();
+    if(glfwGetWindowMonitor(window))
+    {
+        glfwSetWindowMonitor(window, NULL, oldX, oldY, oldWidth, oldHeight, 0);
+        config.fullscreen = false;
+    }
+    else
+    {
+        GLFWmonitor* monitor = glfwGetPrimaryMonitor();
+        if(NULL != monitor)
+        {
+            glfwGetWindowPos(window, &oldX, &oldY);
+            glfwGetWindowSize(window, &oldWidth, &oldHeight);
+
+            const GLFWvidmode* mode = glfwGetVideoMode(monitor);
+            glfwSetWindowMonitor(window, monitor, 0, 0, mode->width, mode->height, mode->refreshRate);
+            config.fullscreen = true;
+        }
+    }
+}
+
 void Cluster::saveFrameBuffer(bgfx::FrameBufferHandle frameBuffer, const char* name)
 {
     if(saveData)

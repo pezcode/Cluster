@@ -13,12 +13,17 @@ void ClusterUI::initialize()
     ImGuiStyle& style = ImGui::GetStyle();
     ImGui::StyleColorsDark(&style);
 
+    // no round corners
     style.WindowRounding = 0.0f;
     style.ChildRounding = 0.0f;
     style.FrameRounding = 0.0f;
     style.GrabRounding = 0.0f;
     style.PopupRounding = 0.0f;
     style.ScrollbarRounding = 0.0f;
+
+    // align text to the left
+    // looks better with icon buttons
+    style.ButtonTextAlign = ImVec2(0.0f, 0.5f);
 
     io.Fonts->Clear();
 
@@ -76,7 +81,7 @@ void ClusterUI::update(float dt)
         ImGui::Checkbox("Show stats", &app.config.showStatsOverlay);
         if(buffers)
             ImGui::Checkbox("Show buffers", &app.config.showBuffers);
-        if(ImGui::Button(ICON_FK_CAMERA "  Screenshot"))
+        if(ImGui::Button(ICON_FK_CAMERA "  Screenshot", ImVec2(100, 0)))
         {
             static unsigned int count = 0;
             count++;
@@ -86,7 +91,11 @@ void ClusterUI::update(float dt)
             // this takes a screenshot of the OS window framebuffer, UI included
             // bgfx::requestScreenShot(BGFX_INVALID_HANDLE, name);
         }
-        if(ImGui::Button(ICON_FK_EYE_SLASH "  Hide UI"))
+        if(ImGui::Button(app.config.fullscreen ? (ICON_FK_WINDOW_RESTORE "  Restore")
+                                               : (ICON_FK_WINDOW_MAXIMIZE "  Fullscreen"),
+                         ImVec2(100, 0)))
+            app.toggleFullscreen();
+        if(ImGui::Button(ICON_FK_EYE_SLASH "  Hide UI", ImVec2(100, 0)))
             app.config.showUI = false;
         ImGui::SameLine();
         // disabled look
@@ -109,7 +118,7 @@ void ClusterUI::update(float dt)
                          ImGuiWindowFlags_NoNav);
 
         // title
-        ImGui::Text("Stats");
+        ImGui::Text(ICON_FK_TACHOMETER " Stats");
         ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().Alpha * 0.4f);
         ImGui::Text("right-click to toggle");
         ImGui::PopStyleVar();

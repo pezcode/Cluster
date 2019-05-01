@@ -9,6 +9,7 @@ public:
 
     bgfx::RendererType::Enum renderer;
 
+    bool fullscreen;
     bool showUI;
     bool showConfigWindow;
     bool showStatsOverlay;

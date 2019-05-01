@@ -2,6 +2,7 @@
 
 Config::Config() :
     renderer(bgfx::RendererType::Count),
+    fullscreen(false),
     showUI(true),
     showConfigWindow(true),
     showStatsOverlay(true),
@@ -19,5 +20,7 @@ void Config::readArgv(int argc, char* argv[])
 
     // bgfx is built with BGFX_CONFIG_RENDERER_OPENGL=43
     // this adds compute shaders and texture copy
-    renderer = bgfx::RendererType::OpenGL;
+    // somehow this also makes it the default
+    // TODO keep DX11 as default on Windows but raise used OpenGL version?
+    // renderer = bgfx::RendererType::OpenGL;
 }
