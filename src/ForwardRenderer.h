@@ -6,6 +6,7 @@ class ForwardRenderer : public Renderer
 {
 public:
     ForwardRenderer(const Scene* scene);
+    virtual ~ForwardRenderer();
 
     virtual void initialize() override;
     virtual void reset(uint16_t width, uint16_t height) override;

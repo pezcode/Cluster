@@ -1,5 +1,9 @@
 #include "Cluster.h"
 
+#include "UI.h"
+#include "Config.h"
+#include "Scene.h"
+
 #include "ForwardRenderer.h"
 #include "DeferredRenderer.h"
 #include "ClusteredRenderer.h"
@@ -15,16 +19,25 @@ bx::AllocatorI* Cluster::iAlloc = &allocator;
 
 Cluster::Cluster() :
     bigg::Application("Cluster", 1024, 768),
-    ui(*this),
+    config(std::make_unique<Config>()),
+    ui(std::make_unique<ClusterUI>(*this)),
+    scene(std::make_unique<Scene>()),
     callbacks(*this),
-    renderer(std::make_unique<ForwardRenderer>(&scene))
+    renderer(nullptr)
 {
+}
+
+Cluster::~Cluster()
+{
+    // we need to define the destructor where the forward-declared classes are actually defined by now
+    // otherwise we get a default constructor defined in the header
+    // then unique_ptr can't delete the object and compilation fails
 }
 
 int Cluster::run(int argc, char* argv[])
 {
-    config.readArgv(argc, argv);
-    return Application::run(argc, argv, config.renderer, BGFX_PCI_ID_NONE, 0, &callbacks, nullptr);
+    config->readArgv(argc, argv);
+    return Application::run(argc, argv, config->renderer, BGFX_PCI_ID_NONE, 0, &callbacks, nullptr);
 }
 
 void Cluster::initialize(int _argc, char* _argv[])
@@ -72,12 +85,20 @@ void Cluster::initialize(int _argc, char* _argv[])
     }
     */
 
+    if(config->fullscreen)
+        toggleFullscreen();
+
     renderer->initialize();
-    ui.initialize();
+    ui->initialize();
 }
 
 void Cluster::onReset()
 {
+    // init renderer here
+    // onReset is called before initialize on startup
+    if(!renderer)
+        setRenderPath(config->renderPath);
+
     renderer->reset(uint16_t(getWidth()), uint16_t(getHeight()));
 }
 
@@ -87,9 +108,12 @@ void Cluster::onKey(int key, int scancode, int action, int mods)
     {
         switch(key)
         {
+            case GLFW_KEY_ESCAPE:
+                close();
+                break;
             case GLFW_KEY_R:
-                config.showUI = true;
-                config.showConfigWindow = true;
+                config->showUI = true;
+                config->showConfigWindow = true;
                 break;
         }
     }
@@ -110,11 +134,12 @@ void Cluster::update(float dt)
         }).detach();
     }
     renderer->render(dt);
-    ui.update(dt);
+    ui->update(dt);
 }
 
 int Cluster::shutdown()
 {
+    ui->shutdown();
     renderer->shutdown();
     return 0;
 }
@@ -160,16 +185,23 @@ void Cluster::BgfxCallbacks::screenShot(const char* name,
     }
 }
 
+void Cluster::close()
+{
+    glfwSetWindowShouldClose(mWindow, 1);
+}
+
 void Cluster::toggleFullscreen()
 {
     static int oldX = 0, oldY = 0;
     static int oldWidth = 0, oldHeight = 0;
 
+    // GLFW didn't create the context, bgfx did
+    // glfwGetCurrentContext returns null
     GLFWwindow* window = mWindow; //glfwGetCurrentContext();
     if(glfwGetWindowMonitor(window))
     {
         glfwSetWindowMonitor(window, NULL, oldX, oldY, oldWidth, oldHeight, 0);
-        config.fullscreen = false;
+        config->fullscreen = false;
     }
     else
     {
@@ -181,9 +213,45 @@ void Cluster::toggleFullscreen()
 
             const GLFWvidmode* mode = glfwGetVideoMode(monitor);
             glfwSetWindowMonitor(window, monitor, 0, 0, mode->width, mode->height, mode->refreshRate);
-            config.fullscreen = true;
+            config->fullscreen = true;
         }
     }
+}
+
+void Cluster::setRenderPath(RenderPath path)
+{
+    if(renderer && path == config->renderPath)
+        return;
+
+    if(renderer)
+        renderer->shutdown();
+
+    renderer.release();
+    switch(path)
+    {
+        case Forward:
+            renderer = std::make_unique<ForwardRenderer>(scene.get());
+            break;
+        case Deferred:
+            renderer = std::make_unique<DeferredRenderer>(scene.get());
+            break;
+        case Clustered:
+            renderer = std::make_unique<ClusteredRenderer>(scene.get());
+            break;
+        default:
+            renderer = nullptr;
+            break;
+    }
+
+    // TODO error out if no renderer
+
+    if(renderer)
+    {
+        renderer->reset(getWidth(), getHeight());
+        renderer->initialize();
+    }
+
+    config->renderPath = path;
 }
 
 void Cluster::saveFrameBuffer(bgfx::FrameBufferHandle frameBuffer, const char* name)

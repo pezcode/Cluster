@@ -7,10 +7,12 @@ class Cluster;
 class ClusterUI
 {
 public:
-    ClusterUI(Cluster& app) : app(app) {}
+    ClusterUI(Cluster& app);
+    ~ClusterUI();
 
     void initialize();
     void update(float dt);
+    void shutdown();
 
 private:
     void imageTooltip(ImTextureID tex, ImVec2 tex_size, float region_size);
@@ -21,6 +23,5 @@ private:
     static constexpr size_t GRAPH_HISTORY = 100;
 
     Cluster& app;
-
-    float mTime = 0.0f;
+    float mTime;
 };

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <bgfx/bgfx.h>
+#include "Cluster.h"
 
 class Config
 {
@@ -8,6 +9,7 @@ public:
     Config();
 
     bgfx::RendererType::Enum renderer;
+    Cluster::RenderPath renderPath;
 
     bool fullscreen;
     bool showUI;

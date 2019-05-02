@@ -16,6 +16,10 @@ Renderer::Renderer(const Scene* scene) :
 {
 }
 
+Renderer::~Renderer()
+{
+}
+
 void Renderer::initialize()
 {
     PosVertex::init();

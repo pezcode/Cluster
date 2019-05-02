@@ -7,3 +7,7 @@ Camera::Camera()
     // identical to CS:GO's fixed fov
     fov = 73.74f;
 }
+
+Camera::~Camera()
+{
+}

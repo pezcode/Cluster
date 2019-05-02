@@ -23,6 +23,7 @@ class Scene
 {
 public:
     Scene();
+    ~Scene();
 
     void load(const char* path);
 

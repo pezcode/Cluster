@@ -18,6 +18,11 @@ Scene::Scene() :
     //std::run_once();
 }
 
+Scene::~Scene()
+{
+
+}
+
 void Scene::load(const char* path)
 {
     Assimp::Importer importer;

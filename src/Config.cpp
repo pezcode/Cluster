@@ -2,6 +2,7 @@
 
 Config::Config() :
     renderer(bgfx::RendererType::Count),
+    renderPath(Cluster::Forward),
     fullscreen(false),
     showUI(true),
     showConfigWindow(true),
@@ -24,4 +25,6 @@ void Config::readArgv(int argc, char* argv[])
     // somehow this also makes it the default
     // TODO keep DX11 as default on Windows but raise used OpenGL version?
     // renderer = bgfx::RendererType::OpenGL;
+
+    //fullscreen = true;
 }

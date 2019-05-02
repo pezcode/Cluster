@@ -13,7 +13,10 @@ ForwardRenderer::ForwardRenderer(const Scene* scene) :
     mIbh(BGFX_INVALID_HANDLE),
     mTime(0.0f)
 {
+}
 
+ForwardRenderer::~ForwardRenderer()
+{
 }
 
 void ForwardRenderer::initialize()

@@ -2,11 +2,12 @@
 
 #include <bigg.hpp>
 #include <bx/string.h>
-#include "UI.h"
-#include "Config.h"
-#include "Scene.h"
-#include "Renderer.h"
 #include <memory>
+
+class ClusterUI;
+class Config;
+class Scene;
+class Renderer;
 
 class Cluster : public bigg::Application
 {
@@ -14,6 +15,7 @@ class Cluster : public bigg::Application
 
 public:
     Cluster();
+    ~Cluster();
 
     int run(int argc, char* argv[]);
 
@@ -27,7 +29,16 @@ public:
 
     //
 
+    void close();
     void toggleFullscreen();
+
+    enum RenderPath : int
+    {
+        Forward,
+        Deferred,
+        Clustered
+    };
+
     void saveFrameBuffer(bgfx::FrameBufferHandle frameBuffer, const char* path);
 
 private:
@@ -60,8 +71,10 @@ private:
         Cluster& app;
     };
 
+    void setRenderPath(RenderPath path);
+
     static bx::DefaultAllocator allocator;
-    static bx::AllocatorI * iAlloc;
+    static bx::AllocatorI* iAlloc;
 
     typedef bx::StringT<&iAlloc> String;
     String log;
@@ -72,8 +85,12 @@ private:
 
     BgfxCallbacks callbacks;
 
-    Config config;
-    ClusterUI ui;
-    Scene scene;
+    // pointers to avoid circular dependencies
+    // Cluster has Config member, Config needs enum definitions
+
+    std::unique_ptr<Config> config;
+    std::unique_ptr<ClusterUI> ui;
+    std::unique_ptr<Scene> scene;
+
     std::unique_ptr<Renderer> renderer;
 };

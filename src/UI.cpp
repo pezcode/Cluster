@@ -1,8 +1,20 @@
 #include "UI.h"
 
 #include "Cluster.h"
+#include "Config.h"
+#include "Renderer.h"
 #include <bx/string.h>
 #include <IconsForkAwesome.h>
+
+ClusterUI::ClusterUI(Cluster& app) :
+    app(app),
+    mTime(0.0f)
+{
+}
+
+ClusterUI::~ClusterUI()
+{
+}
 
 void ClusterUI::initialize()
 {
@@ -25,9 +37,8 @@ void ClusterUI::initialize()
     // looks better with icon buttons
     style.ButtonTextAlign = ImVec2(0.0f, 0.5f);
 
-    io.Fonts->Clear();
-
     // Load text font
+    io.Fonts->Clear();
 
     const char* fontFile = "assets/fonts/Roboto/Roboto-Medium.ttf";
     ImFont* font = io.Fonts->AddFontFromFileTTF(fontFile, 14.0f);
@@ -49,20 +60,20 @@ void ClusterUI::initialize()
     int tex_w, tex_h;
     int bytes;
     io.Fonts->GetTexDataAsRGBA32(&tex_data, &tex_w, &tex_h, &bytes);
-    bgfx::TextureHandle tex = bgfx::createTexture2D((uint16_t)tex_w,
-                                                    (uint16_t)tex_h,
-                                                    false,
-                                                    1,
-                                                    bgfx::TextureFormat::RGBA8,
-                                                    0,
-                                                    bgfx::copy(tex_data, tex_w * tex_h * bytes));
-    io.Fonts->SetTexID(ImTextureID(tex.idx));
+    bgfx::TextureHandle texture = bgfx::createTexture2D((uint16_t)tex_w,
+                                                        (uint16_t)tex_h,
+                                                        false,
+                                                        1,
+                                                        bgfx::TextureFormat::RGBA8,
+                                                        0,
+                                                        bgfx::copy(tex_data, tex_w * tex_h * bytes));
+    io.Fonts->SetTexID(ImTextureID(texture.idx));
 }
 
 void ClusterUI::update(float dt)
 {
     mTime += dt;
-    if(!app.config.showUI)
+    if(!app.config->showUI)
         return;
 
     const Renderer::TextureBuffer* buffers = app.renderer->buffers;
@@ -75,13 +86,25 @@ void ClusterUI::update(float dt)
 
     ImVec2 padding = { 5.0f, 5.0f };
 
-    if(app.config.showConfigWindow)
+    if(app.config->showConfigWindow)
     {
-        ImGui::Begin("Settings", &app.config.showConfigWindow, ImGuiWindowFlags_AlwaysAutoResize);
-        ImGui::Checkbox("Show log", &app.config.showLog);
-        ImGui::Checkbox("Show stats", &app.config.showStatsOverlay);
+        ImGui::Begin("Settings", &app.config->showConfigWindow, ImGuiWindowFlags_AlwaysAutoResize);
+
+        // Render path radio buttons
+        ImGui::Text("Render path:");
+        static int renderPathSelected = app.config->renderPath;
+        ImGui::RadioButton("Forward", &renderPathSelected, Cluster::Forward);
+        ImGui::RadioButton("Deferred", &renderPathSelected, Cluster::Deferred);
+        ImGui::RadioButton("Clustered", &renderPathSelected, Cluster::Clustered);
+        Cluster::RenderPath path = Cluster::RenderPath(renderPathSelected);
+        if(path != app.config->renderPath)
+            app.setRenderPath(path);
+
+        ImGui::Separator();
+        ImGui::Checkbox("Show log", &app.config->showLog);
+        ImGui::Checkbox("Show stats", &app.config->showStatsOverlay);
         if(buffers)
-            ImGui::Checkbox("Show buffers", &app.config.showBuffers);
+            ImGui::Checkbox("Show buffers", &app.config->showBuffers);
         if(ImGui::Button(ICON_FK_CAMERA "  Screenshot", ImVec2(100, 0)))
         {
             static unsigned int count = 0;
@@ -92,12 +115,12 @@ void ClusterUI::update(float dt)
             // this takes a screenshot of the OS window framebuffer, UI included
             // bgfx::requestScreenShot(BGFX_INVALID_HANDLE, name);
         }
-        if(ImGui::Button(app.config.fullscreen ? (ICON_FK_WINDOW_RESTORE "  Restore")
-                                               : (ICON_FK_WINDOW_MAXIMIZE "  Fullscreen"),
+        if(ImGui::Button(app.config->fullscreen ? (ICON_FK_WINDOW_RESTORE "  Restore")
+                                                : (ICON_FK_WINDOW_MAXIMIZE "  Fullscreen"),
                          ImVec2(100, 0)))
             app.toggleFullscreen();
         if(ImGui::Button(ICON_FK_EYE_SLASH "  Hide UI", ImVec2(100, 0)))
-            app.config.showUI = false;
+            app.config->showUI = false;
         ImGui::SameLine();
         // disabled look
         ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().Alpha * 0.4f);
@@ -107,9 +130,9 @@ void ClusterUI::update(float dt)
     }
 
     // log
-    if(app.config.showLog)
+    if(app.config->showLog)
     {
-        ImGui::Begin("Log", &app.config.showLog, ImGuiWindowFlags_HorizontalScrollbar);
+        ImGui::Begin("Log", &app.config->showLog, ImGuiWindowFlags_HorizontalScrollbar);
         ImGui::TextUnformatted(app.log.getPtr());
         // only scroll down if it's currently at the bottom
         if(ImGui::GetScrollY() >= ImGui::GetScrollMaxY())
@@ -118,7 +141,7 @@ void ClusterUI::update(float dt)
     }
 
     // performance overlay
-    if(app.config.showStatsOverlay)
+    if(app.config->showStatsOverlay)
     {
         // top left, transparent background
         ImGui::SetNextWindowPos(padding, ImGuiCond_Always);
@@ -150,7 +173,7 @@ void ClusterUI::update(float dt)
         static float gpuMemoryValues[GRAPH_HISTORY] = { 0 };
         static int offset = 0;
 
-        if(app.config.overlays.fps)
+        if(app.config->overlays.fps)
         {
             ImGui::Separator();
             ImGui::Text("FPS");
@@ -158,7 +181,7 @@ void ClusterUI::update(float dt)
                 "", fpsValues, IM_ARRAYSIZE(fpsValues), offset + 1, nullptr, 0.0f, 200.0f, ImVec2(150, 50));
             ImGui::Text("%.0f", fpsValues[offset]);
         }
-        if(app.config.overlays.frameTime)
+        if(app.config->overlays.frameTime)
         {
             ImGui::Separator();
             ImGui::Text("Frame time");
@@ -168,7 +191,7 @@ void ClusterUI::update(float dt)
             ImGui::Text("GPU: %.2f ms", float(stats->gpuTimeEnd - stats->gpuTimeBegin) * 1000.0f / stats->gpuTimerFreq);
             ImGui::Text("Total: %.2f", frameTimeValues[offset]);
         }
-        if(app.config.overlays.gpuMemory)
+        if(app.config->overlays.gpuMemory)
         {
             float used = float(stats->gpuMemoryUsed) / 1000 / 1000;
             float max = float(stats->gpuMemoryMax) / 1000 / 1000;
@@ -203,15 +226,15 @@ void ClusterUI::update(float dt)
         // right click menu
         if(ImGui::BeginPopupContextWindow())
         {
-            ImGui::Checkbox("FPS", &app.config.overlays.fps);
-            ImGui::Checkbox("Frame time", &app.config.overlays.frameTime);
-            ImGui::Checkbox("GPU memory", &app.config.overlays.gpuMemory);
+            ImGui::Checkbox("FPS", &app.config->overlays.fps);
+            ImGui::Checkbox("Frame time", &app.config->overlays.frameTime);
+            ImGui::Checkbox("GPU memory", &app.config->overlays.gpuMemory);
             ImGui::EndPopup();
         }
         ImGui::End();
     }
 
-    if(buffers && app.config.showBuffers)
+    if(buffers && app.config->showBuffers)
     {
         ImGui::SetNextWindowBgAlpha(0.5f);
         ImGui::Begin("Buffers",
@@ -243,6 +266,15 @@ void ClusterUI::update(float dt)
 
         ImGui::End();
     }
+}
+
+void ClusterUI::shutdown()
+{
+    ImGuiIO& io = ImGui::GetIO();
+    bgfx::TextureHandle fontTexture = BGFX_INVALID_HANDLE;
+    io.Fonts->SetTexID(ImTextureID(uintptr_t(fontTexture.idx)));
+    fontTexture.idx = uint16_t(uintptr_t(io.Fonts->TexID));
+    bgfx::destroy(fontTexture);
 }
 
 void ClusterUI::imageTooltip(ImTextureID tex, ImVec2 tex_size, float region_size)
