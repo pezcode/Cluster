@@ -1,6 +1,8 @@
 #include "Config.h"
 
 Config::Config() :
+    writeLog(true),
+    logFile("Cluster.log"),
     renderer(bgfx::RendererType::Count),
     renderPath(Cluster::Forward),
     lights(0),
@@ -23,10 +25,14 @@ void Config::readArgv(int argc, char* argv[])
 
     // bgfx is built with BGFX_CONFIG_RENDERER_OPENGL=43
     // this adds compute shaders and texture copy
-    // somehow this also makes it the default
+    // somehow this also makes it the only usable renderer
     // TODO keep DX11 as default on Windows but raise used OpenGL version?
+    // define something else so it uses both?
     // renderer = bgfx::RendererType::OpenGL;
 
-    fullscreen = true;
+    // this doesn't work, still use OpenGL
+    renderer = bgfx::RendererType::Direct3D11;
+
+    //fullscreen = true;
     lights = 50;
 }

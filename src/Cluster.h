@@ -59,13 +59,7 @@ private:
         virtual void captureEnd() override {}
         virtual void captureFrame(const void*, uint32_t) override {}
 
-        virtual void screenShot(const char* _filePath,
-                                uint32_t _width,
-                                uint32_t _height,
-                                uint32_t _pitch,
-                                const void* _data,
-                                uint32_t /*_size*/,
-                                bool _yflip) override;
+        virtual void screenShot(const char*, uint32_t, uint32_t, uint32_t, const void*, uint32_t, bool yflip) override;
 
     private:
         Cluster& app;
@@ -75,9 +69,6 @@ private:
 
     static bx::DefaultAllocator allocator;
     static bx::AllocatorI* iAlloc;
-
-    typedef bx::StringT<&iAlloc> String;
-    String log;
 
     // screenshots
     uint32_t saveFrame = 0;

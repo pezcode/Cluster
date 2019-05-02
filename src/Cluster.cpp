@@ -4,13 +4,16 @@
 #include "Config.h"
 #include "Scene.h"
 
-#include "ForwardRenderer.h"
-#include "DeferredRenderer.h"
-#include "ClusteredRenderer.h"
+#include "Renderer/ForwardRenderer.h"
+#include "Renderer/DeferredRenderer.h"
+#include "Renderer/ClusteredRenderer.h"
 
 #include <bx/file.h>
 #include <bx/string.h>
 #include <bimg/bimg.h>
+
+#include <spdlog/sinks/basic_file_sink.h>
+#include "Log/Log.h"
 
 #include <thread>
 
@@ -42,48 +45,20 @@ int Cluster::run(int argc, char* argv[])
 
 void Cluster::initialize(int _argc, char* _argv[])
 {
+    // is _mt (thread safe) necessary?
+    spdlog::sink_ptr fileSink = std::make_shared<spdlog::sinks::basic_file_sink_mt>(config->logFile, true);
+    fileSink->set_level(spdlog::level::trace);
+    fileSink->set_pattern("[%H:%M:%S][%l] %v");
+    Sinks->add_sink(fileSink);
+
+    Log->flush_on(spdlog::level::info);
+    Log->set_level(spdlog::level::trace);
+    spdlog::flush_every(std::chrono::seconds(2));
+    // TODO remove sink during shutdown
+
     // TODO read from config
     //reset(BGFX_RESET_VSYNC | BGFX_RESET_MSAA_X8 | BGFX_RESET_MAXANISOTROPY);
-    bgfx::setDebug(BGFX_DEBUG_TEXT);
-
-    // TODO load app icon
-    // not working
-    // https://github.com/bkaradzic/bgfx/blob/4cd8e574e826dc3b6998790052f7aefac6cc1164/examples/common/bgfx_utils.cpp#L168
-
-    /*
-    bx::Error err;
-    bx::FileReader reader;
-    if(bx::open(&reader, "assets/icons/cube.dds", &err))
-    {
-        bx::DefaultAllocator allocator;
-
-        uint32_t size = (uint32_t)bx::getSize(&reader);
-        void* data = BX_ALLOC(&allocator, size);
-        bx::read(&reader, data, size);
-        bx::close(&reader);
-
-        bimg::ImageContainer image;
-        if(bimg::imageParse(image, data, size, &err))
-        {
-            bimg::ImageContainer* converted = bimg::imageConvert(&allocator, bimg::TextureFormat::RGBA8, image, false);
-            if(converted)
-            {
-                if(converted->m_data)
-                {
-                    GLFWimage icon;
-                    icon.width = converted->m_width;
-                    icon.height = converted->m_height;
-                    icon.pixels = (unsigned char*)converted->m_data;
-                
-                    glfwSetWindowIcon(nullptr, 1, &icon);
-                }
-                bimg::imageFree(converted);
-            }
-        }
-
-        BX_FREE(&allocator, data);
-    }
-    */
+    //bgfx::setDebug(BGFX_DEBUG_TEXT);
 
     if(config->fullscreen)
         toggleFullscreen();
@@ -139,23 +114,38 @@ void Cluster::update(float dt)
 
 int Cluster::shutdown()
 {
+    // TODO
+    // not all resources are freed
+    // e.g. Renderer::blitSampler has count 3 on shutdown
+
     ui->shutdown();
     renderer->shutdown();
     return 0;
 }
 
-void Cluster::BgfxCallbacks::fatal(const char* _filePath, uint16_t _line, bgfx::Fatal::Enum _code, const char* _str)
+void Cluster::BgfxCallbacks::fatal(const char* filePath, uint16_t line, bgfx::Fatal::Enum code, const char* str)
 {
-
+    if(code != bgfx::Fatal::DebugCheck)
+    {
+        // unrecoverable, terminate
+        // don't log debug checks either, their output gets sent to traceVargs
+        Log->critical("{}", str);
+        app.close();
+    }
 }
 
-void Cluster::BgfxCallbacks::traceVargs(const char* _filePath, uint16_t _line, const char* _format, va_list _argList)
+// only called when compiled as debug
+void Cluster::BgfxCallbacks::traceVargs(const char* filePath, uint16_t line, const char* format, va_list args)
 {
-    char out[1024+2];
-    bx::vsnprintf(out, BX_COUNTOF(out)-2, _format, _argList);
-    //bx::strCat(out, BX_COUNTOF(out), "\n");
-    app.log.append(out);
-    //app.log.append("\n");
+    char buffer[1024];
+    int32_t written = bx::vsnprintf(buffer, BX_COUNTOF(buffer), format, args);
+    if(written > 0 && written < BX_COUNTOF(buffer))
+    {
+        // bgfx sends lines with newlines, spdlog adds another
+        if(buffer[written-1] == '\n')
+            buffer[written - 1] = '\0';
+        Log->trace(buffer);
+    }
 }
 
 void Cluster::BgfxCallbacks::screenShot(const char* name,

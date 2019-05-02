@@ -1,6 +1,9 @@
 #include "Scene.h"
 
+#include <assimp/DefaultLogger.hpp>
 #include <assimp/Importer.hpp>
+#include <assimp/postprocess.h>
+#include <assimp/scene.h>
 
 bgfx::VertexDecl PosColorVertex::ms_decl;
 
@@ -15,16 +18,65 @@ Scene::Scene() :
         3, 5, 1, 3, 7, 5, 1, 4, 0, 1, 5, 4, 6, 3, 2, 7, 3, 6
     }
 {
-    //std::run_once();
+    Assimp::DefaultLogger::set(&logSource);
 }
 
 Scene::~Scene()
 {
+}
 
+void Scene::clear()
+{
 }
 
 void Scene::load(const char* path)
 {
+    clear();
+
+    // TODO
+    // importer.SetProgressHandler
+
+    unsigned int flags = aiProcessPreset_TargetRealtime_Quality;
+    // D3D:
+    // aiProcess_ConvertToLeftHanded
+    // better:
+    // use bgfx caps for aiProcess_MakeLeftHanded | aiProcess_FlipUVs | 
+    // aiProcess_FlipWindingOrder: set winding order to CW (Renderer uses that, and BGFX_STATE_DEFAULT contains CW)
+
     Assimp::Importer importer;
-    //const aiScene* scene;
+    const aiScene* scene = importer.ReadFile(path, flags);
+    if(scene)
+    {
+        if(!(scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE) && (scene->mFlags & AI_SCENE_FLAGS_VALIDATED))
+        {
+            for(unsigned int i = 0; i < scene->mNumMeshes; i++)
+            {
+                const aiMesh* mesh = scene->mMeshes[i];
+                loadMesh(mesh);
+            }
+
+            for(unsigned int i = 0; i < scene->mNumMaterials; i++)
+            {
+                const aiMaterial* material = scene->mMaterials[i];
+                loadMaterial(material);
+            }
+        }
+        else
+        {
+            Log->error("Scene is incomplete or invalid");
+        }
+    }
+    else
+    {
+        // TODO
+        //log(importer.GetErrorString());
+    }
+}
+
+void Scene::loadMesh(const aiMesh* mesh)
+{
+}
+
+void Scene::loadMaterial(const aiMaterial* material)
+{
 }

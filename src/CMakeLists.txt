@@ -10,14 +10,18 @@ set(SOURCES
 	Scene.cpp
 	Camera.h
 	Camera.cpp
-	Renderer.h
-	Renderer.cpp
-	ForwardRenderer.h
-	ForwardRenderer.cpp
-	DeferredRenderer.h
-	DeferredRenderer.cpp
-	ClusteredRenderer.h
-	ClusteredRenderer.cpp
+	Renderer/Renderer.h
+	Renderer/Renderer.cpp
+	Renderer/ForwardRenderer.h
+	Renderer/ForwardRenderer.cpp
+	Renderer/DeferredRenderer.h
+	Renderer/DeferredRenderer.cpp
+	Renderer/ClusteredRenderer.h
+	Renderer/ClusteredRenderer.cpp
+	Log/Log.h
+	Log/Log.cpp
+	Log/UISink.h
+	Log/AssimpSource.h
 	vs_cubes.sc
 	fs_cubes.sc
 	vs_screen_quad.sc
@@ -27,7 +31,7 @@ set(SOURCES
 
 add_executable(Cluster ${SOURCES})
 target_include_directories(Cluster PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
-target_link_libraries(Cluster PRIVATE bigg IconFontCppHeaders assimp)
+target_link_libraries(Cluster PRIVATE bigg IconFontCppHeaders assimp spdlog)
 
 set_target_properties(Cluster PROPERTIES
 	RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}"

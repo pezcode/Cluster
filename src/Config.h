@@ -8,9 +8,14 @@ class Config
 public:
     Config();
 
+    // Log
+
+    bool writeLog; // not exposed to UI
+    const char* logFile; // not exposed to UI
+
     // Renderer
 
-    bgfx::RendererType::Enum renderer;
+    bgfx::RendererType::Enum renderer; // not exposed to UI
     Cluster::RenderPath renderPath;
 
     // Scene

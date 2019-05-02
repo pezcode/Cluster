@@ -2,9 +2,14 @@
 
 #include "Cluster.h"
 #include "Config.h"
-#include "Renderer.h"
+#include "Renderer/Renderer.h"
+#include "Log/UISink.h"
+#include "Log/Log.h"
 #include <bx/string.h>
 #include <IconsForkAwesome.h>
+#include <functional>
+
+using namespace std::placeholders;
 
 ClusterUI::ClusterUI(Cluster& app) :
     app(app),
@@ -18,6 +23,18 @@ ClusterUI::~ClusterUI()
 
 void ClusterUI::initialize()
 {
+    // Log
+
+    // is _mt (thread safe) necessary?
+    auto func = std::bind(&ClusterUI::log, this, std::placeholders::_1, std::placeholders::_2);
+    spdlog::sink_ptr uiSink = std::make_shared<spdlog::ext::clusterui_sink_mt<decltype(func)>>(func);
+    uiSink->set_level(spdlog::level::trace);
+    uiSink->set_pattern("%v");
+    Sinks->add_sink(uiSink);
+    // TODO remove sink during shutdown
+
+    // Imgui
+
     ImGuiIO& io = ImGui::GetIO();
     //io.IniFilename = nullptr;   // don't save window positions etc. to ini
     io.MouseDrawCursor = true; // let imgui draw cursors
@@ -39,14 +56,12 @@ void ClusterUI::initialize()
 
     // Load text font
     io.Fonts->Clear();
-
     const char* fontFile = "assets/fonts/Roboto/Roboto-Medium.ttf";
     ImFont* font = io.Fonts->AddFontFromFileTTF(fontFile, 14.0f);
     if(!font)
         io.Fonts->AddFontDefault();
 
     // Load and merge icon font
-
     const char* iconFontFile = "assets/fonts/ForkAwesome/forkawesome-webfont.ttf";
     const ImWchar iconsRanges[] = { ICON_MIN_FK, ICON_MAX_FK, 0 };
     ImFontConfig iconsConfig;
@@ -55,7 +70,6 @@ void ClusterUI::initialize()
     ImFont* iconFont = io.Fonts->AddFontFromFileTTF(iconFontFile, 13.0f, &iconsConfig, iconsRanges);
 
     // Generate font texture
-
     unsigned char* tex_data;
     int tex_w, tex_h;
     int bytes;
@@ -124,10 +138,7 @@ void ClusterUI::update(float dt)
         if(ImGui::Button(ICON_FK_EYE_SLASH "  Hide UI", ImVec2(100, 0)))
             app.config->showUI = false;
         ImGui::SameLine();
-        // disabled look
-        ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().Alpha * 0.4f);
-        ImGui::Text("%s to restore", glfwGetKeyName(GLFW_KEY_R, 0));
-        ImGui::PopStyleVar();
+        ImGui::TextDisabled("%s to restore", glfwGetKeyName(GLFW_KEY_R, 0));
         ImGui::End();
     }
 
@@ -135,8 +146,19 @@ void ClusterUI::update(float dt)
     if(app.config->showLog)
     {
         ImGui::Begin("Log", &app.config->showLog, ImGuiWindowFlags_HorizontalScrollbar);
-        ImGui::TextUnformatted(app.log.getPtr());
+        ImVec4 clrText = ImGui::GetStyleColorVec4(ImGuiCol_Text);
+        ImVec4 clrDisabled = ImGui::GetStyleColorVec4(ImGuiCol_TextDisabled);
+        ImVec4 clrWarning = ImVec4(1.0f, 0.5f, 0.0f, 1.0f); // yellow/orange ("Gold")
+        ImVec4 clrError = ImVec4(0.8f, 0.0f, 0.1f, 1.0f); // yellow/orange ("Crimson")
+        // trace, debug, info, warn, error, critical
+        const ImVec4 colors[] = { clrDisabled, clrDisabled, clrText, clrWarning, clrError, clrError };
+        const char icons[][4] = { " ", " ", ICON_FK_INFO, ICON_FK_EXCLAMATION, ICON_FK_EXCLAMATION, ICON_FK_EXCLAMATION };
+        for(const LogEntry& entry : logEntries)
+        {
+            ImGui::TextColored(colors[entry.level], "%s %s", icons[entry.level], logText.begin() + entry.messageOffset);
+        }
         // only scroll down if it's currently at the bottom
+        // TODO this breaks scrolling up
         if(ImGui::GetScrollY() >= ImGui::GetScrollMaxY())
             ImGui::SetScrollHereY(1.0f);
         ImGui::End();
@@ -156,9 +178,7 @@ void ClusterUI::update(float dt)
 
         // title
         ImGui::Text(ICON_FK_TACHOMETER " Stats");
-        ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().Alpha * 0.4f);
-        ImGui::Text("right-click to toggle");
-        ImGui::PopStyleVar();
+        ImGui::TextDisabled("right-click to toggle");
         ImGui::Separator();
 
         // general data
@@ -272,11 +292,31 @@ void ClusterUI::update(float dt)
 
 void ClusterUI::shutdown()
 {
+    logEntries.clear();
+    logText.clear();
     ImGuiIO& io = ImGui::GetIO();
     // destroy font texture since we always create it ourselves
     bgfx::destroy(fontTexture);
     fontTexture = BGFX_INVALID_HANDLE;
     io.Fonts->SetTexID(ImTextureID(uintptr_t(fontTexture.idx)));
+}
+
+void ClusterUI::log(const char* message, spdlog::level::level_enum level)
+{
+    // TODO
+    // own struct
+    // save with level
+    // color coded
+    //logEntries.push_back({ level, message });
+    //logString.append(message);
+    
+
+    int vecLen = logText.size();
+    int32_t strLen = bx::strLen(message) + 1;
+    logText.resize(vecLen + strLen);
+    bx::memCopy(logText.begin() + vecLen, message, strLen);
+
+    logEntries.push_back({ level, vecLen });
 }
 
 void ClusterUI::imageTooltip(ImTextureID tex, ImVec2 tex_size, float region_size)

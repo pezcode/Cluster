@@ -1,6 +1,9 @@
 #pragma once
 
 #include "Camera.h"
+#include "Log/AssimpSource.h"
+#include <assimp/mesh.h>
+#include <assimp/material.h>
 #include <bgfx/bgfx.h>
 
 struct PosColorVertex
@@ -26,8 +29,15 @@ public:
     ~Scene();
 
     void load(const char* path);
+    void clear();
 
     PosColorVertex s_cubeVertices[8];
     const uint16_t s_cubeTriList[36];
     Camera camera;
+
+private:
+    AssimpLogSource logSource;
+
+    void loadMesh(const aiMesh* mesh);
+    void loadMaterial(const aiMaterial* material);
 };
