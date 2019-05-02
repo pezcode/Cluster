@@ -8,8 +8,16 @@ class Config
 public:
     Config();
 
+    // Renderer
+
     bgfx::RendererType::Enum renderer;
     Cluster::RenderPath renderPath;
+
+    // Scene
+
+    int lights;
+
+    // UI
 
     bool fullscreen;
     bool showUI;

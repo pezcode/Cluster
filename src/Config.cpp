@@ -3,6 +3,7 @@
 Config::Config() :
     renderer(bgfx::RendererType::Count),
     renderPath(Cluster::Forward),
+    lights(0),
     fullscreen(false),
     showUI(true),
     showConfigWindow(true),
@@ -26,5 +27,6 @@ void Config::readArgv(int argc, char* argv[])
     // TODO keep DX11 as default on Windows but raise used OpenGL version?
     // renderer = bgfx::RendererType::OpenGL;
 
-    //fullscreen = true;
+    fullscreen = true;
+    lights = 50;
 }

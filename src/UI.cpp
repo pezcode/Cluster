@@ -60,14 +60,10 @@ void ClusterUI::initialize()
     int tex_w, tex_h;
     int bytes;
     io.Fonts->GetTexDataAsRGBA32(&tex_data, &tex_w, &tex_h, &bytes);
-    bgfx::TextureHandle texture = bgfx::createTexture2D((uint16_t)tex_w,
-                                                        (uint16_t)tex_h,
-                                                        false,
-                                                        1,
-                                                        bgfx::TextureFormat::RGBA8,
-                                                        0,
-                                                        bgfx::copy(tex_data, tex_w * tex_h * bytes));
-    io.Fonts->SetTexID(ImTextureID(texture.idx));
+    fontTexture = bgfx::createTexture2D((uint16_t)tex_w, (uint16_t)tex_h,
+                                        false, 1, bgfx::TextureFormat::RGBA8,
+                                        0, bgfx::copy(tex_data, tex_w * tex_h * bytes));
+    io.Fonts->SetTexID(ImTextureID(fontTexture.idx));
 }
 
 void ClusterUI::update(float dt)
@@ -90,6 +86,8 @@ void ClusterUI::update(float dt)
     {
         ImGui::Begin("Settings", &app.config->showConfigWindow, ImGuiWindowFlags_AlwaysAutoResize);
 
+        ImGui::SliderInt("Lights", &app.config->lights, 0, 1000);
+
         // Render path radio buttons
         ImGui::Text("Render path:");
         static int renderPathSelected = app.config->renderPath;
@@ -101,10 +99,14 @@ void ClusterUI::update(float dt)
             app.setRenderPath(path);
 
         ImGui::Separator();
+
         ImGui::Checkbox("Show log", &app.config->showLog);
         ImGui::Checkbox("Show stats", &app.config->showStatsOverlay);
         if(buffers)
             ImGui::Checkbox("Show buffers", &app.config->showBuffers);
+
+        ImGui::Separator();
+
         if(ImGui::Button(ICON_FK_CAMERA "  Screenshot", ImVec2(100, 0)))
         {
             static unsigned int count = 0;
@@ -271,10 +273,10 @@ void ClusterUI::update(float dt)
 void ClusterUI::shutdown()
 {
     ImGuiIO& io = ImGui::GetIO();
-    bgfx::TextureHandle fontTexture = BGFX_INVALID_HANDLE;
-    io.Fonts->SetTexID(ImTextureID(uintptr_t(fontTexture.idx)));
-    fontTexture.idx = uint16_t(uintptr_t(io.Fonts->TexID));
+    // destroy font texture since we always create it ourselves
     bgfx::destroy(fontTexture);
+    fontTexture = BGFX_INVALID_HANDLE;
+    io.Fonts->SetTexID(ImTextureID(uintptr_t(fontTexture.idx)));
 }
 
 void ClusterUI::imageTooltip(ImTextureID tex, ImVec2 tex_size, float region_size)

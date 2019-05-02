@@ -1,5 +1,6 @@
 #pragma once
 
+#include <bgfx/bgfx.h>
 #include <imgui.h>
 
 class Cluster;
@@ -24,4 +25,6 @@ private:
 
     Cluster& app;
     float mTime;
+
+    bgfx::TextureHandle fontTexture;
 };
