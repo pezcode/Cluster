@@ -38,6 +38,8 @@ void Renderer::initialize()
     blitProgram = bigg::loadProgram(vsName, fsName);
 
     blitSampler = bgfx::createUniform("s_texColor", bgfx::UniformType::Sampler);
+
+    onInitialize();
 }
 
 void Renderer::reset(uint16_t width, uint16_t height)
@@ -78,10 +80,21 @@ void Renderer::reset(uint16_t width, uint16_t height)
     }
     this->width = width;
     this->height = height;
+
+    onReset();
+}
+
+void Renderer::render(float dt)
+{
+    onRender(dt);
+
+    blitToScreen(199);
 }
 
 void Renderer::shutdown()
 {
+    onShutdown();
+
     bgfx::destroy(blitProgram);
     bgfx::destroy(blitSampler);
     bgfx::destroy(frameBuffer);

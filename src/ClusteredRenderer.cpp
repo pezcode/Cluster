@@ -9,21 +9,26 @@ ClusteredRenderer::~ClusteredRenderer()
 {
 }
 
-void ClusteredRenderer::initialize()
+void ClusteredRenderer::onInitialize()
 {
-    Renderer::initialize();
+    
 }
 
-void ClusteredRenderer::reset(uint16_t width, uint16_t height)
+void ClusteredRenderer::onReset()
 {
-    Renderer::reset(width, height);
+    
 }
 
-void ClusteredRenderer::render(float dt)
+void ClusteredRenderer::onRender(float dt)
 {
+    bgfx::ViewId vDefault = 0;
+    bgfx::setViewClear(vDefault, BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH, 0x303030FF, 1.0f, 0);
+    bgfx::setViewRect(vDefault, 0, 0, width, height);
+    bgfx::setViewFrameBuffer(vDefault, frameBuffer);
+    bgfx::touch(vDefault);
 }
 
-void ClusteredRenderer::shutdown()
+void ClusteredRenderer::onShutdown()
 {
-    Renderer::shutdown();
+    
 }

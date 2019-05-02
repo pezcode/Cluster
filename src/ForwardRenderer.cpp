@@ -19,10 +19,8 @@ ForwardRenderer::~ForwardRenderer()
 {
 }
 
-void ForwardRenderer::initialize()
+void ForwardRenderer::onInitialize()
 {
-    Renderer::initialize();
-
     // TODO do this somewhere else (probably Scene)
     PosColorVertex::init();
 
@@ -43,15 +41,14 @@ void ForwardRenderer::initialize()
     mIbh = bgfx::createIndexBuffer(bgfx::makeRef(scene->s_cubeTriList, sizeof(scene->s_cubeTriList)));
 }
 
-void ForwardRenderer::reset(uint16_t width, uint16_t height)
+void ForwardRenderer::onReset()
 {
-    Renderer::reset(width, height);
+    
 }
 
-void ForwardRenderer::render(float dt)
+void ForwardRenderer::onRender(float dt)
 {
     bgfx::ViewId vDefault = 0;
-    bgfx::ViewId vBlitToScreen = 199; // imgui in bigg is 200
 
     mTime += dt;
     glm::mat4 view =
@@ -78,13 +75,11 @@ void ForwardRenderer::render(float dt)
         }
     }
 
-    blitToScreen(vBlitToScreen);
+    //blitToScreen(vBlitToScreen);
 }
 
-void ForwardRenderer::shutdown()
+void ForwardRenderer::onShutdown()
 {
-    Renderer::shutdown();
-
     bgfx::destroy(mProgram);
     bgfx::destroy(mIbh);
     bgfx::destroy(mVbh);

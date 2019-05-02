@@ -12,24 +12,29 @@ DeferredRenderer::DeferredRenderer(const Scene* scene) :
 
 DeferredRenderer::~DeferredRenderer()
 {
+
 }
 
-void DeferredRenderer::initialize()
+void DeferredRenderer::onInitialize()
 {
-    Renderer::initialize();
+
 }
 
-void DeferredRenderer::reset(uint16_t width, uint16_t height)
+void DeferredRenderer::onReset()
 {
-    Renderer::reset(width, height);
+
 }
 
-void DeferredRenderer::render(float dt)
+void DeferredRenderer::onRender(float dt)
 {
-    
+    bgfx::ViewId vDefault = 0;
+    bgfx::setViewClear(vDefault, BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH, 0x303030FF, 1.0f, 0);
+    bgfx::setViewRect(vDefault, 0, 0, width, height);
+    bgfx::setViewFrameBuffer(vDefault, frameBuffer);
+    bgfx::touch(vDefault);
 }
 
-void DeferredRenderer::shutdown()
+void DeferredRenderer::onShutdown()
 {
-    Renderer::shutdown();
+
 }

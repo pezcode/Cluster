@@ -26,14 +26,19 @@ public:
     Renderer(const Scene* scene);
     virtual ~Renderer();
 
-    // subclasses should call these from within their overrides
+    void initialize();
+    void reset(uint16_t width, uint16_t height);
+    void render(float dt);
+    void shutdown();
+
+    // subclasses should override these
 
     // the first reset happens before initialize
-    virtual void initialize();
-    virtual void reset(uint16_t width, uint16_t height); // window resize/flags changed (MSAA, VSYNC, ...)
-    virtual void shutdown();
-
-    virtual void render(float dt) = 0;
+    virtual void onInitialize() {}
+    // window resize/flags changed (MSAA, VSYNC, ...)
+    virtual void onReset() {}
+    virtual void onRender(float dt) = 0;
+    virtual void onShutdown() {}
 
     // buffers for debug output (display in the UI)
 
@@ -51,10 +56,10 @@ public:
 
 protected:
 
-    void blitToScreen(bgfx::ViewId view = 199);
+    static constexpr bgfx::ViewId MAX_VIEW = 199; // imgui in bigg uses view 200
 
+    void blitToScreen(bgfx::ViewId view = MAX_VIEW);
     void screenQuad();
-
     static const char* shaderDir();
 
     const Scene* scene;
