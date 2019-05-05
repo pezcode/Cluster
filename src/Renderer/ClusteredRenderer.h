@@ -8,6 +8,8 @@ public:
     ClusteredRenderer(const Scene* scene);
     virtual ~ClusteredRenderer();
 
+    static bool supported();
+
     virtual void onInitialize() override;
     virtual void onReset() override;
     virtual void onRender(float dt) override;

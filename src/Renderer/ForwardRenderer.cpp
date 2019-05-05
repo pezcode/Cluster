@@ -19,6 +19,15 @@ ForwardRenderer::~ForwardRenderer()
 {
 }
 
+bool ForwardRenderer::supported()
+{
+    if(Renderer::supported())
+    {
+        return true;
+    }
+    return false;
+}
+
 void ForwardRenderer::onInitialize()
 {
     // TODO do this somewhere else (probably Scene)

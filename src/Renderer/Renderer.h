@@ -3,16 +3,20 @@
 #include "Scene.h"
 #include <bgfx/bgfx.h>
 
-struct PosVertex
+struct PosTexCoord0Vertex
 {
-    float m_x;
-    float m_y;
-    float m_z;
+    float x;
+    float y;
+    float z;
+
+    float u;
+    float v;
 
     static void init()
     {
         ms_decl.begin()
             .add(bgfx::Attrib::Position, 3, bgfx::AttribType::Float)
+            .add(bgfx::Attrib::TexCoord0, 2, bgfx::AttribType::Float)
             .end();
     }
 
@@ -30,6 +34,8 @@ public:
     void reset(uint16_t width, uint16_t height);
     void render(float dt);
     void shutdown();
+
+    static bool supported();
 
     // subclasses should override these
 
@@ -59,7 +65,7 @@ protected:
     static constexpr bgfx::ViewId MAX_VIEW = 199; // imgui in bigg uses view 200
 
     void blitToScreen(bgfx::ViewId view = MAX_VIEW);
-    void screenQuad();
+
     static const char* shaderDir();
 
     const Scene* scene;
@@ -70,4 +76,5 @@ private:
 
     bgfx::ProgramHandle blitProgram;
     bgfx::UniformHandle blitSampler;
+    bgfx::VertexBufferHandle quadVB;
 };

@@ -56,6 +56,13 @@ void Cluster::initialize(int _argc, char* _argv[])
     spdlog::flush_every(std::chrono::seconds(2));
     // TODO remove sink during shutdown
 
+    if(!ForwardRenderer::supported())
+        Log->warn("Forward renderer not supported on this hardware");
+    if(!DeferredRenderer::supported())
+        Log->warn("Deferred renderer not supported on this hardware");
+    if(!ClusteredRenderer::supported())
+        Log->warn("Clustered renderer not supported on this hardware");
+
     // TODO read from config
     //reset(BGFX_RESET_VSYNC | BGFX_RESET_MSAA_X8 | BGFX_RESET_MAXANISOTROPY);
     //bgfx::setDebug(BGFX_DEBUG_TEXT);

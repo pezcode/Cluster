@@ -4,7 +4,7 @@
 #include <bx/macros.h>
 #include <bx/string.h>
 
-bgfx::VertexDecl PosVertex::ms_decl;
+bgfx::VertexDecl PosTexCoord0Vertex::ms_decl;
 
 Renderer::Renderer(const Scene* scene) :
     scene(scene),
@@ -22,22 +22,35 @@ Renderer::~Renderer()
 
 void Renderer::initialize()
 {
-    PosVertex::init();
+    PosTexCoord0Vertex::init();
 
     char vsName[32];
     char fsName[32];
-
     const char* dir = shaderDir();
-
     bx::strCopy(vsName, BX_COUNTOF(vsName), dir);
     bx::strCat(vsName, BX_COUNTOF(vsName), "vs_screen_quad.bin");
-
     bx::strCopy(fsName, BX_COUNTOF(fsName), dir);
     bx::strCat(fsName, BX_COUNTOF(fsName), "fs_screen_quad.bin");
-
     blitProgram = bigg::loadProgram(vsName, fsName);
 
     blitSampler = bgfx::createUniform("s_texColor", bgfx::UniformType::Sampler);
+
+    float BOTTOM = -1.0f, TOP = 1.0f;
+    float LEFT = -1.0f, RIGHT = 1.0f;
+    PosTexCoord0Vertex vertices[6] = {
+        { BOTTOM, LEFT }, { TOP, LEFT },  { TOP, RIGHT },
+        { BOTTOM, LEFT }, { TOP, RIGHT }, { BOTTOM, RIGHT }
+    };
+    bool flipV = bgfx::getCaps()->originBottomLeft;
+    for(PosTexCoord0Vertex& v : vertices)
+    {
+        v.z = 0.0f;
+        v.u = (v.x + 1.0f) * 0.5f;
+        v.v = (v.y + 1.0f) * 0.5f;
+        if(flipV)
+            v.v = 1.0f - v.v;
+    }
+    quadVB = bgfx::createVertexBuffer(bgfx::copy(&vertices, sizeof(vertices)), PosTexCoord0Vertex::ms_decl);
 
     onInitialize();
 }
@@ -97,7 +110,17 @@ void Renderer::shutdown()
 
     bgfx::destroy(blitProgram);
     bgfx::destroy(blitSampler);
-    bgfx::destroy(frameBuffer);
+    bgfx::destroy(quadVB);
+    if(bgfx::isValid(frameBuffer))
+        bgfx::destroy(frameBuffer);
+}
+
+bool Renderer::supported()
+{
+    const bgfx::Caps* caps = bgfx::getCaps();
+    
+    return true &&
+           (caps->formats[bgfx::TextureFormat::BGRA8] & BGFX_CAPS_FORMAT_TEXTURE_2D) != 0;
 }
 
 void Renderer::blitToScreen(bgfx::ViewId view)
@@ -108,39 +131,8 @@ void Renderer::blitToScreen(bgfx::ViewId view)
     bgfx::setState(BGFX_STATE_WRITE_RGB | BGFX_STATE_WRITE_A | BGFX_STATE_CULL_CW);
     bgfx::TextureHandle frameBufferTexture = bgfx::getTexture(frameBuffer);
     bgfx::setTexture(0, blitSampler, frameBufferTexture);
-    screenQuad();
+    bgfx::setVertexBuffer(0, quadVB);
     bgfx::submit(view, blitProgram);
-}
-
-void Renderer::screenQuad()
-{
-    constexpr uint32_t vCount = 6;
-    constexpr uint32_t iCount = 6;
-    constexpr float BOTTOM = -1.0f, TOP = 1.0f;
-    constexpr float LEFT = -1.0f, RIGHT = 1.0f;
-    static const PosVertex vertices[vCount] = { { BOTTOM, LEFT, 0.0f }, { TOP, LEFT,  0.0f }, { TOP,    RIGHT, 0.0f },
-                                                { BOTTOM, LEFT, 0.0f }, { TOP, RIGHT, 0.0f }, { BOTTOM, RIGHT, 0.0f } };
-    // clock-wise winding (bgfx default)
-    static const uint16_t indices[iCount] = { 0, 1, 2, 3, 4, 5 };
-
-    if(vCount == bgfx::getAvailTransientVertexBuffer(vCount, PosVertex::ms_decl) &&
-       iCount == bgfx::getAvailTransientIndexBuffer(iCount))
-    {
-        bgfx::TransientVertexBuffer vb;
-        bgfx::allocTransientVertexBuffer(&vb, vCount, PosVertex::ms_decl);
-        PosVertex* vData = (PosVertex*)vb.data;
-
-        bgfx::TransientIndexBuffer ib;
-        bgfx::allocTransientIndexBuffer(&ib, iCount);
-        uint16_t* iData = (uint16_t*)ib.data;
-
-        bx::memCopy(vData, vertices, sizeof(vertices));
-        bx::memCopy(iData, indices, sizeof(indices));
-
-        bgfx::setVertexBuffer(0, &vb);
-        bgfx::setIndexBuffer(&ib);
-    }
-    // TODO error out
 }
 
 const char* Renderer::shaderDir()

@@ -8,6 +8,8 @@ public:
     DeferredRenderer(const Scene* scene);
     virtual ~DeferredRenderer();
 
+    static bool supported();
+
     virtual void onInitialize() override;
     virtual void onReset() override;
     virtual void onRender(float dt) override;

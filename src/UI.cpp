@@ -152,7 +152,9 @@ void ClusterUI::update(float dt)
         ImVec4 clrError = ImVec4(0.8f, 0.0f, 0.1f, 1.0f); // yellow/orange ("Crimson")
         // trace, debug, info, warn, error, critical
         const ImVec4 colors[] = { clrDisabled, clrDisabled, clrText, clrWarning, clrError, clrError };
-        const char icons[][4] = { " ", " ", ICON_FK_INFO, ICON_FK_EXCLAMATION, ICON_FK_EXCLAMATION, ICON_FK_EXCLAMATION };
+        const char icons[][4] = { ICON_FK_INFO,        ICON_FK_INFO,        ICON_FK_INFO,
+                                  ICON_FK_EXCLAMATION, ICON_FK_EXCLAMATION, ICON_FK_EXCLAMATION
+        };
         for(const LogEntry& entry : logEntries)
         {
             ImGui::TextColored(colors[entry.level], "%s %s", icons[entry.level], logText.begin() + entry.messageOffset);
@@ -303,14 +305,8 @@ void ClusterUI::shutdown()
 
 void ClusterUI::log(const char* message, spdlog::level::level_enum level)
 {
-    // TODO
-    // own struct
-    // save with level
-    // color coded
-    //logEntries.push_back({ level, message });
-    //logString.append(message);
-    
-
+    // TODO limit to 2000 entries
+    // rolling index?
     int vecLen = logText.size();
     int32_t strLen = bx::strLen(message) + 1;
     logText.resize(vecLen + strLen);

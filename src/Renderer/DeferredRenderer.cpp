@@ -15,6 +15,15 @@ DeferredRenderer::~DeferredRenderer()
 
 }
 
+bool DeferredRenderer::supported()
+{
+    if(Renderer::supported())
+    {
+        return true;
+    }
+    return false;
+}
+
 void DeferredRenderer::onInitialize()
 {
 

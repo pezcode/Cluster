@@ -9,6 +9,15 @@ ClusteredRenderer::~ClusteredRenderer()
 {
 }
 
+bool ClusteredRenderer::supported()
+{
+    if(Renderer::supported())
+    {
+        return true;
+    }
+    return false;
+}
+
 void ClusteredRenderer::onInitialize()
 {
     
