@@ -32,6 +32,9 @@ void ForwardRenderer::onInitialize()
     bx::snprintf(vsName, BX_COUNTOF(vsName), "%s%s", shaderDir(), "vs_forward.bin");
     bx::snprintf(fsName, BX_COUNTOF(fsName), "%s%s", shaderDir(), "fs_forward.bin");
     program = bigg::loadProgram(vsName, fsName);
+
+    baseColorSampler = bgfx::createUniform("s_texBaseColor", bgfx::UniformType::Sampler);
+    metallicRoughnessSampler = bgfx::createUniform("s_texMetallicRoughness", bgfx::UniformType::Sampler);
 }
 
 void ForwardRenderer::onReset()
@@ -45,9 +48,13 @@ void ForwardRenderer::onRender(float dt)
 
     mTime += dt;
 
-    glm::mat4 view, proj;
-    bx::mtxLookAt(&view[0][0], { 0.0f, 0.0f, -25.0f }, { 0.0f, 0.0f, 0.0f});
-    bx::mtxProj(&proj[0][0], scene->camera.fov, float(width) / height, 0.1f, 100.0f, bgfx::getCaps()->homogeneousDepth);
+    if(!scene->loaded)
+        return;
+    
+    glm::mat4 view = glm::lookAt(scene->camera.pos, scene->camera.lookAt, scene->camera.up);
+    glm::mat4 proj;
+    bx::mtxProj(&proj[0][0], scene->camera.fov, float(width) / height,
+                scene->camera.zNear, scene->camera.zFar, bgfx::getCaps()->homogeneousDepth);
     bgfx::setViewTransform(vDefault, &view[0][0], &proj[0][0]);
 
     bgfx::setViewClear(vDefault, BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH, 0x303030FF, 1.0f, 0);
@@ -56,19 +63,16 @@ void ForwardRenderer::onRender(float dt)
 
     bgfx::touch(vDefault); // empty primitive in case nothing follows
 
-    if(!scene->loaded)
-        return;
-
-    for(size_t i = 0; i < scene->meshes.size(); i++)
+    for(const Scene::Mesh& mesh : scene->meshes)
     {
+        const Scene::Material& mat = scene->materials[mesh.material];
         glm::mat4 mtx;
-        mtx = glm::translate(mtx, glm::vec3(0.0f, -10.0f, 0.0f));
-        mtx = glm::translate(mtx, glm::vec3(5.0f, 0.0f, 20.0f));
-        mtx = glm::scale(mtx, glm::vec3(0.1f));
         mtx = glm::rotate(mtx, mTime * 5.0f, glm::vec3(0.0f, 1.0f, 0.0f));
         bgfx::setTransform(&mtx[0][0]);
-        bgfx::setVertexBuffer(0, scene->meshes[i].vertexBuffer);
-        bgfx::setIndexBuffer(scene->meshes[i].indexBuffer);
+        bgfx::setVertexBuffer(0, mesh.vertexBuffer);
+        bgfx::setIndexBuffer(mesh.indexBuffer);
+        bgfx::setTexture(0, baseColorSampler, mat.baseColor);
+        bgfx::setTexture(1, metallicRoughnessSampler, mat.metallicRoughness);
         bgfx::setState(BGFX_STATE_DEFAULT);
         bgfx::submit(vDefault, program);
     }
@@ -76,5 +80,7 @@ void ForwardRenderer::onRender(float dt)
 
 void ForwardRenderer::onShutdown()
 {
+    bgfx::destroy(baseColorSampler);
+    bgfx::destroy(metallicRoughnessSampler);
     bgfx::destroy(program);
 }

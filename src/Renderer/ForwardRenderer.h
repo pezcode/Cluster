@@ -19,4 +19,6 @@ private:
     float mTime;
 
     bgfx::ProgramHandle program;
+    bgfx::UniformHandle baseColorSampler;
+    bgfx::UniformHandle metallicRoughnessSampler;
 };

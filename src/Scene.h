@@ -2,10 +2,13 @@
 
 #include "Camera.h"
 #include "Log/AssimpSource.h"
-#include <assimp/mesh.h>
-#include <assimp/material.h>
 #include <bgfx/bgfx.h>
+#include <bx/allocator.h>
 #include <mutex>
+
+struct aiMesh;
+struct aiMaterial;
+struct aiCamera;
 
 class Scene
 {
@@ -15,7 +18,7 @@ public:
 
     static void init();
 
-    bool load(const char* path);
+    bool load(const char* file);
     void clear();
 
     Camera camera;
@@ -24,20 +27,21 @@ public:
 
     struct Mesh
     {
-        bgfx::VertexBufferHandle vertexBuffer;
-        bgfx::IndexBufferHandle indexBuffer;
-        unsigned int material; // index into materials vector
+        bgfx::VertexBufferHandle vertexBuffer = BGFX_INVALID_HANDLE;
+        bgfx::IndexBufferHandle indexBuffer = BGFX_INVALID_HANDLE;
+        unsigned int material = 0; // index into materials vector
     };
 
     struct Material
     {
-        bgfx::TextureHandle albedo;
+        bgfx::TextureHandle baseColor = BGFX_INVALID_HANDLE;
+        bgfx::TextureHandle metallicRoughness = BGFX_INVALID_HANDLE;
     };
 
     std::vector<Mesh> meshes;
     std::vector<Material> materials;
 
-    struct PosNormalTex0Vertex
+    struct PosNormalTangentTex0Vertex
     {
         float x, y, z;
         float nx, ny, nz;
@@ -61,5 +65,9 @@ private:
     AssimpLogSource logSource;
 
     Mesh loadMesh(const aiMesh* mesh);
-    Material loadMaterial(const aiMaterial* material);
+    Material loadMaterial(const aiMaterial* material, const char* dir);
+    Camera loadCamera(const aiCamera* camera);
+
+    static bx::DefaultAllocator allocator;
+    static bgfx::TextureHandle loadTexture(const char* file);
 };

@@ -138,6 +138,7 @@ int Cluster::shutdown()
 
     ui->shutdown();
     renderer->shutdown();
+    scene->clear();
     return 0;
 }
 
