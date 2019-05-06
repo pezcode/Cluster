@@ -5,6 +5,7 @@ Config::Config() :
     logFile("Cluster.log"),
     renderer(bgfx::RendererType::Count),
     renderPath(Cluster::Forward),
+    sceneFile("assets/models/duck/Duck.gltf"),
     lights(0),
     fullscreen(false),
     showUI(true),
@@ -33,6 +34,9 @@ void Config::readArgv(int argc, char* argv[])
     // this doesn't work, still use OpenGL
     renderer = bgfx::RendererType::Direct3D11;
 
+    showStatsOverlay = false;
+    showLog = false;
+    showBuffers = false;
     //fullscreen = true;
     lights = 50;
 }

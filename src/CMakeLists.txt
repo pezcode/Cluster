@@ -22,8 +22,8 @@ set(SOURCES
 	Log/Log.cpp
 	Log/UISink.h
 	Log/AssimpSource.h
-	vs_cubes.sc
-	fs_cubes.sc
+	vs_forward.sc
+	fs_forward.sc
 	vs_screen_quad.sc
 	fs_screen_quad.sc
 	varying.def.sc
@@ -32,6 +32,7 @@ set(SOURCES
 add_executable(Cluster ${SOURCES})
 target_include_directories(Cluster PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(Cluster PRIVATE bigg IconFontCppHeaders assimp spdlog)
+target_compile_definitions(Cluster PRIVATE GLM_FORCE_LEFT_HANDED)
 
 set_target_properties(Cluster PROPERTIES
 	RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}"
@@ -47,8 +48,8 @@ endif()
 set(SHADER_DIR "${PROJECT_BINARY_DIR}/shaders")
 set(ASSETS_DIR "${PROJECT_BINARY_DIR}/assets")
 
-add_shader(vs_cubes.sc       VERTEX   OUTPUT ${SHADER_DIR} DX11_MODEL 5_0 GLSL_VERSION 130)
-add_shader(fs_cubes.sc       FRAGMENT OUTPUT ${SHADER_DIR} DX11_MODEL 5_0 GLSL_VERSION 130)
+add_shader(vs_forward.sc       VERTEX   OUTPUT ${SHADER_DIR} DX11_MODEL 5_0 GLSL_VERSION 130)
+add_shader(fs_forward.sc       FRAGMENT OUTPUT ${SHADER_DIR} DX11_MODEL 5_0 GLSL_VERSION 130)
 add_shader(vs_screen_quad.sc VERTEX   OUTPUT ${SHADER_DIR} DX11_MODEL 5_0 GLSL_VERSION 130)
 add_shader(fs_screen_quad.sc FRAGMENT OUTPUT ${SHADER_DIR} DX11_MODEL 5_0 GLSL_VERSION 130)
 

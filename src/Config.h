@@ -20,6 +20,7 @@ public:
 
     // Scene
 
+    const char* sceneFile; // not exposed to UI
     int lights;
 
     // UI

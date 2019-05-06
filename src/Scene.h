@@ -5,22 +5,7 @@
 #include <assimp/mesh.h>
 #include <assimp/material.h>
 #include <bgfx/bgfx.h>
-
-struct PosColorVertex
-{
-    float x;
-    float y;
-    float z;
-    uint32_t abgr;
-    static void init()
-    {
-        ms_decl.begin()
-            .add(bgfx::Attrib::Position, 3, bgfx::AttribType::Float)
-            .add(bgfx::Attrib::Color0, 4, bgfx::AttribType::Uint8, true)
-            .end();
-    }
-    static bgfx::VertexDecl ms_decl;
-};
+#include <mutex>
 
 class Scene
 {
@@ -28,16 +13,53 @@ public:
     Scene();
     ~Scene();
 
-    void load(const char* path);
+    static void init();
+
+    bool load(const char* path);
     void clear();
 
-    PosColorVertex s_cubeVertices[8];
-    const uint16_t s_cubeTriList[36];
     Camera camera;
 
+    bool loaded;
+
+    struct Mesh
+    {
+        bgfx::VertexBufferHandle vertexBuffer;
+        bgfx::IndexBufferHandle indexBuffer;
+        unsigned int material; // index into materials vector
+    };
+
+    struct Material
+    {
+        bgfx::TextureHandle albedo;
+    };
+
+    std::vector<Mesh> meshes;
+    std::vector<Material> materials;
+
+    struct PosNormalTex0Vertex
+    {
+        float x, y, z;
+        float nx, ny, nz;
+        float tx, ty, tz;
+        float u, v;
+
+        static void init()
+        {
+            decl.begin()
+                .add(bgfx::Attrib::Position,  3, bgfx::AttribType::Float)
+                .add(bgfx::Attrib::Normal,    3, bgfx::AttribType::Float)
+                .add(bgfx::Attrib::Tangent,   3, bgfx::AttribType::Float)
+                .add(bgfx::Attrib::TexCoord0, 2, bgfx::AttribType::Float)
+                .end();
+        }
+        static bgfx::VertexDecl decl;
+    };
+
 private:
+    static std::once_flag onceFlag;
     AssimpLogSource logSource;
 
-    void loadMesh(const aiMesh* mesh);
-    void loadMaterial(const aiMaterial* material);
+    Mesh loadMesh(const aiMesh* mesh);
+    Material loadMaterial(const aiMaterial* material);
 };

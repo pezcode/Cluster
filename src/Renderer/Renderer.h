@@ -3,26 +3,6 @@
 #include "Scene.h"
 #include <bgfx/bgfx.h>
 
-struct PosTexCoord0Vertex
-{
-    float x;
-    float y;
-    float z;
-
-    float u;
-    float v;
-
-    static void init()
-    {
-        ms_decl.begin()
-            .add(bgfx::Attrib::Position, 3, bgfx::AttribType::Float)
-            .add(bgfx::Attrib::TexCoord0, 2, bgfx::AttribType::Float)
-            .end();
-    }
-
-    static bgfx::VertexDecl ms_decl;
-};
-
 class Renderer
 {
 public:
@@ -62,10 +42,31 @@ public:
 
 protected:
 
+    struct PosTexCoord0Vertex
+    {
+        float x;
+        float y;
+        float z;
+
+        float u;
+        float v;
+
+        static void init()
+        {
+            decl.begin()
+                .add(bgfx::Attrib::Position, 3, bgfx::AttribType::Float)
+                .add(bgfx::Attrib::TexCoord0, 2, bgfx::AttribType::Float)
+                .end();
+        }
+
+        static bgfx::VertexDecl decl;
+    };
+
     static constexpr bgfx::ViewId MAX_VIEW = 199; // imgui in bigg uses view 200
 
     void blitToScreen(bgfx::ViewId view = MAX_VIEW);
 
+    static bgfx::FrameBufferHandle createFrameBuffer(uint16_t width, uint16_t height, bool depth = true);
     static const char* shaderDir();
 
     const Scene* scene;

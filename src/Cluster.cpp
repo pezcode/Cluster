@@ -56,13 +56,6 @@ void Cluster::initialize(int _argc, char* _argv[])
     spdlog::flush_every(std::chrono::seconds(2));
     // TODO remove sink during shutdown
 
-    if(!ForwardRenderer::supported())
-        Log->warn("Forward renderer not supported on this hardware");
-    if(!DeferredRenderer::supported())
-        Log->warn("Deferred renderer not supported on this hardware");
-    if(!ClusteredRenderer::supported())
-        Log->warn("Clustered renderer not supported on this hardware");
-
     // TODO read from config
     //reset(BGFX_RESET_VSYNC | BGFX_RESET_MSAA_X8 | BGFX_RESET_MAXANISOTROPY);
     //bgfx::setDebug(BGFX_DEBUG_TEXT);
@@ -72,6 +65,23 @@ void Cluster::initialize(int _argc, char* _argv[])
 
     renderer->initialize();
     ui->initialize();
+
+    if(!ForwardRenderer::supported())
+        Log->warn("Forward renderer not supported on this hardware");
+    if(!DeferredRenderer::supported())
+        Log->warn("Deferred renderer not supported on this hardware");
+    if(!ClusteredRenderer::supported())
+        Log->warn("Clustered renderer not supported on this hardware");
+
+    Scene::init();
+    // TODO multithreaded
+    //Log->info("Loading model from {}", config->sceneFile);
+    if(!scene->load(config->sceneFile))
+    {
+        Log->error("Loading model failed");
+        close();
+        return;
+    }
 }
 
 void Cluster::onReset()
@@ -124,6 +134,7 @@ int Cluster::shutdown()
     // TODO
     // not all resources are freed
     // e.g. Renderer::blitSampler has count 3 on shutdown
+    // might be because of threaded renderer or command buffer taking a while
 
     ui->shutdown();
     renderer->shutdown();
@@ -222,18 +233,27 @@ void Cluster::setRenderPath(RenderPath path)
 
     if(renderer)
         renderer->shutdown();
-
     renderer.release();
+
     switch(path)
     {
         case Forward:
-            renderer = std::make_unique<ForwardRenderer>(scene.get());
+            if(!ForwardRenderer::supported())
+                Log->error("Forward renderer not supported");
+            else
+                renderer = std::make_unique<ForwardRenderer>(scene.get());
             break;
         case Deferred:
-            renderer = std::make_unique<DeferredRenderer>(scene.get());
+            if(!DeferredRenderer::supported())
+                Log->error("Deferred renderer not supported");
+            else
+                renderer = std::make_unique<DeferredRenderer>(scene.get());
             break;
         case Clustered:
-            renderer = std::make_unique<ClusteredRenderer>(scene.get());
+            if(!ClusteredRenderer::supported())
+                Log->error("Clustered renderer not supported");
+            else
+                renderer = std::make_unique<ClusteredRenderer>(scene.get());
             break;
         default:
             renderer = nullptr;

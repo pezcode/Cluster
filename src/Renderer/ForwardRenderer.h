@@ -18,7 +18,5 @@ public:
 private:
     float mTime;
 
-    bgfx::ProgramHandle mProgram;
-    bgfx::VertexBufferHandle mVbh;
-    bgfx::IndexBufferHandle mIbh;
+    bgfx::ProgramHandle program;
 };

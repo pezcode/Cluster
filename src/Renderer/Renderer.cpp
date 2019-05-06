@@ -4,7 +4,7 @@
 #include <bx/macros.h>
 #include <bx/string.h>
 
-bgfx::VertexDecl PosTexCoord0Vertex::ms_decl;
+bgfx::VertexDecl Renderer::PosTexCoord0Vertex::decl;
 
 Renderer::Renderer(const Scene* scene) :
     scene(scene),
@@ -24,24 +24,21 @@ void Renderer::initialize()
 {
     PosTexCoord0Vertex::init();
 
-    char vsName[32];
-    char fsName[32];
-    const char* dir = shaderDir();
-    bx::strCopy(vsName, BX_COUNTOF(vsName), dir);
-    bx::strCat(vsName, BX_COUNTOF(vsName), "vs_screen_quad.bin");
-    bx::strCopy(fsName, BX_COUNTOF(fsName), dir);
-    bx::strCat(fsName, BX_COUNTOF(fsName), "fs_screen_quad.bin");
+    char vsName[128], fsName[128];
+    bx::snprintf(vsName, BX_COUNTOF(vsName), "%s%s", shaderDir(), "vs_screen_quad.bin");
+    bx::snprintf(fsName, BX_COUNTOF(fsName), "%s%s", shaderDir(), "fs_screen_quad.bin");
     blitProgram = bigg::loadProgram(vsName, fsName);
 
     blitSampler = bgfx::createUniform("s_texColor", bgfx::UniformType::Sampler);
 
-    float BOTTOM = -1.0f, TOP = 1.0f;
-    float LEFT = -1.0f, RIGHT = 1.0f;
+    float BOTTOM = -1.0f, TOP = 1.0f, LEFT = -1.0f, RIGHT = 1.0f;
     PosTexCoord0Vertex vertices[6] = {
         { BOTTOM, LEFT }, { TOP, LEFT },  { TOP, RIGHT },
         { BOTTOM, LEFT }, { TOP, RIGHT }, { BOTTOM, RIGHT }
     };
-    bool flipV = bgfx::getCaps()->originBottomLeft;
+    // ??? is this necessary?
+    // if v is flipped, it's also flipped in the source texture
+    bool flipV = false; //bgfx::getCaps()->originBottomLeft;
     for(PosTexCoord0Vertex& v : vertices)
     {
         v.z = 0.0f;
@@ -50,7 +47,7 @@ void Renderer::initialize()
         if(flipV)
             v.v = 1.0f - v.v;
     }
-    quadVB = bgfx::createVertexBuffer(bgfx::copy(&vertices, sizeof(vertices)), PosTexCoord0Vertex::ms_decl);
+    quadVB = bgfx::createVertexBuffer(bgfx::copy(&vertices, sizeof(vertices)), PosTexCoord0Vertex::decl);
 
     onInitialize();
 }
@@ -59,37 +56,19 @@ void Renderer::reset(uint16_t width, uint16_t height)
 {
     if(!bgfx::isValid(frameBuffer) || width != this->width || height != this->height)
     {
+        bgfx::FrameBufferHandle newFrameBuffer = createFrameBuffer(width, height);
         if(bgfx::isValid(frameBuffer))
         {
+            // this seems to cause problems when resizing windows too much
+            // if you grab and resize the window frame for a few seconds
+            // it seems to create buffers but not destroy them
+            // TODO try non-threaded
+            // or use FrameBuffer that resizes automatically
+            // but how to do that for G-Buffer?
+            // don't allow resizing? easiest method
             bgfx::destroy(frameBuffer);
         }
-
-        bgfx::TextureHandle textures[2];
-        uint64_t flags = BGFX_TEXTURE_RT | BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP;
-
-        // BGFX_TEXTURE_READ_BACK is not supported for render targets?
-        // TODO try blitting for screenshots (new texture with BGFX_TEXTURE_BLIT_DST and BGFX_TEXTURE_READ_BACK)
-        if(bgfx::isTextureValid(0, false, 1, bgfx::TextureFormat::BGRA8, flags))
-        {
-            textures[0] = bgfx::createTexture2D(width, height, false, 1, bgfx::TextureFormat::BGRA8, flags);
-        }
-        // TODO error out
-
-        flags = BGFX_TEXTURE_RT_WRITE_ONLY;
-
-        bgfx::TextureFormat::Enum depthFormat =
-            bgfx::isTextureValid(0, false, 1, bgfx::TextureFormat::D16, flags)
-                ? bgfx::TextureFormat::D16
-                : bgfx::isTextureValid(0, false, 1, bgfx::TextureFormat::D24S8, flags) ? bgfx::TextureFormat::D24S8
-                                                                                       : bgfx::TextureFormat::D32;
-
-        textures[1] = bgfx::createTexture2D(width, height, false, 1, depthFormat, flags);
-
-        frameBuffer = bgfx::createFrameBuffer(BX_COUNTOF(textures), textures, true);
-
-        // this creates no depth buffer
-        // will spam the debug output with D3D warnings
-        // frameBuffer = bgfx::createFrameBuffer(bgfx::BackbufferRatio::Equal, bgfx::TextureFormat::BGRA8);
+        frameBuffer = newFrameBuffer;
     }
     this->width = width;
     this->height = height;
@@ -100,7 +79,6 @@ void Renderer::reset(uint16_t width, uint16_t height)
 void Renderer::render(float dt)
 {
     onRender(dt);
-
     blitToScreen(199);
 }
 
@@ -119,8 +97,7 @@ bool Renderer::supported()
 {
     const bgfx::Caps* caps = bgfx::getCaps();
     
-    return true &&
-           (caps->formats[bgfx::TextureFormat::BGRA8] & BGFX_CAPS_FORMAT_TEXTURE_2D) != 0;
+    return (caps->formats[bgfx::TextureFormat::BGRA8] & BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER) != 0;
 }
 
 void Renderer::blitToScreen(bgfx::ViewId view)
@@ -133,6 +110,39 @@ void Renderer::blitToScreen(bgfx::ViewId view)
     bgfx::setTexture(0, blitSampler, frameBufferTexture);
     bgfx::setVertexBuffer(0, quadVB);
     bgfx::submit(view, blitProgram);
+}
+
+bgfx::FrameBufferHandle Renderer::createFrameBuffer(uint16_t width, uint16_t height, bool depth)
+{
+    //bgfx::FrameBufferHandle fb = bgfx::createFrameBuffer(bgfx::BackbufferRatio::Equal, bgfx::TextureFormat::BGRA8);
+    
+    bgfx::TextureHandle textures[2];
+    uint64_t flags = BGFX_TEXTURE_RT | BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP;
+
+    // BGFX_TEXTURE_READ_BACK is not supported for render targets?
+    // TODO try blitting for screenshots (new texture with BGFX_TEXTURE_BLIT_DST and BGFX_TEXTURE_READ_BACK)
+    if(bgfx::isTextureValid(0, false, 1, bgfx::TextureFormat::BGRA8, flags))
+    {
+        textures[0] = bgfx::createTexture2D(width, height, false, 1, bgfx::TextureFormat::BGRA8, flags);
+    }
+    // TODO error out
+
+    flags = BGFX_TEXTURE_RT_WRITE_ONLY;
+
+    bgfx::TextureFormat::Enum depthFormat = bgfx::isTextureValid(0, false, 1, bgfx::TextureFormat::D16, flags)
+                                                ? bgfx::TextureFormat::D16
+                                                : bgfx::isTextureValid(0, false, 1, bgfx::TextureFormat::D24S8, flags)
+                                                      ? bgfx::TextureFormat::D24S8
+                                                      : bgfx::TextureFormat::D32;
+
+    textures[1] = bgfx::createTexture2D(width, height, false, 1, depthFormat, flags);
+
+    bgfx::FrameBufferHandle fb = bgfx::createFrameBuffer(BX_COUNTOF(textures), textures, true);
+    
+    if(!bgfx::isValid(fb))
+        Log->warn("Failed to create framebuffer");
+
+    return fb;
 }
 
 const char* Renderer::shaderDir()
