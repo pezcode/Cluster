@@ -4,7 +4,6 @@
 #include <bx/string.h>
 #include <bx/math.h>
 #include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtx/euler_angles.hpp>
 
 ForwardRenderer::ForwardRenderer(const Scene* scene) :
     Renderer(scene),
@@ -51,7 +50,7 @@ void ForwardRenderer::onRender(float dt)
     if(!scene->loaded)
         return;
     
-    glm::mat4 view = glm::lookAt(scene->camera.pos, scene->camera.lookAt, scene->camera.up);
+    glm::mat4 view = scene->camera.matrix();
     glm::mat4 proj;
     bx::mtxProj(&proj[0][0], scene->camera.fov, float(width) / height,
                 scene->camera.zNear, scene->camera.zFar, bgfx::getCaps()->homogeneousDepth);
@@ -68,7 +67,7 @@ void ForwardRenderer::onRender(float dt)
         const Scene::Material& mat = scene->materials[mesh.material];
         glm::mat4 mtx;
         mtx = glm::rotate(mtx, mTime * 5.0f, glm::vec3(0.0f, 1.0f, 0.0f));
-        bgfx::setTransform(&mtx[0][0]);
+        //bgfx::setTransform(&mtx[0][0]);
         bgfx::setVertexBuffer(0, mesh.vertexBuffer);
         bgfx::setIndexBuffer(mesh.indexBuffer);
         bgfx::setTexture(0, baseColorSampler, mat.baseColor);

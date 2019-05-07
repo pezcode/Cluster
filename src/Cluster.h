@@ -24,6 +24,8 @@ public:
     void initialize(int _argc, char* _argv[]) override;
     void onReset() override;
     void onKey(int key, int scancode, int action, int mods) override;
+    void onCursorPos(double xpos, double ypos) override;
+    void onCursorEnter(int entered) override;
     void update(float dt) override;
     int shutdown() override;
 
@@ -65,14 +67,17 @@ private:
         Cluster& app;
     };
 
+    float deltaTime;
+    double mouseX, mouseY;
+
     void setRenderPath(RenderPath path);
 
     static bx::DefaultAllocator allocator;
     static bx::AllocatorI* iAlloc;
 
     // screenshots
-    uint32_t saveFrame = 0;
-    void* saveData = nullptr;
+    uint32_t saveFrame;
+    void* saveData;
 
     BgfxCallbacks callbacks;
 

@@ -3,29 +3,31 @@
 #include "UI.h"
 #include "Config.h"
 #include "Scene.h"
-
+#include "Log/Log.h"
 #include "Renderer/ForwardRenderer.h"
 #include "Renderer/DeferredRenderer.h"
 #include "Renderer/ClusteredRenderer.h"
-
 #include <bx/file.h>
 #include <bx/string.h>
 #include <bimg/bimg.h>
-
 #include <spdlog/sinks/basic_file_sink.h>
-#include "Log/Log.h"
-
 #include <thread>
+#include <glm/gtc/constants.hpp>
 
 bx::DefaultAllocator Cluster::allocator;
 bx::AllocatorI* Cluster::iAlloc = &allocator;
 
 Cluster::Cluster() :
     bigg::Application("Cluster", 1024, 768),
+    deltaTime(0.0f),
+    mouseX(-1.0f),
+    mouseY(-1.0f),
+    saveFrame(0),
+    saveData(nullptr),
+    callbacks(*this),
     config(std::make_unique<Config>()),
     ui(std::make_unique<ClusterUI>(*this)),
     scene(std::make_unique<Scene>()),
-    callbacks(*this),
     renderer(nullptr)
 {
 }
@@ -96,6 +98,8 @@ void Cluster::onReset()
 
 void Cluster::onKey(int key, int scancode, int action, int mods)
 {
+    constexpr float velocity = 100.0f; // m/s
+
     if(action == GLFW_RELEASE)
     {
         switch(key)
@@ -109,10 +113,60 @@ void Cluster::onKey(int key, int scancode, int action, int mods)
                 break;
         }
     }
+
+    if(action == GLFW_PRESS || action == GLFW_REPEAT)
+    {
+        switch(key)
+        {
+            case GLFW_KEY_W:
+                scene->camera.move(glm::vec3(0.0f, 0.0f, 1.0f) * velocity * deltaTime);
+                break;
+            case GLFW_KEY_A:
+                scene->camera.move(glm::vec3(-1.0f, 0.0f, 0.0f) * velocity * deltaTime);
+                break;
+            case GLFW_KEY_S:
+                scene->camera.move(glm::vec3(0.0f, 0.0f, -1.0f) * velocity * deltaTime);
+                break;
+            case GLFW_KEY_D:
+                scene->camera.move(glm::vec3(1.0f, 0.0f, 0.0f) * velocity * deltaTime);
+                break;
+            case GLFW_KEY_SPACE:
+                scene->camera.move(glm::vec3(0.0f, 1.0f, 0.0f) * velocity * deltaTime);
+                break;
+            case GLFW_KEY_LEFT_CONTROL:
+                scene->camera.move(glm::vec3(0.0f, -1.0f, 0.0f) * velocity * deltaTime);
+                break;
+        }
+    }
+}
+
+void Cluster::onCursorPos(double xpos, double ypos)
+{
+    constexpr float angularVelocity = glm::pi<float>() / 800.0f; // rad/pixel
+
+    if(mouseX >= 0.0f && mouseY >= 0.0f)
+    {   
+        if(glfwGetMouseButton(mWindow, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS)
+        {
+            scene->camera.rotate(glm::vec3(ypos - mouseY, xpos - mouseX, 0.0f) * angularVelocity);
+
+        }
+    }
+    mouseX = xpos;
+    mouseY = ypos;
+}
+
+void Cluster::onCursorEnter(int entered)
+{
+    if(!entered)
+    {
+        mouseX = mouseY = -1.0f;
+    }
 }
 
 void Cluster::update(float dt)
 {
+    deltaTime = dt;
     // screenshot texture data is ready, save in a new thread
     if(mFrameNumber > 0 && mFrameNumber == saveFrame)
     {

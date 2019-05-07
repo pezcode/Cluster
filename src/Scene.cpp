@@ -8,6 +8,7 @@
 #include <assimp/material.h>
 #include <assimp/pbrmaterial.h>
 #include <assimp/camera.h>
+#include <glm/gtc/matrix_transform.hpp>
 #include <glm/trigonometric.hpp>
 #include <bx/file.h>
 #include <bimg/decode.h>
@@ -109,7 +110,7 @@ bool Scene::load(const char* file)
 
             if(scene->HasCameras())
             {
-                //camera = loadCamera(scene->mCameras[0]);
+                camera = loadCamera(scene->mCameras[0]);
             }
             else
                 Log->info("No camera, using default");
@@ -210,19 +211,22 @@ Scene::Material Scene::loadMaterial(const aiMaterial* material, const char* dir)
 
 Camera Scene::loadCamera(const aiCamera* camera)
 {
-    float aspect =
-        camera->mAspect == 0.0f
-            ? 16.0f/9.0f
-            : camera->mAspect;
-    return
-    {
-        glm::vec3(camera->mPosition.x, camera->mPosition.y, camera->mPosition.z),
-        glm::vec3(camera->mLookAt.x, camera->mLookAt.y, camera->mLookAt.z),
-        glm::vec3(camera->mUp.x, camera->mUp.y, camera->mUp.z),
-        glm::radians(2.0f * glm::atan(glm::tan(camera->mHorizontalFOV) * aspect)),
-        camera->mClipPlaneNear,
-        camera->mClipPlaneFar
-    };
+    float aspect = camera->mAspect == 0.0f
+                       ? 16.0f/9.0f
+                       : camera->mAspect;
+
+    glm::vec3 pos(camera->mPosition.x, camera->mPosition.y, camera->mPosition.z);
+    glm::vec3 lookAt(camera->mLookAt.x, camera->mLookAt.y, camera->mLookAt.z);
+    glm::vec3 up(camera->mUp.x, camera->mUp.y, camera->mUp.z);
+    //glm::vec3 up(0.0f, 1.0f, 0.0f);
+
+    Camera cam;
+    cam.setMatrix(glm::lookAt(pos, lookAt, up));
+    cam.fov = glm::degrees(2.0f * glm::atan(glm::tan(camera->mHorizontalFOV) / aspect));
+    cam.zNear = camera->mClipPlaneNear;
+    cam.zFar  = camera->mClipPlaneFar;
+
+    return cam;
 }
 
 bgfx::TextureHandle Scene::loadTexture(const char* file)
