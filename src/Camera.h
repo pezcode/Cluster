@@ -1,32 +1,37 @@
 #pragma once
 
 #include <glm/glm.hpp>
+#include <glm/gtc/quaternion.hpp>
 
 struct Camera
 {
-    // fixed vertical fov (Hor+) in degrees (full angle, not half)
-    // notes on 73.74:
-    // this is 90 degrees horizontal fov on a 4:3 monitor
+    // fixed vertical field of view (Hor+) in degrees (full angle, not half)
+    // default value is 90 degrees horizontal FOV on a 4:3 monitor
     // expands to 106.26 at 16:9
-    float fov = 73.74f;
+    // taken from Counter-Strike Global Offensive
+    float fov = 73.7397953f; // degrees(atan(tan(radians(90)/2) / (4/3)) * 2)
 
-    float zNear = 0.01f;
-    float zFar = 100.0f;
+    float zNear = 0.01f; // projection plane
+    float zFar = 100.0f; // far plane, only exists to keep precision in check (keep as small as possible)
 
-    void move(glm::vec3 delta); // relative to camera forward
-    void rotate(glm::vec3 delta); // x, y, z axis (rotation order: y -> x -> z)
+    void move(glm::vec3 delta); // camera-space
+    void rotate(glm::vec2 delta); // rotation around x, y axis in camera-space (rotation order: y [yaw] -> x [pitch])
+    void zoom(float offset); // > 0 = zoom in (decrease FOV by <offset> angles)
 
-    const glm::mat4& matrix() const;
-    void setMatrix(const glm::mat4& newMat);
+    void lookAt(const glm::vec3& position, const glm::vec3& target, const glm::vec3& up);
+
+    const glm::mat4 matrix() const;
+
+    glm::vec3 forward() const;
+    glm::vec3 up() const;
+    glm::vec3 right() const;
 
 private:
 
-    void update(); // calculate matrix and rotationMatrix
-    void decompose(const glm::mat4& transformation); // extract position and angles
+    static constexpr float MIN_FOV = 10.0f;
+    static constexpr float MAX_FOV = 90.0f;
 
-    glm::vec3 pos = { 0.0f, 1.0f, -2.0f };
-    glm::vec3 angles = { 0.0f, 0.0f, 0.0f };
-
-    glm::mat4 mat;
-    glm::mat4 rotationMat;
+    glm::vec3 position;
+    glm::quat rotation;
+    glm::quat invRotation;
 };

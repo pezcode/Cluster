@@ -2,6 +2,7 @@
 
 #include <bigg.hpp>
 #include <bx/string.h>
+//#include <map>
 #include <memory>
 
 class ClusterUI;
@@ -26,6 +27,7 @@ public:
     void onKey(int key, int scancode, int action, int mods) override;
     void onCursorPos(double xpos, double ypos) override;
     void onCursorEnter(int entered) override;
+    void onScroll(double xoffset, double yoffset) override;
     void update(float dt) override;
     int shutdown() override;
 
@@ -68,6 +70,7 @@ private:
     };
 
     float deltaTime;
+    //std::map<int, bool> keys;
     double mouseX, mouseY;
 
     void setRenderPath(RenderPath path);

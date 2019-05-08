@@ -12,7 +12,6 @@
 #include <bimg/bimg.h>
 #include <spdlog/sinks/basic_file_sink.h>
 #include <thread>
-#include <glm/gtc/constants.hpp>
 
 bx::DefaultAllocator Cluster::allocator;
 bx::AllocatorI* Cluster::iAlloc = &allocator;
@@ -119,22 +118,22 @@ void Cluster::onKey(int key, int scancode, int action, int mods)
         switch(key)
         {
             case GLFW_KEY_W:
-                scene->camera.move(glm::vec3(0.0f, 0.0f, 1.0f) * velocity * deltaTime);
+                scene->camera.move(scene->camera.forward() * velocity * deltaTime);
                 break;
             case GLFW_KEY_A:
-                scene->camera.move(glm::vec3(-1.0f, 0.0f, 0.0f) * velocity * deltaTime);
+                scene->camera.move(-scene->camera.right() * velocity * deltaTime);
                 break;
             case GLFW_KEY_S:
-                scene->camera.move(glm::vec3(0.0f, 0.0f, -1.0f) * velocity * deltaTime);
+                scene->camera.move(-scene->camera.forward() * velocity * deltaTime);
                 break;
             case GLFW_KEY_D:
-                scene->camera.move(glm::vec3(1.0f, 0.0f, 0.0f) * velocity * deltaTime);
+                scene->camera.move(scene->camera.right() * velocity * deltaTime);
                 break;
             case GLFW_KEY_SPACE:
-                scene->camera.move(glm::vec3(0.0f, 1.0f, 0.0f) * velocity * deltaTime);
+                scene->camera.move(scene->camera.up() * velocity * deltaTime);
                 break;
             case GLFW_KEY_LEFT_CONTROL:
-                scene->camera.move(glm::vec3(0.0f, -1.0f, 0.0f) * velocity * deltaTime);
+                scene->camera.move(-scene->camera.up() * velocity * deltaTime);
                 break;
         }
     }
@@ -142,14 +141,13 @@ void Cluster::onKey(int key, int scancode, int action, int mods)
 
 void Cluster::onCursorPos(double xpos, double ypos)
 {
-    constexpr float angularVelocity = glm::pi<float>() / 800.0f; // rad/pixel
+    constexpr float angularVelocity = 180.0f / 600.0f; // degrees/pixel
 
     if(mouseX >= 0.0f && mouseY >= 0.0f)
     {   
         if(glfwGetMouseButton(mWindow, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS)
         {
-            scene->camera.rotate(glm::vec3(ypos - mouseY, xpos - mouseX, 0.0f) * angularVelocity);
-
+            scene->camera.rotate(glm::vec3(-(ypos - mouseY), -(xpos - mouseX), 0.0f) * angularVelocity);
         }
     }
     mouseX = xpos;
@@ -158,10 +156,16 @@ void Cluster::onCursorPos(double xpos, double ypos)
 
 void Cluster::onCursorEnter(int entered)
 {
-    if(!entered)
+    if(!entered) // lost focus
     {
         mouseX = mouseY = -1.0f;
     }
+}
+
+void Cluster::onScroll(double xoffset, double yoffset)
+{
+    // wheel scrolled up = zoom in by 2 extra degrees
+    scene->camera.zoom((float)yoffset * 2.0f);
 }
 
 void Cluster::update(float dt)

@@ -216,12 +216,11 @@ Camera Scene::loadCamera(const aiCamera* camera)
                        : camera->mAspect;
 
     glm::vec3 pos(camera->mPosition.x, camera->mPosition.y, camera->mPosition.z);
-    glm::vec3 lookAt(camera->mLookAt.x, camera->mLookAt.y, camera->mLookAt.z);
+    glm::vec3 target(camera->mLookAt.x, camera->mLookAt.y, camera->mLookAt.z);
     glm::vec3 up(camera->mUp.x, camera->mUp.y, camera->mUp.z);
-    //glm::vec3 up(0.0f, 1.0f, 0.0f);
 
     Camera cam;
-    cam.setMatrix(glm::lookAt(pos, lookAt, up));
+    cam.lookAt(pos, target, up);
     cam.fov = glm::degrees(2.0f * glm::atan(glm::tan(camera->mHorizontalFOV) / aspect));
     cam.zNear = camera->mClipPlaneNear;
     cam.zFar  = camera->mClipPlaneFar;

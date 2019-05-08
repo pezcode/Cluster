@@ -2,47 +2,63 @@
 
 #include <glm/gtx/euler_angles.hpp>
 #include <glm/gtx/matrix_decompose.hpp>
+#include <glm/gtx/quaternion.hpp>
 
 void Camera::move(glm::vec3 delta)
 {
-    glm::vec3 camDelta = /*rotationMat **/ glm::vec4(delta, 0.0f);
-    pos += camDelta;
-    update();
+    position += delta;
 }
 
-void Camera::rotate(glm::vec3 delta)
+void Camera::rotate(glm::vec2 delta)
 {
-    angles += delta;
-    angles = glm::mod(angles, glm::pi<float>() * 2.0f);
-    update();
+    // TODO limit total x rotation
+    rotation = glm::rotate(glm::quat(), glm::radians(delta.y), { 0.0f, 1.0f, 0.0f }) *
+               glm::rotate(glm::quat(), glm::radians(delta.x), { 1.0f, 0.0f, 0.0f }) *
+               rotation;
+    invRotation = glm::conjugate(rotation);
 }
 
-const glm::mat4& Camera::matrix() const
+void Camera::zoom(float offset)
 {
-    return mat;
+    fov = glm::clamp(fov - offset, MIN_FOV, MAX_FOV);
 }
 
-void Camera::setMatrix(const glm::mat4& newMat)
+void Camera::lookAt(const glm::vec3& position, const glm::vec3& target, const glm::vec3& up)
 {
-    decompose(newMat);
-    update();
+    this->position = position;
+
+    // model rotation
+    // maps vectors to camera space (x, y, z)
+    glm::vec3 forward = glm::normalize(target - position);
+    rotation = glm::rotation(forward, { 0.0f, 0.0f, 1.0f });
+
+    // correct the up vector
+    glm::vec3 right = glm::cross(glm::normalize(up), forward); // left-handed coordinate system
+    glm::vec3 orthUp = -glm::cross(right, forward);
+    glm::quat upRotation = glm::rotation(rotation * orthUp, { 0.0f, 1.0f, 0.0f });
+    rotation = upRotation * rotation;
+
+    // inverse of the model rotation
+    // maps camera space vectors to model vectors
+    invRotation = glm::conjugate(rotation);
 }
 
-void Camera::update()
+const glm::mat4 Camera::matrix() const
 {
-    rotationMat = glm::yawPitchRoll(angles.y, angles.x, 0.0f);
-    mat = glm::translate(glm::mat4(), pos) * rotationMat;
+    return glm::mat4_cast(rotation) * glm::translate(glm::mat4(), -position);
 }
 
-void Camera::decompose(const glm::mat4& transformation)
+glm::vec3 Camera::forward() const
 {
-    glm::vec3 scale;
-    glm::quat rotation;
-    glm::vec3 translation;
-    glm::vec3 skew;
-    glm::vec4 perspective;
-    glm::decompose(transformation, scale, rotation, translation, skew, perspective);
+    return invRotation * glm::vec3(0.0f, 0.0f, 1.0f);
+}
 
-    pos = translation;
-    angles = glm::eulerAngles(rotation);
+glm::vec3 Camera::up() const
+{
+    return invRotation * glm::vec3(0.0f, 1.0f, 0.0f);
+}
+
+glm::vec3 Camera::right() const
+{
+    return invRotation * glm::vec3(1.0f, 0.0f, 0.0f);
 }
