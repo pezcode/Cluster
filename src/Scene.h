@@ -32,6 +32,7 @@ public:
     // https://github.com/KhronosGroup/glTF/tree/master/specification/2.0#metallic-roughness-material
     struct Material
     {
+        bool blend = false;
         bool doubleSided = false;
         glm::vec4 baseColor = { 1.0f, 0.0f, 1.0f, 1.0f }; // normalized RGBA
         float metallic = 0.0f;

@@ -59,9 +59,9 @@ void ForwardRenderer::onRender(float dt)
         return;
     
     glm::mat4 view = scene->camera.matrix();
-    // scale down (default camera far plane is 5)
+    // scale down to camera far plane
     float size = glm::compMax(glm::abs(scene->maxBounds - scene->minBounds));
-    view = glm::scale(view, glm::vec3(1.0f / size * 5.0f));
+    view = glm::scale(view, glm::vec3(1.0f / size * scene->camera.zFar));
     glm::mat4 proj;
     bx::mtxProj(&proj[0][0], scene->camera.fov, float(width) / height,
                 scene->camera.zNear, scene->camera.zFar, bgfx::getCaps()->homogeneousDepth);
@@ -72,11 +72,9 @@ void ForwardRenderer::onRender(float dt)
         bgfx::setVertexBuffer(0, mesh.vertexBuffer);
         bgfx::setIndexBuffer(mesh.indexBuffer);
         const Scene::Material& mat = scene->materials[mesh.material];
-        bindMaterial(mat);
-        uint64_t state = BGFX_STATE_DEFAULT | BGFX_STATE_BLEND_ALPHA;
-        if(mat.doubleSided)
-            state &= ~BGFX_STATE_CULL_MASK;
-        bgfx::setState(state);
+        uint64_t materialState = bindMaterial(mat);
+        uint64_t state = BGFX_STATE_DEFAULT & ~BGFX_STATE_CULL_MASK;
+        bgfx::setState(state | materialState);
         bgfx::submit(vDefault, program);
     }
 }
@@ -92,7 +90,7 @@ void ForwardRenderer::onShutdown()
     bgfx::destroy(program);
 }
 
-void ForwardRenderer::bindMaterial(const Scene::Material& material)
+uint64_t ForwardRenderer::bindMaterial(const Scene::Material& material)
 {
     float metallicRoughnessValues[4] = { material.metallic, material.roughness, 0.0f, 0.0f };
     float hasTexturesValues[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
@@ -113,4 +111,11 @@ void ForwardRenderer::bindMaterial(const Scene::Material& material)
         hasTexturesValues[2] = 0.0f;
 
     bgfx::setUniform(hasTexturesUniform, &hasTexturesValues[0]);
+
+    uint64_t state = 0;
+    if(material.blend)
+        state |= BGFX_STATE_BLEND_ALPHA;
+    if(!material.doubleSided)
+        state |= BGFX_STATE_CULL_CW;
+    return state;
 }

@@ -11,8 +11,8 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/trigonometric.hpp>
 #include <bx/file.h>
-#include <bx/sort.h>
 #include <bimg/decode.h>
+#include <algorithm>
 
 std::once_flag Scene::onceFlag;
 bgfx::VertexDecl Scene::PosNormalTangentTex0Vertex::decl;
@@ -97,9 +97,6 @@ bool Scene::load(const char* file)
                 }
             }
 
-            // TODO sort opaque meshes to appear first
-            //bx::quickSort(&meshes, meshes.size(), 
-
             char dir[bx::kMaxFilePath] = "";
             bx::strCopy(dir, BX_COUNTOF(dir), bx::FilePath(file).getPath());
             for(unsigned int i = 0; i < scene->mNumMaterials; i++)
@@ -116,6 +113,12 @@ bool Scene::load(const char* file)
                     Log->warn("{}", e.what());
                 }
             }
+
+            // bring opaque meshes to the front so alpha blending works
+            // still need depth sorting for scenes with overlapping transparent meshes
+            std::sort(meshes.begin(), meshes.end(), [this](const Mesh& m1, const Mesh& m2) {
+                return !materials[m1.material].blend || materials[m2.material].blend;
+            });
 
             if(scene->HasCameras())
             {
@@ -198,6 +201,12 @@ Scene::Mesh Scene::loadMesh(const aiMesh* mesh)
 Scene::Material Scene::loadMaterial(const aiMaterial* material, const char* dir)
 {
     Material out;
+
+    aiString alphaMode;
+    material->Get(AI_MATKEY_GLTF_ALPHAMODE, alphaMode);
+    aiString alphaModeOpaque;
+    alphaModeOpaque.Set("OPAQUE");
+    out.blend = alphaMode != alphaModeOpaque;
 
     material->Get(AI_MATKEY_TWOSIDED, out.doubleSided);
 

@@ -24,5 +24,5 @@ private:
     bgfx::UniformHandle metallicRoughnessSampler;
     bgfx::UniformHandle normalSampler;
 
-    void bindMaterial(const Scene::Material& material);
+    uint64_t bindMaterial(const Scene::Material& material);
 };

@@ -25,8 +25,5 @@ void main()
     float metallic = u_metallic;
     float roughness = u_roughness;
     vec3 normal = u_hasNormalTexture ? texture2D(s_texNormal, v_texcoord0).xyz : vec3(0.0, 0.0, 0.0);
-
-    //if(baseColor.a <= 0.9) // default GLTF alpha mask cutoff is 0.5, not enough for Sponza vegetation textures
-    //    discard;
     gl_FragColor = baseColor;
 }
