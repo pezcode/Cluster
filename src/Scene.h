@@ -18,12 +18,9 @@ public:
 
     static void init();
 
+    // load meshes, materials, camera from .gltf file
     bool load(const char* file);
     void clear();
-
-    Camera camera;
-
-    bool loaded;
 
     struct Mesh
     {
@@ -32,15 +29,49 @@ public:
         unsigned int material = 0; // index into materials vector
     };
 
+    // https://github.com/KhronosGroup/glTF/tree/master/specification/2.0#metallic-roughness-material
     struct Material
     {
-        bgfx::TextureHandle baseColor = BGFX_INVALID_HANDLE;
-        bgfx::TextureHandle metallicRoughness = BGFX_INVALID_HANDLE;
+        bool doubleSided = false;
+        glm::vec4 baseColor = { 1.0f, 0.0f, 1.0f, 1.0f }; // normalized RGBA
+        float metallic = 0.0f;
+        float roughness = 0.5f;
+        bgfx::TextureHandle baseColorTexture = BGFX_INVALID_HANDLE;         // F0 for non-metals
+        bgfx::TextureHandle metallicRoughnessTexture = BGFX_INVALID_HANDLE; // blue = metallic, green = roughness
+        bgfx::TextureHandle normalTexture = BGFX_INVALID_HANDLE;
     };
 
+    struct PointLight
+    {
+        glm::vec3 position;
+        glm::vec4 color;
+    };
+
+    struct DirectionalLight
+    {
+        glm::vec3 direction;
+        glm::vec4 color;
+    };
+
+    struct SpotLight : PointLight
+    {
+        glm::vec3 direction;
+        float angle; // full angle in degrees
+    };
+
+    bool loaded;
+    glm::vec3 minBounds;
+    glm::vec3 maxBounds;
+    Camera camera;
     std::vector<Mesh> meshes;
     std::vector<Material> materials;
+    // sky color and lights are not populated by load
+    glm::vec4 skyColor;
+    std::vector<PointLight> pointLights;
+    std::vector<PointLight> spotLights;
+    DirectionalLight ambientLight;
 
+private:
     struct PosNormalTangentTex0Vertex
     {
         float x, y, z;
@@ -51,16 +82,15 @@ public:
         static void init()
         {
             decl.begin()
-                .add(bgfx::Attrib::Position,  3, bgfx::AttribType::Float)
-                .add(bgfx::Attrib::Normal,    3, bgfx::AttribType::Float)
-                .add(bgfx::Attrib::Tangent,   3, bgfx::AttribType::Float)
+                .add(bgfx::Attrib::Position, 3, bgfx::AttribType::Float)
+                .add(bgfx::Attrib::Normal, 3, bgfx::AttribType::Float)
+                .add(bgfx::Attrib::Tangent, 3, bgfx::AttribType::Float)
                 .add(bgfx::Attrib::TexCoord0, 2, bgfx::AttribType::Float)
                 .end();
         }
         static bgfx::VertexDecl decl;
     };
 
-private:
     static std::once_flag onceFlag;
     AssimpLogSource logSource;
 

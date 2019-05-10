@@ -11,8 +11,10 @@ struct Camera
     // taken from Counter-Strike Global Offensive
     float fov = 73.7397953f; // degrees(atan(tan(radians(90)/2) / (4/3)) * 2)
 
-    float zNear = 0.01f; // projection plane
-    float zFar = 100.0f; // far plane, only exists to keep precision in check (keep as small as possible)
+    // the ratio zFar/zNear should be minimal
+    // the higher it is, the more precision loss we get in the depth buffer (-> z-fighting)
+    float zNear = 0.1f; // projection plane
+    float zFar = 5.0f; // far plane
 
     void move(glm::vec3 delta); // camera-space
     void rotate(glm::vec2 delta); // rotation around x, y axis in camera-space (rotation order: y [yaw] -> x [pitch])
@@ -28,8 +30,15 @@ struct Camera
 
 private:
 
+    static const glm::vec3 X, Y, Z;
+
     static constexpr float MIN_FOV = 10.0f;
     static constexpr float MAX_FOV = 90.0f;
+
+    //static constexpr float MIN_PITCH = glm::radians(1.0f);
+    //static constexpr float MAX_PITCH = glm::radians(89.0f);
+
+    glm::vec3 orthUp;
 
     glm::vec3 position;
     glm::quat rotation;

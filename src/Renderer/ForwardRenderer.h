@@ -16,9 +16,13 @@ public:
     virtual void onShutdown() override;
 
 private:
-    float mTime;
-
     bgfx::ProgramHandle program;
+    bgfx::UniformHandle baseColorUniform;
+    bgfx::UniformHandle metallicRoughnessUniform;
+    bgfx::UniformHandle hasTexturesUniform;
     bgfx::UniformHandle baseColorSampler;
     bgfx::UniformHandle metallicRoughnessSampler;
+    bgfx::UniformHandle normalSampler;
+
+    void bindMaterial(const Scene::Material& material);
 };

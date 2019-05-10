@@ -5,7 +5,8 @@ Config::Config() :
     logFile("Cluster.log"),
     renderer(bgfx::RendererType::Count),
     renderPath(Cluster::Forward),
-    sceneFile("assets/models/duck/Duck.gltf"),
+    sceneFile("assets/models/Sponza/glTF/Sponza.gltf"), //("assets/models/duck/Duck.gltf"),
+    skyColor{ 0.53f, 0.81f, 0.98f }, // https://en.wikipedia.org/wiki/Sky_blue#Light_sky_blue
     lights(0),
     fullscreen(false),
     showUI(true),
@@ -19,20 +20,13 @@ Config::Config() :
 
 void Config::readArgv(int argc, char* argv[])
 {
-    // TODO
-    // set renderer
-    // load scene
-    // consider using Argh! (https://github.com/adishavit/argh)
-
-    // bgfx is built with BGFX_CONFIG_RENDERER_OPENGL=43
+    // bgfx OpenGL renderer uses version 2.1
+    // can be built with BGFX_CONFIG_RENDERER_OPENGL=43
     // this adds compute shaders and texture copy
     // somehow this also makes it the only usable renderer
-    // TODO keep DX11 as default on Windows but raise used OpenGL version?
-    // define something else so it uses both?
-    // renderer = bgfx::RendererType::OpenGL;
+    // passing D3D11 as renderer will still use OpenGL with that define
 
-    // this doesn't work, still use OpenGL
-    renderer = bgfx::RendererType::Direct3D11;
+    //renderer = bgfx::RendererType::OpenGL;
 
     showStatsOverlay = false;
     showLog = false;

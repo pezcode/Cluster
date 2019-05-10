@@ -21,6 +21,7 @@ public:
     // Scene
 
     const char* sceneFile; // not exposed to UI
+    float skyColor[3]; // RGB, not exposed to UI
     int lights;
 
     // UI

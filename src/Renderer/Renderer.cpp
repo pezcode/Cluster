@@ -3,6 +3,7 @@
 #include <bigg.hpp>
 #include <bx/macros.h>
 #include <bx/string.h>
+#include <glm/common.hpp>
 
 bgfx::VertexDecl Renderer::PosTexCoord0Vertex::decl;
 
@@ -10,6 +11,7 @@ Renderer::Renderer(const Scene* scene) :
     scene(scene),
     width(0),
     height(0),
+    time(0.0f),
     frameBuffer(BGFX_INVALID_HANDLE),
     blitProgram(BGFX_INVALID_HANDLE),
     blitSampler(BGFX_INVALID_HANDLE)
@@ -24,21 +26,15 @@ void Renderer::initialize()
 {
     PosTexCoord0Vertex::init();
 
-    char vsName[128], fsName[128];
-    bx::snprintf(vsName, BX_COUNTOF(vsName), "%s%s", shaderDir(), "vs_screen_quad.bin");
-    bx::snprintf(fsName, BX_COUNTOF(fsName), "%s%s", shaderDir(), "fs_screen_quad.bin");
-    blitProgram = bigg::loadProgram(vsName, fsName);
-
     blitSampler = bgfx::createUniform("s_texColor", bgfx::UniformType::Sampler);
 
+    // TODO use triangle covering screen (less fragment overdraw)
     float BOTTOM = -1.0f, TOP = 1.0f, LEFT = -1.0f, RIGHT = 1.0f;
     PosTexCoord0Vertex vertices[6] = {
         { BOTTOM, LEFT }, { TOP, LEFT },  { TOP, RIGHT },
         { BOTTOM, LEFT }, { TOP, RIGHT }, { BOTTOM, RIGHT }
     };
-    // ??? is this necessary?
-    // if v is flipped, it's also flipped in the source texture
-    bool flipV = false; //bgfx::getCaps()->originBottomLeft;
+    bool flipV = !bgfx::getCaps()->originBottomLeft;
     for(PosTexCoord0Vertex& v : vertices)
     {
         v.z = 0.0f;
@@ -48,6 +44,11 @@ void Renderer::initialize()
             v.v = 1.0f - v.v;
     }
     quadVB = bgfx::createVertexBuffer(bgfx::copy(&vertices, sizeof(vertices)), PosTexCoord0Vertex::decl);
+
+    char vsName[128], fsName[128];
+    bx::snprintf(vsName, BX_COUNTOF(vsName), "%s%s", shaderDir(), "vs_screen_quad.bin");
+    bx::snprintf(fsName, BX_COUNTOF(fsName), "%s%s", shaderDir(), "fs_screen_quad.bin");
+    blitProgram = bigg::loadProgram(vsName, fsName);
 
     onInitialize();
 }
@@ -78,6 +79,17 @@ void Renderer::reset(uint16_t width, uint16_t height)
 
 void Renderer::render(float dt)
 {
+    time += dt;
+
+    if(scene->loaded)
+    {
+        // glm has packUnorm4x8 but it depends on endianness
+        glm::u8vec4 result = glm::round(glm::clamp(scene->skyColor, 0.0f, 1.0f) * 255.0f);
+        clearColor = (result[0] << 24) | (result[1] << 16) | (result[2] << 8) | result[0];
+    }
+    else
+        clearColor = 0x303030FF;
+
     onRender(dt);
     blitToScreen(199);
 }

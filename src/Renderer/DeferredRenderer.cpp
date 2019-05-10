@@ -37,7 +37,7 @@ void DeferredRenderer::onReset()
 void DeferredRenderer::onRender(float dt)
 {
     bgfx::ViewId vDefault = 0;
-    bgfx::setViewClear(vDefault, BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH, 0x303030FF, 1.0f, 0);
+    bgfx::setViewClear(vDefault, BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH, clearColor, 1.0f, 0);
     bgfx::setViewRect(vDefault, 0, 0, width, height);
     bgfx::setViewFrameBuffer(vDefault, frameBuffer);
     bgfx::touch(vDefault);

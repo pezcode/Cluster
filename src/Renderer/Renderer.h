@@ -73,6 +73,9 @@ protected:
     uint16_t width;
     uint16_t height;
 
+    uint32_t clearColor;
+    float time;
+
 private:
 
     bgfx::ProgramHandle blitProgram;

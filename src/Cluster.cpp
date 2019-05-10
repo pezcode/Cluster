@@ -10,6 +10,7 @@
 #include <bx/file.h>
 #include <bx/string.h>
 #include <bimg/bimg.h>
+#include <glm/gtc/type_ptr.hpp>
 #include <spdlog/sinks/basic_file_sink.h>
 #include <thread>
 
@@ -58,7 +59,7 @@ void Cluster::initialize(int _argc, char* _argv[])
     // TODO remove sink during shutdown
 
     // TODO read from config
-    //reset(BGFX_RESET_VSYNC | BGFX_RESET_MSAA_X8 | BGFX_RESET_MAXANISOTROPY);
+    //reset(BGFX_RESET_VSYNC | BGFX_RESET_MSAA_X4 | BGFX_RESET_MAXANISOTROPY);
     //bgfx::setDebug(BGFX_DEBUG_TEXT);
 
     if(config->fullscreen)
@@ -76,8 +77,12 @@ void Cluster::initialize(int _argc, char* _argv[])
 
     Scene::init();
     // TODO multithreaded
-    //Log->info("Loading model from {}", config->sceneFile);
-    if(!scene->load(config->sceneFile))
+    if(scene->load(config->sceneFile))
+    {
+        scene->skyColor = glm::vec4(glm::make_vec3(&config->skyColor[0]), 1.0f);
+        scene->ambientLight = { { 0.0f, -1.0f, 0.0f }, { 1.0f, 0.0f, 0.0f, 0.0f } }; // red sun straight up
+    }
+    else
     {
         Log->error("Loading model failed");
         close();
@@ -97,7 +102,7 @@ void Cluster::onReset()
 
 void Cluster::onKey(int key, int scancode, int action, int mods)
 {
-    constexpr float velocity = 100.0f; // m/s
+    constexpr float velocity = 10.0f; // m/s
 
     if(action == GLFW_RELEASE)
     {
@@ -113,6 +118,9 @@ void Cluster::onKey(int key, int scancode, int action, int mods)
         }
     }
 
+    // this doesn't handle multiple keys pressed at the same time
+    // TODO buffer keys pressed and handle input every frame
+    // GLFW only sends GLFW_REPEAT for the last key pressed
     if(action == GLFW_PRESS || action == GLFW_REPEAT)
     {
         switch(key)
@@ -175,7 +183,7 @@ void Cluster::update(float dt)
     if(mFrameNumber > 0 && mFrameNumber == saveFrame)
     {
         // async destructor blocks, even if not assigned
-        // thread also blocks, unless detached
+        // thread destructor also blocks, unless detached
         std::thread([this]() {
             callbacks.screenShot("hehe", getWidth(), getHeight(), 0, saveData, 0, false);
             saveFrame = 0;

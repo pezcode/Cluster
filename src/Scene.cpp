@@ -11,6 +11,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/trigonometric.hpp>
 #include <bx/file.h>
+#include <bx/sort.h>
 #include <bimg/decode.h>
 
 std::once_flag Scene::onceFlag;
@@ -29,7 +30,8 @@ Scene::~Scene()
 
 void Scene::init()
 {
-    std::call_once(onceFlag, []() { PosNormalTangentTex0Vertex::init();
+    std::call_once(onceFlag, []() {
+        PosNormalTangentTex0Vertex::init();
     });
 }
 
@@ -37,7 +39,7 @@ void Scene::clear()
 {
     if(loaded)
     {
-        camera = Camera();
+        minBounds = maxBounds = { 0.0f, 0.0f, 0.0f };
         for(const Mesh& mesh : meshes)
         {
             bgfx::destroy(mesh.vertexBuffer);
@@ -46,8 +48,12 @@ void Scene::clear()
         meshes.clear();
         for(const Material& mat : materials)
         {
-            bgfx::destroy(mat.baseColor);
-            bgfx::destroy(mat.metallicRoughness);
+            if(bgfx::isValid(mat.baseColorTexture))
+                bgfx::destroy(mat.baseColorTexture);
+            if(bgfx::isValid(mat.metallicRoughnessTexture))
+                bgfx::destroy(mat.metallicRoughnessTexture);
+            if(bgfx::isValid(mat.normalTexture))
+                bgfx::destroy(mat.normalTexture);
         }
         materials.clear();
     }
@@ -91,6 +97,9 @@ bool Scene::load(const char* file)
                 }
             }
 
+            // TODO sort opaque meshes to appear first
+            //bx::quickSort(&meshes, meshes.size(), 
+
             char dir[bx::kMaxFilePath] = "";
             bx::strCopy(dir, BX_COUNTOF(dir), bx::FilePath(file).getPath());
             for(unsigned int i = 0; i < scene->mNumMaterials; i++)
@@ -102,6 +111,7 @@ bool Scene::load(const char* file)
                 catch(std::exception& e)
                 {
                     // material not loaded, use default
+                    // really only happens if there is no diffuse color
                     // TODO generate error texture (8x8 pink)
                     materials.push_back(Material());
                     Log->warn("{}", e.what());
@@ -120,8 +130,6 @@ bool Scene::load(const char* file)
         else
             Log->error("Scene is incomplete or invalid");
     }
-    else
-        Log->error(importer.GetErrorString());
 
     return loaded;
 }
@@ -145,6 +153,9 @@ Scene::Mesh Scene::loadMesh(const aiMesh* mesh)
         vertices[i].x = pos.x;
         vertices[i].y = pos.y;
         vertices[i].z = pos.z;
+
+        minBounds = glm::min(minBounds, { pos.x, pos.y, pos.z });
+        maxBounds = glm::max(maxBounds, { pos.x, pos.y, pos.z });
 
         aiVector3D nrm = mesh->mNormals[i];
         vertices[i].nx = nrm.x;
@@ -187,26 +198,65 @@ Scene::Mesh Scene::loadMesh(const aiMesh* mesh)
 
 Scene::Material Scene::loadMaterial(const aiMaterial* material, const char* dir)
 {
-    aiString fileBaseColor, fileMetallicRoughness;
+    Material out;
+
+    material->Get(AI_MATKEY_TWOSIDED, out.doubleSided);
+
+    aiString fileBaseColor, fileMetallicRoughness, fileNormals;
     material->GetTexture(AI_MATKEY_GLTF_PBRMETALLICROUGHNESS_BASE_COLOR_TEXTURE, &fileBaseColor);
     material->GetTexture(AI_MATKEY_GLTF_PBRMETALLICROUGHNESS_METALLICROUGHNESS_TEXTURE, &fileMetallicRoughness);
-    if(fileBaseColor.length == 0)
-        throw std::runtime_error("No PBR base color texture");
-    // disabled for duck testing
-    //if(fileMetallicRoughness.length == 0)
-    //    throw std::runtime_error("No PBR metallic/roughness texture");
+    material->GetTexture(aiTextureType_NORMALS, 0, &fileNormals);
 
-    aiString pathBaseColor, pathMetallicRoughness;
-    pathBaseColor.Set(dir);
-    pathBaseColor.Append(fileBaseColor.C_Str());
-    pathMetallicRoughness.Set(dir);
-    pathMetallicRoughness.Append(fileMetallicRoughness.C_Str());
-
-    return
+    if(fileBaseColor.length > 0)
     {
-        loadTexture(pathBaseColor.C_Str()),
-        BGFX_INVALID_HANDLE//loadTexture(pathMetallicRoughness.C_Str())
-    };
+        aiString pathBaseColor;
+        pathBaseColor.Set(dir);
+        pathBaseColor.Append(fileBaseColor.C_Str());
+        out.baseColorTexture = loadTexture(pathBaseColor.C_Str());
+    }
+    else
+    {
+        Log->warn("Material has no PBR base color texture");
+        aiColor4D baseColor;
+        if(AI_SUCCESS == material->Get(AI_MATKEY_GLTF_PBRMETALLICROUGHNESS_BASE_COLOR_FACTOR, baseColor))
+            out.baseColor = { baseColor.r, baseColor.g, baseColor.b, baseColor.a };
+        else
+            throw std::runtime_error("Material has no PBR base color");
+    }
+
+    if(fileMetallicRoughness.length > 0)
+    {
+        aiString pathMetallicRoughness;
+        pathMetallicRoughness.Set(dir);
+        pathMetallicRoughness.Append(fileMetallicRoughness.C_Str());
+        out.metallicRoughnessTexture = loadTexture(pathMetallicRoughness.C_Str());
+    }
+    else
+    {
+        Log->warn("Material has no PBR metallic/roughness texture");
+
+        ai_real metallicFactor;
+        if(AI_SUCCESS == material->Get(AI_MATKEY_GLTF_PBRMETALLICROUGHNESS_METALLIC_FACTOR, metallicFactor))
+            out.metallic = metallicFactor;
+        else
+            Log->warn("Material has no PBR metallic factor, using default of ", out.metallic);
+
+        ai_real roughnessFactor;
+        if(AI_SUCCESS == material->Get(AI_MATKEY_GLTF_PBRMETALLICROUGHNESS_ROUGHNESS_FACTOR, roughnessFactor))
+            out.roughness = roughnessFactor;
+        else
+            Log->warn("Material has no PBR roughness factor, using default of ", out.roughness);
+    }
+
+    if(fileNormals.length > 0)
+    {
+        aiString pathNormals;
+        pathNormals.Set(dir);
+        pathNormals.Append(fileNormals.C_Str());
+        out.normalTexture = loadTexture(pathNormals.C_Str());
+    }
+
+    return out;
 }
 
 Camera Scene::loadCamera(const aiCamera* camera)
@@ -214,13 +264,13 @@ Camera Scene::loadCamera(const aiCamera* camera)
     float aspect = camera->mAspect == 0.0f
                        ? 16.0f/9.0f
                        : camera->mAspect;
-
     glm::vec3 pos(camera->mPosition.x, camera->mPosition.y, camera->mPosition.z);
     glm::vec3 target(camera->mLookAt.x, camera->mLookAt.y, camera->mLookAt.z);
     glm::vec3 up(camera->mUp.x, camera->mUp.y, camera->mUp.z);
 
     Camera cam;
     cam.lookAt(pos, target, up);
+    // convert horizontal half angle (radians) to vertical full angle (degrees)
     cam.fov = glm::degrees(2.0f * glm::atan(glm::tan(camera->mHorizontalFOV) / aspect));
     cam.zNear = camera->mClipPlaneNear;
     cam.zFar  = camera->mClipPlaneFar;
@@ -267,7 +317,7 @@ bgfx::TextureHandle Scene::loadTexture(const char* file)
                                                             (bgfx::TextureFormat::Enum)image->m_format,
                                                             BGFX_TEXTURE_NONE,
                                                             mem);
-            bgfx::setName(tex, file);
+            //bgfx::setName(tex, file); // causes debug errors with DirectX SetPrivateProperty duplicate
             return tex;
         }
         else
