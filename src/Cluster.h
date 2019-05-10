@@ -2,7 +2,7 @@
 
 #include <bigg.hpp>
 #include <bx/string.h>
-//#include <map>
+#include <map>
 #include <memory>
 
 class ClusterUI;
@@ -69,8 +69,8 @@ private:
         Cluster& app;
     };
 
-    float deltaTime;
-    //std::map<int, bool> keys;
+    //float deltaTime;
+    std::map<int, bool> keys;
     double mouseX, mouseY;
 
     void setRenderPath(RenderPath path);

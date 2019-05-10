@@ -112,7 +112,6 @@ bool Scene::load(const char* file)
                 {
                     // material not loaded, use default
                     // really only happens if there is no diffuse color
-                    // TODO generate error texture (8x8 pink)
                     materials.push_back(Material());
                     Log->warn("{}", e.what());
                 }

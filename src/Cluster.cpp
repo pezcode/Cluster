@@ -19,7 +19,7 @@ bx::AllocatorI* Cluster::iAlloc = &allocator;
 
 Cluster::Cluster() :
     bigg::Application("Cluster", 1024, 768),
-    deltaTime(0.0f),
+    //deltaTime(0.0f),
     mouseX(-1.0f),
     mouseY(-1.0f),
     saveFrame(0),
@@ -59,7 +59,7 @@ void Cluster::initialize(int _argc, char* _argv[])
     // TODO remove sink during shutdown
 
     // TODO read from config
-    //reset(BGFX_RESET_VSYNC | BGFX_RESET_MSAA_X4 | BGFX_RESET_MAXANISOTROPY);
+    reset(/*BGFX_RESET_VSYNC | */BGFX_RESET_MSAA_X4 | BGFX_RESET_MAXANISOTROPY);
     //bgfx::setDebug(BGFX_DEBUG_TEXT);
 
     if(config->fullscreen)
@@ -102,8 +102,6 @@ void Cluster::onReset()
 
 void Cluster::onKey(int key, int scancode, int action, int mods)
 {
-    constexpr float velocity = 10.0f; // m/s
-
     if(action == GLFW_RELEASE)
     {
         switch(key)
@@ -118,32 +116,20 @@ void Cluster::onKey(int key, int scancode, int action, int mods)
         }
     }
 
-    // this doesn't handle multiple keys pressed at the same time
-    // TODO buffer keys pressed and handle input every frame
-    // GLFW only sends GLFW_REPEAT for the last key pressed
-    if(action == GLFW_PRESS || action == GLFW_REPEAT)
+    // camera input handling
+    // GLFW only sends repeat event for the last key pressed
+    // need to keep track of which keys are currently down
+    // TODO put in separate class
+    switch(key)
     {
-        switch(key)
-        {
-            case GLFW_KEY_W:
-                scene->camera.move(scene->camera.forward() * velocity * deltaTime);
-                break;
-            case GLFW_KEY_A:
-                scene->camera.move(-scene->camera.right() * velocity * deltaTime);
-                break;
-            case GLFW_KEY_S:
-                scene->camera.move(-scene->camera.forward() * velocity * deltaTime);
-                break;
-            case GLFW_KEY_D:
-                scene->camera.move(scene->camera.right() * velocity * deltaTime);
-                break;
-            case GLFW_KEY_SPACE:
-                scene->camera.move(scene->camera.up() * velocity * deltaTime);
-                break;
-            case GLFW_KEY_LEFT_CONTROL:
-                scene->camera.move(-scene->camera.up() * velocity * deltaTime);
-                break;
-        }
+        case GLFW_KEY_W:
+        case GLFW_KEY_A:
+        case GLFW_KEY_S:
+        case GLFW_KEY_D:
+        case GLFW_KEY_SPACE:
+        case GLFW_KEY_LEFT_CONTROL:
+            keys[key] = action != GLFW_RELEASE;
+            break;
     }
 }
 
@@ -178,7 +164,22 @@ void Cluster::onScroll(double xoffset, double yoffset)
 
 void Cluster::update(float dt)
 {
-    deltaTime = dt;
+    //deltaTime = dt;
+
+    constexpr float velocity = 1.0f; // m/s
+    if(keys[GLFW_KEY_W])
+        scene->camera.move(scene->camera.forward() * velocity * dt);
+    if(keys[GLFW_KEY_A])
+        scene->camera.move(-scene->camera.right() * velocity * dt);
+    if(keys[GLFW_KEY_S])
+        scene->camera.move(-scene->camera.forward() * velocity * dt);
+    if(keys[GLFW_KEY_D])
+        scene->camera.move(scene->camera.right() * velocity * dt);
+    if(keys[GLFW_KEY_SPACE])
+        scene->camera.move(scene->camera.up() * velocity * dt);
+    if(keys[GLFW_KEY_LEFT_CONTROL])
+        scene->camera.move(-scene->camera.up() * velocity * dt);
+
     // screenshot texture data is ready, save in a new thread
     if(mFrameNumber > 0 && mFrameNumber == saveFrame)
     {

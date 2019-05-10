@@ -16,14 +16,15 @@ struct Camera
     float zNear = 0.1f; // projection plane
     float zFar = 5.0f; // far plane
 
-    void move(glm::vec3 delta); // camera-space
-    void rotate(glm::vec2 delta); // rotation around x, y axis in camera-space (rotation order: y [yaw] -> x [pitch])
+    void move(glm::vec3 delta); // coordinates are in world-space (use forward/up/right to move relative to the camera)
+    void rotate(glm::vec2 delta); // rotation around x, y axis
     void zoom(float offset); // > 0 = zoom in (decrease FOV by <offset> angles)
 
     void lookAt(const glm::vec3& position, const glm::vec3& target, const glm::vec3& up);
 
     const glm::mat4 matrix() const;
 
+    // camera vectors in world-space coordinates
     glm::vec3 forward() const;
     glm::vec3 up() const;
     glm::vec3 right() const;
@@ -35,10 +36,7 @@ private:
     static constexpr float MIN_FOV = 10.0f;
     static constexpr float MAX_FOV = 90.0f;
 
-    //static constexpr float MIN_PITCH = glm::radians(1.0f);
-    //static constexpr float MAX_PITCH = glm::radians(89.0f);
-
-    glm::vec3 orthUp;
+    glm::vec3 orthUp = Y;
 
     glm::vec3 position;
     glm::quat rotation;
