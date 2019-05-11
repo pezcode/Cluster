@@ -23,7 +23,13 @@ uniform vec4 u_hasTextures;
 
 void main()
 {
-    vec4 baseColor = u_hasBaseColorTexture ? texture2D(s_texBaseColor, v_texcoord0) : u_baseColor;
+    
+    vec4 baseColor = u_baseColor;
+    if(u_hasBaseColorTexture)
+    {
+        baseColor = texture2D(s_texBaseColor, v_texcoord0);
+        baseColor.rgb = sRGBToLinear(baseColor.rgb);
+    }
     vec2 metallicRoughness = u_hasMetallicRoughnessTexture ? texture2D(s_texMetallicRoughness, v_texcoord0).xy : u_metallicRoughness.xy;
     float metallic = u_metallic;
     float roughness = u_roughness;

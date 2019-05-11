@@ -316,9 +316,7 @@ bgfx::TextureHandle Scene::loadTexture(const char* file)
         }, image);
         BX_FREE(&allocator, data);
 
-        // GLTF textures are stored as sRGB
-        // isTextureValid returns false for BGFX_TEXTURE_SRGB, creating works fine ??
-        //if(bgfx::isTextureValid(0, false, image->m_numLayers, (bgfx::TextureFormat::Enum)image->m_format, BGFX_TEXTURE_SRGB))
+        if(bgfx::isTextureValid(0, false, image->m_numLayers, (bgfx::TextureFormat::Enum)image->m_format, BGFX_TEXTURE_NONE))
         if(true)
         {
             bgfx::TextureHandle tex = bgfx::createTexture2D((uint16_t)image->m_width,
@@ -326,7 +324,7 @@ bgfx::TextureHandle Scene::loadTexture(const char* file)
                                                             image->m_numMips > 1,
                                                             image->m_numLayers,
                                                             (bgfx::TextureFormat::Enum)image->m_format,
-                                                            BGFX_TEXTURE_SRGB,
+                                                            BGFX_TEXTURE_NONE,
                                                             mem);
             //bgfx::setName(tex, file); // causes debug errors with DirectX SetPrivateProperty duplicate
             return tex;
