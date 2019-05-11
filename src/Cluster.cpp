@@ -2,7 +2,7 @@
 
 #include "UI.h"
 #include "Config.h"
-#include "Scene.h"
+#include "Scene/Scene.h"
 #include "Log/Log.h"
 #include "Renderer/ForwardRenderer.h"
 #include "Renderer/DeferredRenderer.h"

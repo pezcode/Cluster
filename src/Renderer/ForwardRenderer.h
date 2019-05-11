@@ -17,12 +17,4 @@ public:
 
 private:
     bgfx::ProgramHandle program;
-    bgfx::UniformHandle baseColorUniform;
-    bgfx::UniformHandle metallicRoughnessUniform;
-    bgfx::UniformHandle hasTexturesUniform;
-    bgfx::UniformHandle baseColorSampler;
-    bgfx::UniformHandle metallicRoughnessSampler;
-    bgfx::UniformHandle normalSampler;
-
-    uint64_t bindMaterial(const Scene::Material& material);
 };

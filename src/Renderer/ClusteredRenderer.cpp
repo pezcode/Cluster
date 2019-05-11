@@ -1,5 +1,7 @@
 #include "ClusteredRenderer.h"
 
+#include "Scene/Scene.h"
+
 ClusteredRenderer::ClusteredRenderer(const Scene* scene) :
     Renderer(scene)
 {

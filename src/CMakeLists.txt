@@ -6,10 +6,13 @@ set(SOURCES
 	Config.cpp
 	UI.h
 	UI.cpp
-	Scene.h
-	Scene.cpp
-	Camera.h
-	Camera.cpp
+	Scene/Scene.h
+	Scene/Scene.cpp
+	Scene/Camera.h
+	Scene/Camera.cpp
+	Scene/Mesh.h
+	Scene/Material.h
+	Scene/Light.h
 	Renderer/Renderer.h
 	Renderer/Renderer.cpp
 	Renderer/ForwardRenderer.h
@@ -18,16 +21,18 @@ set(SOURCES
 	Renderer/DeferredRenderer.cpp
 	Renderer/ClusteredRenderer.h
 	Renderer/ClusteredRenderer.cpp
+	Renderer/PBRShader.h
+	Renderer/PBRShader.cpp
 	Log/Log.h
 	Log/Log.cpp
 	Log/UISink.h
 	Log/AssimpSource.h
 	vs_forward.sc
 	fs_forward.sc
-	vs_screen_quad.sc
-	fs_screen_quad.sc
+	vs_tonemap.sc
+	fs_tonemap.sc
 	tonemapping.sh
-	pbr.sh
+	pbr_shader.sh
 	varying.def.sc
 )
 
@@ -50,10 +55,10 @@ endif()
 set(SHADER_DIR "${PROJECT_BINARY_DIR}/shaders")
 set(ASSETS_DIR "${PROJECT_BINARY_DIR}/assets")
 
-add_shader(vs_forward.sc     VERTEX   OUTPUT ${SHADER_DIR} DX11_MODEL 5_0 GLSL_VERSION 130)
-add_shader(fs_forward.sc     FRAGMENT OUTPUT ${SHADER_DIR} DX11_MODEL 5_0 GLSL_VERSION 130)
-add_shader(vs_screen_quad.sc VERTEX   OUTPUT ${SHADER_DIR} DX11_MODEL 5_0 GLSL_VERSION 130)
-add_shader(fs_screen_quad.sc FRAGMENT OUTPUT ${SHADER_DIR} DX11_MODEL 5_0 GLSL_VERSION 130)
+add_shader(vs_forward.sc VERTEX   OUTPUT ${SHADER_DIR} DX11_MODEL 5_0 GLSL_VERSION 130)
+add_shader(fs_forward.sc FRAGMENT OUTPUT ${SHADER_DIR} DX11_MODEL 5_0 GLSL_VERSION 130)
+add_shader(vs_tonemap.sc VERTEX   OUTPUT ${SHADER_DIR} DX11_MODEL 5_0 GLSL_VERSION 130)
+add_shader(fs_tonemap.sc FRAGMENT OUTPUT ${SHADER_DIR} DX11_MODEL 5_0 GLSL_VERSION 130)
 
 file(COPY ../assets/ DESTINATION ${ASSETS_DIR})
 

@@ -136,7 +136,7 @@ bool Scene::load(const char* file)
     return loaded;
 }
 
-Scene::Mesh Scene::loadMesh(const aiMesh* mesh)
+Mesh Scene::loadMesh(const aiMesh* mesh)
 {
     if(mesh->mPrimitiveTypes != aiPrimitiveType_TRIANGLE)
         throw std::runtime_error("Mesh has incompatible primitive type");
@@ -198,7 +198,7 @@ Scene::Mesh Scene::loadMesh(const aiMesh* mesh)
     return { vbh, ibh, mesh->mMaterialIndex };
 }
 
-Scene::Material Scene::loadMaterial(const aiMaterial* material, const char* dir)
+Material Scene::loadMaterial(const aiMaterial* material, const char* dir)
 {
     Material out;
 

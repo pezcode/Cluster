@@ -1,5 +1,7 @@
 #include "DeferredRenderer.h"
 
+#include "Scene/Scene.h"
+
 DeferredRenderer::DeferredRenderer(const Scene* scene) :
     Renderer(scene),
     bufferList{ { BGFX_INVALID_HANDLE, "Albedo"   },

@@ -1,4 +1,5 @@
 build/
+screenshots/
 .vs/
 .vscode/
 CMakeSettings.json

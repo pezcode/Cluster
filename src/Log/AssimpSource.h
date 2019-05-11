@@ -1,8 +1,5 @@
 #pragma once
 
-// assimp includes winmin.h which defines APIENTRY
-// GLFW already defined it which causes a warning
-#undef APIENTRY
 #include <assimp/Logger.hpp>
 #include <assimp/LogStream.hpp>
 #include "Log.h"

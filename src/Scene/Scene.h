@@ -1,9 +1,14 @@
 #pragma once
 
-#include "Camera.h"
+#include "Scene/Camera.h"
+#include "Scene/Light.h"
+#include "Scene/Mesh.h"
+#include "Scene/Material.h"
 #include "Log/AssimpSource.h"
+#include <glm/glm.hpp>
 #include <bgfx/bgfx.h>
 #include <bx/allocator.h>
+#include <vector>
 #include <mutex>
 
 struct aiMesh;
@@ -21,44 +26,6 @@ public:
     // load meshes, materials, camera from .gltf file
     bool load(const char* file);
     void clear();
-
-    struct Mesh
-    {
-        bgfx::VertexBufferHandle vertexBuffer = BGFX_INVALID_HANDLE;
-        bgfx::IndexBufferHandle indexBuffer = BGFX_INVALID_HANDLE;
-        unsigned int material = 0; // index into materials vector
-    };
-
-    // https://github.com/KhronosGroup/glTF/tree/master/specification/2.0#metallic-roughness-material
-    struct Material
-    {
-        bool blend = false;
-        bool doubleSided = false;
-        glm::vec4 baseColor = { 1.0f, 0.0f, 1.0f, 1.0f }; // normalized RGBA
-        float metallic = 0.0f;
-        float roughness = 0.5f;
-        bgfx::TextureHandle baseColorTexture = BGFX_INVALID_HANDLE;         // F0 for non-metals
-        bgfx::TextureHandle metallicRoughnessTexture = BGFX_INVALID_HANDLE; // blue = metallic, green = roughness
-        bgfx::TextureHandle normalTexture = BGFX_INVALID_HANDLE;
-    };
-
-    struct PointLight
-    {
-        glm::vec3 position;
-        glm::vec4 color;
-    };
-
-    struct DirectionalLight
-    {
-        glm::vec3 direction;
-        glm::vec4 color;
-    };
-
-    struct SpotLight : PointLight
-    {
-        glm::vec3 direction;
-        float angle; // full angle in degrees
-    };
 
     bool loaded;
     glm::vec3 minBounds;

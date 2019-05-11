@@ -1,7 +1,9 @@
 #pragma once
 
-#include "Scene.h"
 #include <bgfx/bgfx.h>
+#include "PBRShader.h"
+
+class Scene;
 
 class Renderer
 {
@@ -37,7 +39,7 @@ public:
     TextureBuffer* buffers = nullptr;
 
     // final output
-    // used for postprocessing, screenshots
+    // used for tonemapping, screenshots
     bgfx::FrameBufferHandle frameBuffer;
 
 protected:
@@ -66,13 +68,13 @@ protected:
 
     void blitToScreen(bgfx::ViewId view = MAX_VIEW);
 
-    static bgfx::FrameBufferHandle createFrameBuffer(uint16_t width, uint16_t height, bool depth = true);
+    static bgfx::FrameBufferHandle createFrameBuffer(uint16_t width, uint16_t height, bool hdr = true, bool depth = true);
     static const char* shaderDir();
 
     const Scene* scene;
     uint16_t width;
     uint16_t height;
-
+    PBRShader pbr;
     uint32_t clearColor;
     float time;
 
