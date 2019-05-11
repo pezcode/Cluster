@@ -1,6 +1,9 @@
 $input v_normal, v_tangent, v_texcoord0
 
 #include <bgfx_shader.sh>
+
+#define SRGB_CONVERSION_FAST
+#include "tonemapping.sh"
 #include "pbr.sh"
 
 SAMPLER2D(s_texBaseColor, 0);
@@ -25,5 +28,11 @@ void main()
     float metallic = u_metallic;
     float roughness = u_roughness;
     vec3 normal = u_hasNormalTexture ? texture2D(s_texNormal, v_texcoord0).xyz : vec3(0.0, 0.0, 0.0);
-    gl_FragColor = baseColor;
+
+    // do shading
+
+    vec4 result = baseColor;
+    result.rgb = LinearTosRGB(result.rgb);
+
+    gl_FragColor = result;
 }

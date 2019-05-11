@@ -117,7 +117,7 @@ void Renderer::blitToScreen(bgfx::ViewId view)
     bgfx::setViewClear(view, BGFX_CLEAR_NONE);
     bgfx::setViewRect(view, 0, 0, width, height);
     bgfx::setViewFrameBuffer(view, BGFX_INVALID_HANDLE);
-    bgfx::setState(BGFX_STATE_WRITE_RGB | BGFX_STATE_WRITE_A | BGFX_STATE_CULL_CW);
+    bgfx::setState(BGFX_STATE_WRITE_RGB);
     bgfx::TextureHandle frameBufferTexture = bgfx::getTexture(frameBuffer);
     bgfx::setTexture(0, blitSampler, frameBufferTexture);
     bgfx::setVertexBuffer(0, quadVB);

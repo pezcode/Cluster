@@ -26,6 +26,7 @@ set(SOURCES
 	fs_forward.sc
 	vs_screen_quad.sc
 	fs_screen_quad.sc
+	tonemapping.sh
 	pbr.sh
 	varying.def.sc
 )
