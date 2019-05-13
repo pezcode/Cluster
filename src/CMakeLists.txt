@@ -11,6 +11,7 @@ set(SOURCES
 	Scene/Camera.h
 	Scene/Camera.cpp
 	Scene/Mesh.h
+	Scene/Mesh.cpp
 	Scene/Material.h
 	Scene/Light.h
 	Renderer/Renderer.h
@@ -48,6 +49,9 @@ set_target_properties(Cluster PROPERTIES
 configure_debugging(Cluster WORKING_DIR ${PROJECT_BINARY_DIR})
 
 if(MSVC)
+	# disable macro redefinition warning
+	# ideally 3rd party include folders were marked as SYSTEM so we wouldn't get these warnings
+	target_compile_options(Cluster PRIVATE "/wd4005")
 	# hide console window
 	target_link_options(Cluster PRIVATE "/SUBSYSTEM:WINDOWS" "/ENTRY:mainCRTStartup")
 endif()

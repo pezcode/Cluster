@@ -1,3 +1,6 @@
+#define SRGB_CONVERSION_FAST
+#include "tonemapping.sh"
+
 SAMPLER2D(s_texBaseColor, 0);
 SAMPLER2D(s_texMetallicRoughness, 1);
 SAMPLER2D(s_texNormal, 2);
@@ -15,57 +18,57 @@ vec4 pbrBaseColor(vec2 texcoord)
     if(u_hasBaseColorTexture)
     {
         vec4 color = texture2D(s_texBaseColor, texcoord);
-		// GLTF base color texture is stored as sRGB
+        // GLTF base color texture is stored as sRGB
         return vec4(sRGBToLinear(color.rgb), color.a) * u_baseColorFactor;
     }
-	else
-	{
-		return u_baseColorFactor;
-	}
+    else
+    {
+        return u_baseColorFactor;
+    }
 }
 
 vec2 pbrMetallicRoughness(vec2 texcoord)
 {
-	if(u_hasMetallicRoughnessTexture)
-	{
-		return texture2D(s_texMetallicRoughness, texcoord).bg * u_metallicRoughnessFactor.xy;
-	}
-	else
-	{
-		return u_metallicRoughnessFactor.xy;
-	}
+    if(u_hasMetallicRoughnessTexture)
+    {
+        return texture2D(s_texMetallicRoughness, texcoord).bg * u_metallicRoughnessFactor.xy;
+    }
+    else
+    {
+        return u_metallicRoughnessFactor.xy;
+    }
 }
 
 vec3 pbrNormal(vec2 texcoord)
 {
-	if(u_hasNormalTexture)
-	{
-		return texture2D(s_texNormal, texcoord).rgb;
-	}
-	else
-	{
-		// should this be something else to match null vector in tangent space?
-		return vec3_splat(0.0);
-	}
+    if(u_hasNormalTexture)
+    {
+        return normalize((texture2D(s_texNormal, texcoord).rgb * 2.0) - 1.0);
+    }
+    else
+    {
+        // should this be something else to match null vector in tangent space?
+        return vec3_splat(0.0);
+    }
 }
 
 struct PBRMaterial
 {
-	vec4 albedo;
-	float metallic;
-	float roughness;
-	vec3 normal;
+    vec4 albedo;
+    float metallic;
+    float roughness;
+    vec3 normal;
 };
 
 PBRMaterial pbrMaterial(vec2 texcoord)
 {
-	PBRMaterial mat;
-	mat.albedo = pbrBaseColor(texcoord);
-	vec2 metallicRoughness = pbrMetallicRoughness(texcoord);
-	mat.metallic  = metallicRoughness.r;
-	mat.roughness = metallicRoughness.g;
-	mat.normal = pbrNormal(texcoord);
-	return mat;
+    PBRMaterial mat;
+    mat.albedo = pbrBaseColor(texcoord);
+    vec2 metallicRoughness = pbrMetallicRoughness(texcoord);
+    mat.metallic  = metallicRoughness.r;
+    mat.roughness = metallicRoughness.g;
+    mat.normal = pbrNormal(texcoord);
+    return mat;
 }
 
 // Physically based shading
@@ -115,26 +118,26 @@ float V_SmithGGXCorrelated(float NoV, float NoL, float a)
 // uniform color
 float Fd_Lambert()
 {
-	return 1.0 / PI;
+    return 1.0 / PI;
 }
 
 vec3 BRDF(vec3 v, vec3 l, vec3 n, PBRMaterial mat)
 {
-	// GLTF 2.0
+    // GLTF 2.0
 
-	const vec3 dielectricSpecular = vec3(0.04, 0.04, 0.04);
-	const vec3 black = vec3(0.0, 0.0, 0.0);
+    const vec3 dielectricSpecular = vec3(0.04, 0.04, 0.04);
+    const vec3 black = vec3(0.0, 0.0, 0.0);
 
-	vec3 diffuseColor = mix(mat.albedo.rgb * (1.0 - dielectricSpecular.r), black, mat.metallic);
-	vec3 F0 = mix(dielectricSpecular, mat.albedo.rgb, mat.metallic);
-	float a = mat.roughness * mat.roughness;
+    vec3 diffuseColor = mix(mat.albedo.rgb * (1.0 - dielectricSpecular.r), black, mat.metallic);
+    vec3 F0 = mix(dielectricSpecular, mat.albedo.rgb, mat.metallic);
+    float a = mat.roughness * mat.roughness;
 
-	/*
-	V is the normalized vector from the shading location to the eye
-	L is the normalized vector from the shading location to the light
-	N is the surface normal in the same space as the above values
-	H is the half vector, where H = normalize(L+V)
-	*/
+    /*
+    V is the normalized vector from the shading location to the eye
+    L is the normalized vector from the shading location to the light
+    N is the surface normal in the same space as the above values
+    H is the half vector, where H = normalize(L+V)
+    */
 
     vec3 h = normalize(l + v);
 
@@ -144,7 +147,7 @@ vec3 BRDF(vec3 v, vec3 l, vec3 n, PBRMaterial mat)
     float LoH = clamp(dot(l, h), 0.0, 1.0);
 
     // specular BRDF
-	float D = D_GGX(NoH, a);
+    float D = D_GGX(NoH, a);
     vec3  F = F_Schlick(LoH, F0);
     float V = V_SmithGGXCorrelated(NoV, NoL, a);
     vec3 Fr = (D * V) * F;
@@ -153,5 +156,5 @@ vec3 BRDF(vec3 v, vec3 l, vec3 n, PBRMaterial mat)
     vec3 Fd = diffuseColor * Fd_Lambert();
 
     vec3 kD = (1.0 - F) * (1.0 - mat.metallic);
-	return kD * Fd + Fr;
+    return kD * Fd + Fr;
 }

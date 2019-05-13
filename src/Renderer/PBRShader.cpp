@@ -3,8 +3,8 @@
 #include "Scene/Material.h"
 
 PBRShader::PBRShader() :
-    baseColorUniform(BGFX_INVALID_HANDLE),
-    metallicRoughnessUniform(BGFX_INVALID_HANDLE),
+    baseColorFactorUniform(BGFX_INVALID_HANDLE),
+    metallicRoughnessFactorUniform(BGFX_INVALID_HANDLE),
     hasTexturesUniform(BGFX_INVALID_HANDLE),
     baseColorSampler(BGFX_INVALID_HANDLE),
     metallicRoughnessSampler(BGFX_INVALID_HANDLE),
@@ -14,8 +14,8 @@ PBRShader::PBRShader() :
 
 void PBRShader::init()
 {
-    baseColorUniform = bgfx::createUniform("u_baseColorFactor", bgfx::UniformType::Vec4);
-    metallicRoughnessUniform = bgfx::createUniform("u_metallicRoughnessFactor", bgfx::UniformType::Vec4);
+    baseColorFactorUniform = bgfx::createUniform("u_baseColorFactor", bgfx::UniformType::Vec4);
+    metallicRoughnessFactorUniform = bgfx::createUniform("u_metallicRoughnessFactor", bgfx::UniformType::Vec4);
     hasTexturesUniform = bgfx::createUniform("u_hasTextures", bgfx::UniformType::Vec4);
     baseColorSampler = bgfx::createUniform("s_texBaseColor", bgfx::UniformType::Sampler);
     metallicRoughnessSampler = bgfx::createUniform("s_texMetallicRoughness", bgfx::UniformType::Sampler);
@@ -24,22 +24,23 @@ void PBRShader::init()
 
 void PBRShader::shutdown()
 {
-    bgfx::destroy(baseColorUniform);
-    bgfx::destroy(metallicRoughnessUniform);
+    bgfx::destroy(baseColorFactorUniform);
+    bgfx::destroy(metallicRoughnessFactorUniform);
     bgfx::destroy(hasTexturesUniform);
     bgfx::destroy(baseColorSampler);
     bgfx::destroy(metallicRoughnessSampler);
     bgfx::destroy(normalSampler);
 
-    baseColorUniform = metallicRoughnessUniform = hasTexturesUniform = baseColorSampler = metallicRoughnessSampler = normalSampler = BGFX_INVALID_HANDLE;
+    baseColorFactorUniform = metallicRoughnessFactorUniform = hasTexturesUniform = baseColorSampler =
+        metallicRoughnessSampler = normalSampler = BGFX_INVALID_HANDLE;
 }
 
 uint64_t PBRShader::bindMaterial(const Material& material)
 {
     float metallicRoughnessValues[4] = { material.metallicFactor, material.roughnessFactor, 0.0f, 0.0f };
     float hasTexturesValues[4] = { 1.0f, 1.0f, 1.0f, 0.0f };
-    bgfx::setUniform(baseColorUniform, &material.baseColorFactor[0]);
-    bgfx::setUniform(metallicRoughnessUniform, &metallicRoughnessValues[0]);
+    bgfx::setUniform(baseColorFactorUniform, &material.baseColorFactor[0]);
+    bgfx::setUniform(metallicRoughnessFactorUniform, &metallicRoughnessValues[0]);
 
     if(bgfx::isValid(material.baseColorTexture))
         bgfx::setTexture(0, baseColorSampler, material.baseColorTexture);

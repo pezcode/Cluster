@@ -16,6 +16,9 @@ struct Camera
     float zNear = 0.1f; // projection plane
     float zFar = 5.0f; // far plane
 
+    // simply a multiplier for the irradiance arriving at the camera
+    float exposure = 1.0f;
+
     void move(glm::vec3 delta); // coordinates are in world-space (use forward/up/right to move relative to the camera)
     void rotate(glm::vec2 delta); // rotation around x, y axis
     void zoom(float offset); // > 0 = zoom in (decrease FOV by <offset> angles)

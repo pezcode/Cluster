@@ -14,8 +14,6 @@
 #include <bimg/decode.h>
 #include <algorithm>
 
-std::once_flag Scene::onceFlag;
-bgfx::VertexDecl Scene::PosNormalTangentTex0Vertex::decl;
 bx::DefaultAllocator Scene::allocator;
 
 Scene::Scene() :
@@ -30,8 +28,8 @@ Scene::~Scene()
 
 void Scene::init()
 {
-    std::call_once(onceFlag, []() {
-        PosNormalTangentTex0Vertex::init();
+    std::call_once(Mesh::PosNormalTangentTex0Vertex::initFlag, []() {
+        Mesh::PosNormalTangentTex0Vertex::init();
     });
 }
 
@@ -146,8 +144,8 @@ Mesh Scene::loadMesh(const aiMesh* mesh)
 
     // vertices
 
-    const bgfx::Memory* vMem = bgfx::alloc(mesh->mNumVertices * sizeof(PosNormalTangentTex0Vertex));
-    PosNormalTangentTex0Vertex* vertices = (PosNormalTangentTex0Vertex*)vMem->data;
+    const bgfx::Memory* vMem = bgfx::alloc(mesh->mNumVertices * sizeof(Mesh::PosNormalTangentTex0Vertex));
+    Mesh::PosNormalTangentTex0Vertex* vertices = (Mesh::PosNormalTangentTex0Vertex*)vMem->data;
 
     for(unsigned int i = 0; i < mesh->mNumVertices; i++)
     {
@@ -169,6 +167,11 @@ Mesh Scene::loadMesh(const aiMesh* mesh)
         vertices[i].ty = tan.y;
         vertices[i].tz = tan.z;
 
+        aiVector3D bit = mesh->mBitangents[i];
+        vertices[i].bx = bit.x;
+        vertices[i].by = bit.y;
+        vertices[i].bz = bit.z;
+
         if(hasTexture)
         {
             aiVector3D uv = mesh->mTextureCoords[coords][i];
@@ -177,7 +180,7 @@ Mesh Scene::loadMesh(const aiMesh* mesh)
         }
     }
 
-    bgfx::VertexBufferHandle vbh = bgfx::createVertexBuffer(vMem, PosNormalTangentTex0Vertex::decl);
+    bgfx::VertexBufferHandle vbh = bgfx::createVertexBuffer(vMem, Mesh::PosNormalTangentTex0Vertex::decl);
 
     // indices
 
@@ -202,6 +205,8 @@ Material Scene::loadMaterial(const aiMaterial* material, const char* dir)
 {
     Material out;
 
+    // technically there is a difference between MASK and BLEND mode
+    // but for our purposes it's enough if we sort properly
     aiString alphaMode;
     material->Get(AI_MATKEY_GLTF_ALPHAMODE, alphaMode);
     aiString alphaModeOpaque;
@@ -230,6 +235,7 @@ Material Scene::loadMaterial(const aiMaterial* material, const char* dir)
             out.baseColorFactor = { baseColorFactor.r, baseColorFactor.g, baseColorFactor.b, baseColorFactor.a };
         else
             throw std::runtime_error("Material has no PBR base color");
+        out.baseColorFactor = glm::clamp(out.baseColorFactor, 0.0f, 1.0f);
     }
 
     if(fileMetallicRoughness.length > 0)
@@ -245,13 +251,13 @@ Material Scene::loadMaterial(const aiMaterial* material, const char* dir)
 
         ai_real metallicFactor;
         if(AI_SUCCESS == material->Get(AI_MATKEY_GLTF_PBRMETALLICROUGHNESS_METALLIC_FACTOR, metallicFactor))
-            out.metallicFactor = metallicFactor;
+            out.metallicFactor = glm::clamp(metallicFactor, 0.0f, 1.0f);
         else
             Log->warn("Material has no PBR metallic factor, using default of ", out.metallicFactor);
 
         ai_real roughnessFactor;
         if(AI_SUCCESS == material->Get(AI_MATKEY_GLTF_PBRMETALLICROUGHNESS_ROUGHNESS_FACTOR, roughnessFactor))
-            out.roughnessFactor = roughnessFactor;
+            out.roughnessFactor = glm::clamp(roughnessFactor, 0.0f, 1.0f);
         else
             Log->warn("Material has no PBR roughness factor, using default of ", out.roughnessFactor);
     }

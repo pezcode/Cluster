@@ -16,8 +16,8 @@ public:
     uint64_t bindMaterial(const Material& material);
 
 private:
-    bgfx::UniformHandle baseColorUniform;
-    bgfx::UniformHandle metallicRoughnessUniform;
+    bgfx::UniformHandle baseColorFactorUniform;
+    bgfx::UniformHandle metallicRoughnessFactorUniform;
     bgfx::UniformHandle hasTexturesUniform;
     bgfx::UniformHandle baseColorSampler;
     bgfx::UniformHandle metallicRoughnessSampler;
