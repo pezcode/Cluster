@@ -14,8 +14,8 @@ PBRShader::PBRShader() :
 
 void PBRShader::init()
 {
-    baseColorUniform = bgfx::createUniform("u_baseColor", bgfx::UniformType::Vec4);
-    metallicRoughnessUniform = bgfx::createUniform("u_metallicRoughness", bgfx::UniformType::Vec4);
+    baseColorUniform = bgfx::createUniform("u_baseColorFactor", bgfx::UniformType::Vec4);
+    metallicRoughnessUniform = bgfx::createUniform("u_metallicRoughnessFactor", bgfx::UniformType::Vec4);
     hasTexturesUniform = bgfx::createUniform("u_hasTextures", bgfx::UniformType::Vec4);
     baseColorSampler = bgfx::createUniform("s_texBaseColor", bgfx::UniformType::Sampler);
     metallicRoughnessSampler = bgfx::createUniform("s_texMetallicRoughness", bgfx::UniformType::Sampler);
@@ -36,9 +36,9 @@ void PBRShader::shutdown()
 
 uint64_t PBRShader::bindMaterial(const Material& material)
 {
-    float metallicRoughnessValues[4] = { material.metallic, material.roughness, 0.0f, 0.0f };
+    float metallicRoughnessValues[4] = { material.metallicFactor, material.roughnessFactor, 0.0f, 0.0f };
     float hasTexturesValues[4] = { 1.0f, 1.0f, 1.0f, 0.0f };
-    bgfx::setUniform(baseColorUniform, &material.baseColor[0]);
+    bgfx::setUniform(baseColorUniform, &material.baseColorFactor[0]);
     bgfx::setUniform(metallicRoughnessUniform, &metallicRoughnessValues[0]);
 
     if(bgfx::isValid(material.baseColorTexture))

@@ -225,9 +225,9 @@ Material Scene::loadMaterial(const aiMaterial* material, const char* dir)
     else
     {
         Log->warn("Material has no PBR base color texture");
-        aiColor4D baseColor;
-        if(AI_SUCCESS == material->Get(AI_MATKEY_GLTF_PBRMETALLICROUGHNESS_BASE_COLOR_FACTOR, baseColor))
-            out.baseColor = { baseColor.r, baseColor.g, baseColor.b, baseColor.a };
+        aiColor4D baseColorFactor;
+        if(AI_SUCCESS == material->Get(AI_MATKEY_GLTF_PBRMETALLICROUGHNESS_BASE_COLOR_FACTOR, baseColorFactor))
+            out.baseColorFactor = { baseColorFactor.r, baseColorFactor.g, baseColorFactor.b, baseColorFactor.a };
         else
             throw std::runtime_error("Material has no PBR base color");
     }
@@ -245,15 +245,15 @@ Material Scene::loadMaterial(const aiMaterial* material, const char* dir)
 
         ai_real metallicFactor;
         if(AI_SUCCESS == material->Get(AI_MATKEY_GLTF_PBRMETALLICROUGHNESS_METALLIC_FACTOR, metallicFactor))
-            out.metallic = metallicFactor;
+            out.metallicFactor = metallicFactor;
         else
-            Log->warn("Material has no PBR metallic factor, using default of ", out.metallic);
+            Log->warn("Material has no PBR metallic factor, using default of ", out.metallicFactor);
 
         ai_real roughnessFactor;
         if(AI_SUCCESS == material->Get(AI_MATKEY_GLTF_PBRMETALLICROUGHNESS_ROUGHNESS_FACTOR, roughnessFactor))
-            out.roughness = roughnessFactor;
+            out.roughnessFactor = roughnessFactor;
         else
-            Log->warn("Material has no PBR roughness factor, using default of ", out.roughness);
+            Log->warn("Material has no PBR roughness factor, using default of ", out.roughnessFactor);
     }
 
     if(fileNormals.length > 0)
