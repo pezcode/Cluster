@@ -36,12 +36,15 @@ public:
     void close();
     void toggleFullscreen();
 
+    void createLights(unsigned int num);
+
     enum RenderPath : int
     {
         Forward,
         Deferred,
         Clustered
     };
+    void setRenderPath(RenderPath path);
 
     void saveFrameBuffer(bgfx::FrameBufferHandle frameBuffer, const char* path);
 
@@ -72,8 +75,6 @@ private:
     //float deltaTime;
     std::map<int, bool> keys;
     double mouseX, mouseY;
-
-    void setRenderPath(RenderPath path);
 
     static bx::DefaultAllocator allocator;
     static bx::AllocatorI* iAlloc;

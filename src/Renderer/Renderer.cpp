@@ -59,21 +59,9 @@ void Renderer::initialize()
 
 void Renderer::reset(uint16_t width, uint16_t height)
 {
-    if(!bgfx::isValid(frameBuffer) || width != this->width || height != this->height)
+    if(!bgfx::isValid(frameBuffer))
     {
-        bgfx::FrameBufferHandle newFrameBuffer = createFrameBuffer(width, height, true, true);
-        if(bgfx::isValid(frameBuffer))
-        {
-            // this seems to cause problems when resizing windows too much
-            // if you grab and resize the window frame for a few seconds
-            // it seems to create buffers but not destroy them
-            // TODO try non-threaded
-            // or use FrameBuffer that resizes automatically
-            // but how to do that for G-Buffer?
-            // don't allow resizing? easiest method
-            bgfx::destroy(frameBuffer);
-        }
-        frameBuffer = newFrameBuffer;
+        frameBuffer = createFrameBuffer(true, true);
     }
     this->width = width;
     this->height = height;
@@ -119,6 +107,7 @@ bool Renderer::supported()
 
 void Renderer::blitToScreen(bgfx::ViewId view)
 {
+    bgfx::setViewName(view, "Blit to screen + tonemapping");
     bgfx::setViewClear(view, BGFX_CLEAR_NONE);
     bgfx::setViewRect(view, 0, 0, width, height);
     bgfx::setViewFrameBuffer(view, BGFX_INVALID_HANDLE);
@@ -131,7 +120,7 @@ void Renderer::blitToScreen(bgfx::ViewId view)
     bgfx::submit(view, blitProgram);
 }
 
-bgfx::FrameBufferHandle Renderer::createFrameBuffer(uint16_t width, uint16_t height, bool hdr, bool depth)
+bgfx::FrameBufferHandle Renderer::createFrameBuffer(bool hdr, bool depth)
 {
     bgfx::TextureHandle textures[2];
     uint8_t attachments = 0;
@@ -145,7 +134,7 @@ bgfx::FrameBufferHandle Renderer::createFrameBuffer(uint16_t width, uint16_t hei
                                        : bgfx::TextureFormat::BGRA8;
     if(bgfx::isTextureValid(0, false, 1, format, flags))
     {
-        textures[attachments++] = bgfx::createTexture2D(width, height, false, 1, format, flags);
+        textures[attachments++] = bgfx::createTexture2D(bgfx::BackbufferRatio::Equal, false, 1, format, flags);
     }
     // TODO error out
 
@@ -157,7 +146,7 @@ bgfx::FrameBufferHandle Renderer::createFrameBuffer(uint16_t width, uint16_t hei
                                                 : bgfx::isTextureValid(0, false, 1, bgfx::TextureFormat::D24S8, flags)
                                                   ? bgfx::TextureFormat::D24S8
                                                   : bgfx::TextureFormat::D32;
-        textures[attachments++] = bgfx::createTexture2D(width, height, false, 1, depthFormat, flags);
+        textures[attachments++] = bgfx::createTexture2D(bgfx::BackbufferRatio::Equal, false, 1, depthFormat, flags);
     }
 
     bgfx::FrameBufferHandle fb = bgfx::createFrameBuffer(attachments, textures, true);

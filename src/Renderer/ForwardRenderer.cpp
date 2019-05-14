@@ -34,15 +34,11 @@ void ForwardRenderer::onInitialize()
     program = bigg::loadProgram(vsName, fsName);
 }
 
-void ForwardRenderer::onReset()
-{
-    
-}
-
 void ForwardRenderer::onRender(float dt)
 {
     bgfx::ViewId vDefault = 0;
 
+    bgfx::setViewName(vDefault, "Forward render pass");
     bgfx::setViewClear(vDefault, BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH, clearColor, 1.0f, 0);
     bgfx::setViewRect(vDefault, 0, 0, width, height);
     bgfx::setViewFrameBuffer(vDefault, frameBuffer);

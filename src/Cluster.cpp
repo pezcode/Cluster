@@ -11,8 +11,10 @@
 #include <bx/string.h>
 #include <bimg/bimg.h>
 #include <glm/gtc/type_ptr.hpp>
+#include <glm/gtc/random.hpp>
 #include <spdlog/sinks/basic_file_sink.h>
 #include <thread>
+#include <algorithm> 
 
 bx::DefaultAllocator Cluster::allocator;
 bx::AllocatorI* Cluster::iAlloc = &allocator;
@@ -291,6 +293,24 @@ void Cluster::toggleFullscreen()
             glfwSetWindowMonitor(window, monitor, 0, 0, mode->width, mode->height, mode->refreshRate);
             config->fullscreen = true;
         }
+    }
+}
+
+void Cluster::createLights(unsigned int num)
+{
+    size_t curNum = scene->pointLights.size();
+    if(num < curNum)
+    {
+        scene->pointLights.resize(num);
+    }
+    else if(num > curNum)
+    {
+        std::generate_n(std::back_inserter(scene->pointLights), num - curNum, []() -> PointLight {
+            return {
+                glm::linearRand(glm::vec3(0.0f), glm::vec3(2.0f)),
+                glm::vec4(glm::linearRand(glm::vec3(0.0f), glm::vec3(1.0f)), 1.0f)
+            };
+        });
     }
 }
 

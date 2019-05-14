@@ -101,7 +101,8 @@ void ClusterUI::update(float dt)
     {
         ImGui::Begin("Settings", &app.config->showConfigWindow, ImGuiWindowFlags_AlwaysAutoResize);
 
-        ImGui::SliderInt("Lights", &app.config->lights, 0, 1000);
+        ImGui::SliderInt("Lights", &app.config->lights, 0, 500);
+        app.createLights(app.config->lights);
         // TODO? show f-stop
         // higher f-stop = less(!) exposure
         // what is max exposure?
@@ -136,8 +137,9 @@ void ClusterUI::update(float dt)
             // this takes a screenshot of the OS window framebuffer, UI included
             // bgfx::requestScreenShot(BGFX_INVALID_HANDLE, name);
         }
-        if(ImGui::Button(app.config->fullscreen ? (ICON_FK_WINDOW_RESTORE "  Restore")
-                                                : (ICON_FK_WINDOW_MAXIMIZE "  Fullscreen"),
+        if(ImGui::Button(app.config->fullscreen
+                            ? (ICON_FK_WINDOW_RESTORE  "  Restore")
+                            : (ICON_FK_WINDOW_MAXIMIZE "  Fullscreen"),
                          ImVec2(100, 0)))
             app.toggleFullscreen();
         if(ImGui::Button(ICON_FK_EYE_SLASH "  Hide UI", ImVec2(100, 0)))
