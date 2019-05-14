@@ -17,11 +17,14 @@ void main()
 
     vec3 camPos = mul(u_invView, vec4(0.0, 0.0, 0.0, 1.0)).xyz;
 
-    // normal map is in tangent space
-    // convert to world space
+    // convert normal map from tangent space to model space
+    // GLSL mat3 constructor takes columns
     mat3 TBN = mat3(v_tangent, v_bitangent, v_normal);
-    mat3 invTBN = transpose(TBN);
-    vec3 normalOffset = mul(invTBN, mat.normal);
+#if !BGFX_SHADER_LANGUAGE_GLSL
+    TBN = transpose(TBN);
+#endif
+    vec3 normalOffset = mul(TBN, mat.normal);
+    normalOffset = mul(u_model[0], vec4(normalOffset, 0.0)).xyz;
 
     vec3 N = normalize(v_normal + normalOffset);
     vec3 V = normalize(camPos - v_worldpos);

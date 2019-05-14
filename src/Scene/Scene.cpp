@@ -114,8 +114,8 @@ bool Scene::load(const char* file)
 
             // bring opaque meshes to the front so alpha blending works
             // still need depth sorting for scenes with overlapping transparent meshes
-            std::sort(meshes.begin(), meshes.end(), [this](const Mesh& m1, const Mesh& m2) {
-                return !materials[m1.material].blend || materials[m2.material].blend;
+            std::partition(meshes.begin(), meshes.end(), [this](const Mesh& mesh) {
+                return !materials[mesh.material].blend;
             });
 
             if(scene->HasCameras())

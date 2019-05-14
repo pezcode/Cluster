@@ -112,9 +112,7 @@ void Renderer::shutdown()
 bool Renderer::supported()
 {
     const bgfx::Caps* caps = bgfx::getCaps();
-
-    // RGBA16F?
-    return (caps->formats[bgfx::TextureFormat::BGRA8] & BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER) != 0;
+    return (caps->formats[bgfx::TextureFormat::RGBA16F] & BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_MSAA) != 0;
 }
 
 void Renderer::blitToScreen(bgfx::ViewId view)

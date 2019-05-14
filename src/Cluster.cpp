@@ -59,7 +59,7 @@ void Cluster::initialize(int _argc, char* _argv[])
     // TODO remove sink during shutdown
 
     // TODO read from config
-    reset(/*BGFX_RESET_VSYNC | */ BGFX_RESET_MSAA_X16 | BGFX_RESET_MAXANISOTROPY);
+    reset(/*BGFX_RESET_VSYNC | */ BGFX_RESET_MAXANISOTROPY);
     //bgfx::setDebug(BGFX_DEBUG_TEXT);
 
     if(config->fullscreen)

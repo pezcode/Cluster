@@ -26,7 +26,8 @@ void Config::readArgv(int argc, char* argv[])
     // somehow this also makes it the only usable renderer
     // passing D3D11 as renderer will still use OpenGL with that define
 
-    //renderer = bgfx::RendererType::OpenGL;
+    // D3D9 doesn't seem to work, device gets lost
+    renderer = bgfx::RendererType::Direct3D11;
 
     showStatsOverlay = false;
     showLog = false;
