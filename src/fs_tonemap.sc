@@ -5,15 +5,15 @@ $input v_texcoord0
 #define SRGB_CONVERSION_FAST
 #include "tonemapping.sh"
 
+uniform vec4 u_exposureVec;
+#define u_exposure u_exposureVec.x
+
 SAMPLER2D(s_texColor, 0);
 
 void main()
 {
     vec4 result = texture2D(s_texColor, v_texcoord0);
-
-    // exposure
-    float exposure = 1.0;
-    result *= exposure;
+    result *= u_exposure;
 
     // tonemapping
     //result.rgb = tonemap_reinhard(result.rgb);

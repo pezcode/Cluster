@@ -12,7 +12,7 @@ PBRShader::PBRShader() :
 {
 }
 
-void PBRShader::init()
+void PBRShader::initialize()
 {
     baseColorFactorUniform = bgfx::createUniform("u_baseColorFactor", bgfx::UniformType::Vec4);
     metallicRoughnessFactorUniform = bgfx::createUniform("u_metallicRoughnessFactor", bgfx::UniformType::Vec4);

@@ -10,7 +10,7 @@ public:
 
     PBRShader();
 
-    void init();
+    void initialize();
     void shutdown();
 
     uint64_t bindMaterial(const Material& material);

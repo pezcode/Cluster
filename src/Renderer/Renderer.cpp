@@ -28,6 +28,7 @@ void Renderer::initialize()
     PosTexCoord0Vertex::init();
 
     blitSampler = bgfx::createUniform("s_texColor", bgfx::UniformType::Sampler);
+    exposureVecUniform = bgfx::createUniform("u_exposureVec", bgfx::UniformType::Vec4);
 
     // TODO use triangle covering screen (less fragment overdraw)
     float BOTTOM = -1.0f, TOP = 1.0f, LEFT = -1.0f, RIGHT = 1.0f;
@@ -51,7 +52,7 @@ void Renderer::initialize()
     bx::snprintf(fsName, BX_COUNTOF(fsName), "%s%s", shaderDir(), "fs_tonemap.bin");
     blitProgram = bigg::loadProgram(vsName, fsName);
 
-    pbr.init();
+    pbr.initialize();
 
     onInitialize();
 }
@@ -104,6 +105,7 @@ void Renderer::shutdown()
     pbr.shutdown();
     bgfx::destroy(blitProgram);
     bgfx::destroy(blitSampler);
+    bgfx::destroy(exposureVecUniform);
     bgfx::destroy(quadVB);
     if(bgfx::isValid(frameBuffer))
         bgfx::destroy(frameBuffer);
@@ -123,6 +125,8 @@ void Renderer::blitToScreen(bgfx::ViewId view)
     bgfx::setState(BGFX_STATE_WRITE_RGB);
     bgfx::TextureHandle frameBufferTexture = bgfx::getTexture(frameBuffer);
     bgfx::setTexture(0, blitSampler, frameBufferTexture);
+    float exposure[4] = { scene->loaded ? scene->camera.exposure : 1.0f, 0.0f, 0.0f, 0.0f };
+    bgfx::setUniform(exposureVecUniform, &exposure[0]);
     bgfx::setVertexBuffer(0, quadVB);
     bgfx::submit(view, blitProgram);
 }

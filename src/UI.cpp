@@ -1,6 +1,7 @@
 #include "UI.h"
 
 #include "Cluster.h"
+#include "Scene/Scene.h"
 #include "Config.h"
 #include "Renderer/Renderer.h"
 #include "Log/UISink.h"
@@ -101,6 +102,10 @@ void ClusterUI::update(float dt)
         ImGui::Begin("Settings", &app.config->showConfigWindow, ImGuiWindowFlags_AlwaysAutoResize);
 
         ImGui::SliderInt("Lights", &app.config->lights, 0, 1000);
+        // TODO? show f-stop
+        // higher f-stop = less(!) exposure
+        // what is max exposure?
+        ImGui::SliderFloat("Exposure", &app.scene->camera.exposure, 0.0f, 30.0f, "%.3f", 5.0f);
 
         // Render path radio buttons
         ImGui::Text("Render path:");

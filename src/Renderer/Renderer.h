@@ -82,5 +82,6 @@ private:
 
     bgfx::ProgramHandle blitProgram;
     bgfx::UniformHandle blitSampler;
+    bgfx::UniformHandle exposureVecUniform;
     bgfx::VertexBufferHandle quadVB;
 };
