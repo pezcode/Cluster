@@ -144,7 +144,7 @@ Mesh Scene::loadMesh(const aiMesh* mesh)
 
     // vertices
 
-    const bgfx::Memory* vMem = bgfx::alloc(mesh->mNumVertices * sizeof(Mesh::PosNormalTangentTex0Vertex));
+    const bgfx::Memory* vMem = bgfx::alloc(mesh->mNumVertices * Mesh::PosNormalTangentTex0Vertex::decl.getStride());
     Mesh::PosNormalTangentTex0Vertex* vertices = (Mesh::PosNormalTangentTex0Vertex*)vMem->data;
 
     for(unsigned int i = 0; i < mesh->mNumVertices; i++)
@@ -323,16 +323,15 @@ bgfx::TextureHandle Scene::loadTexture(const char* file)
         BX_FREE(&allocator, data);
 
         if(bgfx::isTextureValid(0, false, image->m_numLayers, (bgfx::TextureFormat::Enum)image->m_format, BGFX_TEXTURE_NONE))
-        if(true)
         {
             bgfx::TextureHandle tex = bgfx::createTexture2D((uint16_t)image->m_width,
                                                             (uint16_t)image->m_height,
                                                             image->m_numMips > 1,
                                                             image->m_numLayers,
                                                             (bgfx::TextureFormat::Enum)image->m_format,
-                                                            BGFX_TEXTURE_NONE,
+                                                            BGFX_TEXTURE_NONE | BGFX_SAMPLER_MIN_ANISOTROPIC | BGFX_SAMPLER_MAG_ANISOTROPIC,
                                                             mem);
-            //bgfx::setName(tex, file); // causes debug errors with DirectX SetPrivateProperty duplicate
+            bgfx::setName(tex, file); // causes debug errors with DirectX SetPrivateProperty duplicate
             return tex;
         }
         else

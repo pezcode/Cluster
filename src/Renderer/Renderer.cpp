@@ -5,17 +5,23 @@
 #include <bx/macros.h>
 #include <bx/string.h>
 #include <glm/common.hpp>
+#include <glm/gtx/component_wise.hpp>
+#include <glm/gtc/color_space.hpp>
 
 bgfx::VertexDecl Renderer::PosTexCoord0Vertex::decl;
 
 Renderer::Renderer(const Scene* scene) :
     scene(scene),
+    scale(1.0f),
     width(0),
     height(0),
+    clearColor(0),
     time(0.0f),
     frameBuffer(BGFX_INVALID_HANDLE),
     blitProgram(BGFX_INVALID_HANDLE),
-    blitSampler(BGFX_INVALID_HANDLE)
+    blitSampler(BGFX_INVALID_HANDLE),
+    exposureVecUniform(BGFX_INVALID_HANDLE),
+    sceneScaleVecUniform(BGFX_INVALID_HANDLE)
 {
 }
 
@@ -29,6 +35,7 @@ void Renderer::initialize()
 
     blitSampler = bgfx::createUniform("s_texColor", bgfx::UniformType::Sampler);
     exposureVecUniform = bgfx::createUniform("u_exposureVec", bgfx::UniformType::Vec4);
+    sceneScaleVecUniform = bgfx::createUniform("u_sceneScaleVec", bgfx::UniformType::Vec4);
 
     // TODO use triangle covering screen (less fragment overdraw)
     float BOTTOM = -1.0f, TOP = 1.0f, LEFT = -1.0f, RIGHT = 1.0f;
@@ -75,12 +82,20 @@ void Renderer::render(float dt)
 
     if(scene->loaded)
     {
-        // glm has packUnorm4x8 but it depends on endianness
-        glm::u8vec4 result = glm::round(glm::clamp(scene->skyColor, 0.0f, 1.0f) * 255.0f);
-        clearColor = (result[0] << 24) | (result[1] << 16) | (result[2] << 8) | result[0];
+        // scale scene down to camera far plane
+        scale = 1.0f / glm::compMax(glm::abs(scene->maxBounds - scene->minBounds)) / glm::sqrt(2.0f) * scene->camera.zFar;
+        float scaleVec[4] = { scale, 0.0f, 0.0f, 0.0f };
+        bgfx::setUniform(sceneScaleVecUniform, &scale);
+        // tonemapping expects linear colors
+        glm::vec3 linear = glm::convertSRGBToLinear(scene->skyColor);
+        glm::u8vec3 result = glm::round(glm::clamp(linear, 0.0f, 1.0f) * 255.0f);
+        clearColor = (result[0] << 24) | (result[1] << 16) | (result[2] << 8) | 255;
     }
     else
+    {
+        scale = 1.0f;
         clearColor = 0x303030FF;
+    }
 
     onRender(dt);
     blitToScreen(199);
@@ -94,6 +109,7 @@ void Renderer::shutdown()
     bgfx::destroy(blitProgram);
     bgfx::destroy(blitSampler);
     bgfx::destroy(exposureVecUniform);
+    bgfx::destroy(sceneScaleVecUniform);
     bgfx::destroy(quadVB);
     if(bgfx::isValid(frameBuffer))
         bgfx::destroy(frameBuffer);

@@ -5,9 +5,12 @@ Config::Config() :
     logFile("Cluster.log"),
     renderer(bgfx::RendererType::Count),
     renderPath(Cluster::Forward),
-    sceneFile("assets/models/Sponza/glTF/Sponza.gltf"), //("assets/models/duck/Duck.gltf"),
-    skyColor{ 0.53f, 0.81f, 0.98f }, // https://en.wikipedia.org/wiki/Sky_blue#Light_sky_blue
-    lights(0),
+    //sceneFile("assets/models/duck/Duck.gltf"),
+    sceneFile("assets/models/Sponza/glTF/Sponza.gltf"),
+    //skyColor{ 0.53f, 0.81f, 0.98f }, // https://en.wikipedia.org/wiki/Sky_blue#Light_sky_blue
+    //skyColor{ 0.1f, 0.1f, 0.44f }, // https://en.wikipedia.org/wiki/Midnight_blue#X11
+    skyColor{ 0.0f, 0.0f, 0.0f },
+    lights(1),
     fullscreen(false),
     showUI(true),
     showConfigWindow(true),

@@ -5,7 +5,6 @@
 #include <bx/string.h>
 #include <bx/math.h>
 #include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtx/component_wise.hpp>
 
 ForwardRenderer::ForwardRenderer(const Scene* scene) :
     Renderer(scene),
@@ -28,6 +27,8 @@ bool ForwardRenderer::supported()
 
 void ForwardRenderer::onInitialize()
 {
+    normalMatrixUniform = bgfx::createUniform("u_normalMatrix", bgfx::UniformType::Mat4);
+
     char vsName[128], fsName[128];
     bx::snprintf(vsName, BX_COUNTOF(vsName), "%s%s", shaderDir(), "vs_forward.bin");
     bx::snprintf(fsName, BX_COUNTOF(fsName), "%s%s", shaderDir(), "fs_forward.bin");
@@ -50,18 +51,25 @@ void ForwardRenderer::onRender(float dt)
 
     // view matrix
     glm::mat4 view = scene->camera.matrix();
-    // scale down to camera far plane
-    float size = glm::compMax(glm::abs(scene->maxBounds - scene->minBounds));
-    view = glm::scale(view, glm::vec3(1.0f / size * scene->camera.zFar));
-
     // projection matrix
     glm::mat4 proj;
     bx::mtxProj(&proj[0][0], scene->camera.fov, float(width) / height,
                 scene->camera.zNear, scene->camera.zFar, bgfx::getCaps()->homogeneousDepth);
+    
+    glm::mat4 scaleM = glm::scale(glm::mat4(), glm::vec3(scale));
+    view = scaleM * view;
     bgfx::setViewTransform(vDefault, &view[0][0], &proj[0][0]);
 
     for(const Mesh& mesh : scene->meshes)
     {
+        glm::mat4 model = glm::mat4();
+        bgfx::setTransform(&model[0][0]);
+        glm::mat4 modelView = view * model;
+        // if we don't do non-uniform scaling, the normal matrix is the same as the model-view matrix
+        //glm::mat4 normalMatrix = glm::transpose(glm::inverse(modelView));
+        glm::mat4 normalMatrix = modelView;
+        bgfx::setUniform(normalMatrixUniform, &normalMatrix[0][0]);
+        
         bgfx::setVertexBuffer(0, mesh.vertexBuffer);
         bgfx::setIndexBuffer(mesh.indexBuffer);
         const Material& mat = scene->materials[mesh.material];
@@ -74,5 +82,6 @@ void ForwardRenderer::onRender(float dt)
 
 void ForwardRenderer::onShutdown()
 {
+    bgfx::destroy(normalMatrixUniform);
     bgfx::destroy(program);
 }

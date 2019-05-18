@@ -5,6 +5,8 @@ SAMPLER2D(s_texBaseColor, 0);
 SAMPLER2D(s_texMetallicRoughness, 1);
 SAMPLER2D(s_texNormal, 2);
 
+#define PBR_SAMPLER_END 2
+
 uniform vec4 u_baseColorFactor;
 uniform vec4 u_metallicRoughnessFactor;
 uniform vec4 u_hasTextures;

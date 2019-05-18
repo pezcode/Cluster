@@ -81,8 +81,8 @@ void Cluster::initialize(int _argc, char* _argv[])
     // TODO multithreaded
     if(scene->load(config->sceneFile))
     {
-        scene->skyColor = glm::vec4(glm::make_vec3(&config->skyColor[0]), 1.0f);
-        scene->ambientLight = { { 0.0f, -1.0f, 0.0f }, { 1.0f, 0.0f, 0.0f, 0.0f } }; // red sun straight up
+        scene->skyColor = glm::make_vec3(&config->skyColor[0]);
+        scene->ambientLight = { glm::vec3(0.04f, 0.04f, 0.04f) };
     }
     else
     {
@@ -168,7 +168,7 @@ void Cluster::update(float dt)
 {
     //deltaTime = dt;
 
-    constexpr float velocity = 1.0f; // m/s
+    constexpr float velocity = 3.0f; // m/s
     if(keys[GLFW_KEY_W])
         scene->camera.move(scene->camera.forward() * velocity * dt);
     if(keys[GLFW_KEY_A])
