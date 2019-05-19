@@ -17,6 +17,7 @@ void main()
 
     // tonemapping
     //result.rgb = tonemap_reinhard(result.rgb);
+    //result.rgb = tonemap_reinhard_luminance(result.rgb);
     //result.rgb = tonemap_hable(result.rgb);
     result.rgb = tonemap_duiker(result.rgb);
     //result.rgb = tonemap_aces(result.rgb);

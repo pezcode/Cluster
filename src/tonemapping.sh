@@ -7,7 +7,7 @@ vec3 LinearTosRGB(vec3 linearRGB)
 #ifdef SRGB_CONVERSION_FAST
 	return pow(linearRGB, vec3_splat(1.0/2.2));
 #else
-    vec3 cutoff = step(sRGB, vec3_splat(0.0031308));
+    vec3 cutoff = step(linearRGB, vec3_splat(0.0031308));
     vec3 higher = 1.055 * pow(linearRGB, vec3_splat(1.0/2.4)) - 0.055;
     vec3 lower = linearRGB * 12.92;
     return mix(higher, lower, cutoff);
@@ -27,19 +27,35 @@ vec3 sRGBToLinear(vec3 sRGB)
 #endif
 }
 
+// relative luminance of linear RGB(!)
+// BT.709 primaries
+float luminance(vec3 RGB)
+{
+    return 0.2126 * RGB.r + 0.7152 * RGB.g + 0.0722 * RGB.b;
+}
+
 // Reinhard, Hable, Duiken taken from:
 // http://filmicworlds.com/blog/filmic-tonemapping-operators/
 
 // Reinhard et al
 // http://www.cs.utah.edu/~reinhard/cdrom/tonemap.pdf
 // simple version, desaturates colors
-// the correct way to use it would be to apply it to luminance only
-// that however creates undesirable whites
-// see https://imdoingitwrong.wordpress.com/2010/08/19/why-reinhard-desaturates-my-blacks-3/
 
 vec3 tonemap_reinhard(vec3 color)
 {
 	return color / (color + 1.0);
+}
+
+// Reinhard, luminance only
+// possibly creates undesirable whites
+// one alternative is to define a pure white point (ideally max luminance in the scene)
+// see original paper and https://imdoingitwrong.wordpress.com/2010/08/19/why-reinhard-desaturates-my-blacks-3/
+
+vec3 tonemap_reinhard_luminance(vec3 color)
+{
+    float lum = luminance(color);
+	float nLum =  lum / (lum + 1.0);
+    return color * (nLum / lum);
 }
 
 // Uncharted 2 filmic operator
