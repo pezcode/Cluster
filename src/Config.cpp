@@ -5,11 +5,9 @@ Config::Config() :
     logFile("Cluster.log"),
     renderer(bgfx::RendererType::Count),
     renderPath(Cluster::Forward),
+    vsync(false),
     //sceneFile("assets/models/duck/Duck.gltf"),
     sceneFile("assets/models/Sponza/glTF/Sponza.gltf"),
-    //skyColor{ 0.53f, 0.81f, 0.98f }, // https://en.wikipedia.org/wiki/Sky_blue#Light_sky_blue
-    //skyColor{ 0.1f, 0.1f, 0.44f }, // https://en.wikipedia.org/wiki/Midnight_blue#X11
-    skyColor{ 0.0f, 0.0f, 0.0f },
     lights(1),
     fullscreen(false),
     showUI(true),
@@ -29,7 +27,12 @@ void Config::readArgv(int argc, char* argv[])
     // somehow this also makes it the only usable renderer
     // passing D3D11 as renderer will still use OpenGL with that define
 
-    // D3D9 doesn't seem to work, device gets lost
+    // DX 9.0c (shader model 3.0) doesn't allow indexing into the light buffer
+    // so shaders for DX9 aren't even compiled anymore
+
+    // DX11, DX12, OpenGL all work
+    // Vulkan doesn't support framebuffer textures
+
     renderer = bgfx::RendererType::Direct3D11;
 
     showStatsOverlay = false;

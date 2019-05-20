@@ -4,9 +4,11 @@
 #include <bigg.hpp>
 #include <bx/macros.h>
 #include <bx/string.h>
+#include <bx/math.h>
 #include <glm/common.hpp>
 #include <glm/gtx/component_wise.hpp>
 #include <glm/gtc/color_space.hpp>
+#include <glm/gtc/matrix_transform.hpp>
 
 bgfx::VertexDecl Renderer::PosTexCoord0Vertex::decl;
 
@@ -20,6 +22,7 @@ Renderer::Renderer(const Scene* scene) :
     frameBuffer(BGFX_INVALID_HANDLE),
     blitProgram(BGFX_INVALID_HANDLE),
     blitSampler(BGFX_INVALID_HANDLE),
+    normalMatrixUniform(BGFX_INVALID_HANDLE),
     exposureVecUniform(BGFX_INVALID_HANDLE),
     sceneScaleVecUniform(BGFX_INVALID_HANDLE)
 {
@@ -34,6 +37,7 @@ void Renderer::initialize()
     PosTexCoord0Vertex::init();
 
     blitSampler = bgfx::createUniform("s_texColor", bgfx::UniformType::Sampler);
+    normalMatrixUniform = bgfx::createUniform("u_normalMatrix", bgfx::UniformType::Mat3);
     exposureVecUniform = bgfx::createUniform("u_exposureVec", bgfx::UniformType::Vec4);
     sceneScaleVecUniform = bgfx::createUniform("u_sceneScaleVec", bgfx::UniformType::Vec4);
 
@@ -60,6 +64,7 @@ void Renderer::initialize()
     blitProgram = bigg::loadProgram(vsName, fsName);
 
     pbr.initialize();
+    lights.initialize();
 
     onInitialize();
 }
@@ -106,19 +111,54 @@ void Renderer::shutdown()
     onShutdown();
 
     pbr.shutdown();
+    lights.shutdown();
+
     bgfx::destroy(blitProgram);
     bgfx::destroy(blitSampler);
+    bgfx::destroy(normalMatrixUniform);
     bgfx::destroy(exposureVecUniform);
     bgfx::destroy(sceneScaleVecUniform);
     bgfx::destroy(quadVB);
     if(bgfx::isValid(frameBuffer))
         bgfx::destroy(frameBuffer);
+
+    blitProgram = BGFX_INVALID_HANDLE;
+    blitSampler = normalMatrixUniform = exposureVecUniform = sceneScaleVecUniform = BGFX_INVALID_HANDLE;
+    quadVB = BGFX_INVALID_HANDLE;
+    frameBuffer = BGFX_INVALID_HANDLE;
 }
 
 bool Renderer::supported()
 {
     const bgfx::Caps* caps = bgfx::getCaps();
     return (caps->formats[bgfx::TextureFormat::RGBA16F] & BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_MSAA) != 0;
+}
+
+void Renderer::setViewProjection(bgfx::ViewId view)
+{
+    // view matrix
+    viewMat = scene->camera.matrix();
+    // projection matrix
+    bx::mtxProj(&projMat[0][0],
+                scene->camera.fov,
+                float(width) / height,
+                scene->camera.zNear,
+                scene->camera.zFar,
+                bgfx::getCaps()->homogeneousDepth);
+
+    glm::mat4 scaleMat = glm::scale(glm::mat4(), glm::vec3(scale));
+    viewMat = scaleMat * viewMat;
+    bgfx::setViewTransform(view, &viewMat[0][0], &projMat[0][0]);
+}
+
+void Renderer::setNormalMatrix(const glm::mat4& modelMat)
+{
+    glm::mat4 modelViewMat = viewMat * modelMat;
+    // if we don't do non-uniform scaling, the normal matrix is the same as the model-view matrix
+    // it's enough to calculate the adjugate instead of the inverse, it always exists (requires GLM 0.9.9.3)
+    //glm::mat3 normalMat = glm::transpose(glm::inverse(glm::mat3(modelViewMat)));
+    glm::mat3 normalMat = modelViewMat;
+    bgfx::setUniform(normalMatrixUniform, &normalMat[0][0]);
 }
 
 void Renderer::blitToScreen(bgfx::ViewId view)
@@ -199,6 +239,7 @@ const char* Renderer::shaderDir()
             path = "shaders/essl/";
             break;
         case bgfx::RendererType::Vulkan:
+            path = "shaders/spirv/";
             break;
         case bgfx::RendererType::Count:
             break;

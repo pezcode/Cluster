@@ -1,3 +1,6 @@
+#ifndef TONEMAPPING_SH_HEADER_GUARD
+#define TONEMAPPING_SH_HEADER_GUARD
+
 // Taken from
 // https://gamedev.stackexchange.com/a/148088/45850
 
@@ -144,3 +147,5 @@ vec3 tonemap_aces_luminance(vec3 color)
 	vec3 x = color * 0.6;
 	return clamp((x * (a * x + b)) / (x * (c * x + d ) + e), 0.0, 1.0);
 }
+
+#endif // TONEMAPPING_SH_HEADER_GUARD

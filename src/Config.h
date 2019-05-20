@@ -18,10 +18,11 @@ public:
     bgfx::RendererType::Enum renderer; // not exposed to UI
     Cluster::RenderPath renderPath;
 
+    bool vsync; // not exposed to UI
+
     // Scene
 
     const char* sceneFile; // not exposed to UI
-    float skyColor[3]; // RGB, not exposed to UI
     int lights;
 
     // UI

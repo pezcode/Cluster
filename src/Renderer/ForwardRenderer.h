@@ -16,5 +16,4 @@ public:
 
 private:
     bgfx::ProgramHandle program;
-    bgfx::UniformHandle normalMatrixUniform;
 };

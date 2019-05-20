@@ -3,8 +3,7 @@
 #include "Scene/Scene.h"
 #include <bigg.hpp>
 #include <bx/string.h>
-#include <bx/math.h>
-#include <glm/gtc/matrix_transform.hpp>
+#include <glm/matrix.hpp>
 
 ForwardRenderer::ForwardRenderer(const Scene* scene) :
     Renderer(scene),
@@ -27,8 +26,6 @@ bool ForwardRenderer::supported()
 
 void ForwardRenderer::onInitialize()
 {
-    normalMatrixUniform = bgfx::createUniform("u_normalMatrix", bgfx::UniformType::Mat4);
-
     char vsName[128], fsName[128];
     bx::snprintf(vsName, BX_COUNTOF(vsName), "%s%s", shaderDir(), "vs_forward.bin");
     bx::snprintf(fsName, BX_COUNTOF(fsName), "%s%s", shaderDir(), "fs_forward.bin");
@@ -49,39 +46,28 @@ void ForwardRenderer::onRender(float dt)
     if(!scene->loaded)
         return;
 
-    // view matrix
-    glm::mat4 view = scene->camera.matrix();
-    // projection matrix
-    glm::mat4 proj;
-    bx::mtxProj(&proj[0][0], scene->camera.fov, float(width) / height,
-                scene->camera.zNear, scene->camera.zFar, bgfx::getCaps()->homogeneousDepth);
+    setViewProjection(vDefault);
+
+    uint64_t state = BGFX_STATE_DEFAULT & ~BGFX_STATE_CULL_MASK;
     
-    glm::mat4 scaleM = glm::scale(glm::mat4(), glm::vec3(scale));
-    view = scaleM * view;
-    bgfx::setViewTransform(vDefault, &view[0][0], &proj[0][0]);
 
     for(const Mesh& mesh : scene->meshes)
     {
         glm::mat4 model = glm::mat4();
         bgfx::setTransform(&model[0][0]);
-        glm::mat4 modelView = view * model;
-        // if we don't do non-uniform scaling, the normal matrix is the same as the model-view matrix
-        //glm::mat4 normalMatrix = glm::transpose(glm::inverse(modelView));
-        glm::mat4 normalMatrix = modelView;
-        bgfx::setUniform(normalMatrixUniform, &normalMatrix[0][0]);
-        
+        setNormalMatrix(model);
         bgfx::setVertexBuffer(0, mesh.vertexBuffer);
         bgfx::setIndexBuffer(mesh.indexBuffer);
         const Material& mat = scene->materials[mesh.material];
         uint64_t materialState = pbr.bindMaterial(mat);
-        uint64_t state = BGFX_STATE_DEFAULT & ~BGFX_STATE_CULL_MASK;
-        bgfx::setState(state | materialState);
+        uint64_t lightState = lights.bindLights();
+        bgfx::setState(state | lightState | materialState);
         bgfx::submit(vDefault, program);
     }
 }
 
 void ForwardRenderer::onShutdown()
 {
-    bgfx::destroy(normalMatrixUniform);
     bgfx::destroy(program);
+    program = BGFX_INVALID_HANDLE;
 }

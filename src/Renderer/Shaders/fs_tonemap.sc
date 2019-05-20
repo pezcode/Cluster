@@ -13,7 +13,7 @@ SAMPLER2D(s_texColor, 0);
 void main()
 {
     vec4 result = texture2D(s_texColor, v_texcoord0);
-    result *= u_exposure;
+    result.rgb *= u_exposure;
 
     // tonemapping
     //result.rgb = tonemap_reinhard(result.rgb);

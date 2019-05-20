@@ -102,7 +102,7 @@ void ClusterUI::update(float dt)
         ImGui::Begin("Settings", &app.config->showConfigWindow, ImGuiWindowFlags_AlwaysAutoResize);
 
         ImGui::SliderInt("Lights", &app.config->lights, 0, 500);
-        app.createLights(app.config->lights);
+        //app.createLights(app.config->lights);
         // TODO? show f-stop
         // higher f-stop = less(!) exposure
         // what is max exposure?

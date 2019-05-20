@@ -1,3 +1,6 @@
+#ifndef PBR_SH_HEADER_GUARD
+#define PBR_SH_HEADER_GUARD
+
 #define SRGB_CONVERSION_FAST
 #include "tonemapping.sh"
 
@@ -49,8 +52,9 @@ vec3 pbrNormal(vec2 texcoord)
     }
     else
     {
-        // should this be something else to match null vector in tangent space?
-        return vec3_splat(0.0);
+        // the up vector (w) in tangent space is the default normal
+        // that's why normal maps are mostly blue
+        return vec3(0.0, 0.0, 1.0);
     }
 }
 
@@ -160,3 +164,5 @@ vec3 BRDF(vec3 v, vec3 l, vec3 n, PBRMaterial mat)
     vec3 kD = (1.0 - F) * (1.0 - mat.metallic);
     return kD * Fd + Fr;
 }
+
+#endif // PBR_SH_HEADER_GUARD

@@ -1,14 +1,15 @@
 #pragma once
 
 #include <bgfx/bgfx.h>
-#include "PBRShader.h"
+#include "Renderer/PBRShader.h"
+#include "Renderer/LightShader.h"
+#include <glm/matrix.hpp>
 
 class Scene;
 
 class Renderer
 {
 public:
-
     Renderer(const Scene* scene);
     virtual ~Renderer();
 
@@ -23,7 +24,7 @@ public:
 
     // the first reset happens before initialize
     virtual void onInitialize() {}
-    // window resize/flags changed (MSAA, VSYNC, ...)
+    // window resize/flags changed (MSAA, V-Sync, ...)
     virtual void onReset() {}
     virtual void onRender(float dt) = 0;
     virtual void onShutdown() {}
@@ -43,7 +44,6 @@ public:
     bgfx::FrameBufferHandle frameBuffer;
 
 protected:
-
     struct PosTexCoord0Vertex
     {
         float x;
@@ -66,6 +66,9 @@ protected:
 
     static constexpr bgfx::ViewId MAX_VIEW = 199; // imgui in bigg uses view 200
 
+    void setViewProjection(bgfx::ViewId view);
+    void setNormalMatrix(const glm::mat4& modelMat);
+
     void blitToScreen(bgfx::ViewId view = MAX_VIEW);
 
     static bgfx::FrameBufferHandle createFrameBuffer(bool hdr = true, bool depth = true);
@@ -78,14 +81,18 @@ protected:
     uint16_t height;
 
     PBRShader pbr;
+    LightShader lights;
 
     uint32_t clearColor;
     float time;
 
 private:
+    glm::mat4 viewMat;
+    glm::mat4 projMat;
 
     bgfx::ProgramHandle blitProgram;
     bgfx::UniformHandle blitSampler;
+    bgfx::UniformHandle normalMatrixUniform;
     bgfx::UniformHandle exposureVecUniform;
     bgfx::UniformHandle sceneScaleVecUniform;
     bgfx::VertexBufferHandle quadVB;

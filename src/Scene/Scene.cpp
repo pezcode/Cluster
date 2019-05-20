@@ -17,7 +17,11 @@
 bx::DefaultAllocator Scene::allocator;
 
 Scene::Scene() :
-    loaded(false)
+    loaded(false),
+    //skyColor({ 0.53f, 0.81f, 0.98f }), // https://en.wikipedia.org/wiki/Sky_blue#Light_sky_blue
+    //skyColor({ 0.1f, 0.1f, 0.44f }),   // https://en.wikipedia.org/wiki/Midnight_blue#X11
+    skyColor({ 0.0f, 0.0f, 0.0f }),
+    ambientLight({ { 0.02f, 0.02f, 0.02f } })
 {
     Assimp::DefaultLogger::set(&logSource);
 }
@@ -28,9 +32,7 @@ Scene::~Scene()
 
 void Scene::init()
 {
-    std::call_once(Mesh::PosNormalTangentTex0Vertex::initFlag, []() {
-        Mesh::PosNormalTangentTex0Vertex::init();
-    });
+    Mesh::PosNormalTangentTex0Vertex::init();
 }
 
 void Scene::clear()
@@ -144,7 +146,7 @@ Mesh Scene::loadMesh(const aiMesh* mesh)
 
     // vertices
 
-    const bgfx::Memory* vMem = bgfx::alloc(mesh->mNumVertices * Mesh::PosNormalTangentTex0Vertex::decl.getStride());
+    const bgfx::Memory* vMem = bgfx::alloc(mesh->mNumVertices * sizeof(Mesh::PosNormalTangentTex0Vertex));
     Mesh::PosNormalTangentTex0Vertex* vertices = (Mesh::PosNormalTangentTex0Vertex*)vMem->data;
 
     for(unsigned int i = 0; i < mesh->mNumVertices; i++)

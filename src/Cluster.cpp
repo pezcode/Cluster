@@ -60,9 +60,10 @@ void Cluster::initialize(int _argc, char* _argv[])
     spdlog::flush_every(std::chrono::seconds(2));
     // TODO remove sink during shutdown
 
-    // TODO read from config
-    reset(/*BGFX_RESET_VSYNC | */ BGFX_RESET_MAXANISOTROPY);
-    //bgfx::setDebug(BGFX_DEBUG_TEXT);
+    uint32_t resetFlags = BGFX_RESET_MAXANISOTROPY;
+    if(config->vsync)
+        resetFlags |= BGFX_RESET_VSYNC;
+    reset(resetFlags);
 
     if(config->fullscreen)
         toggleFullscreen();
@@ -79,14 +80,11 @@ void Cluster::initialize(int _argc, char* _argv[])
 
     Scene::init();
     // TODO multithreaded
-    if(scene->load(config->sceneFile))
+    // textures still have to be loaded from main thread
+    // keep list and load one texture every X frames
+    if(!scene->load(config->sceneFile))
     {
-        scene->skyColor = glm::make_vec3(&config->skyColor[0]);
-        scene->ambientLight = { glm::vec3(0.04f, 0.04f, 0.04f) };
-    }
-    else
-    {
-        Log->error("Loading model failed");
+        Log->error("Loading scene model failed");
         close();
         return;
     }
@@ -293,24 +291,6 @@ void Cluster::toggleFullscreen()
             glfwSetWindowMonitor(window, monitor, 0, 0, mode->width, mode->height, mode->refreshRate);
             config->fullscreen = true;
         }
-    }
-}
-
-void Cluster::createLights(unsigned int num)
-{
-    size_t curNum = scene->pointLights.size();
-    if(num < curNum)
-    {
-        scene->pointLights.resize(num);
-    }
-    else if(num > curNum)
-    {
-        std::generate_n(std::back_inserter(scene->pointLights), num - curNum, []() -> PointLight {
-            return {
-                glm::linearRand(glm::vec3(0.0f), glm::vec3(2.0f)),
-                glm::vec4(glm::linearRand(glm::vec3(0.0f), glm::vec3(1.0f)), 1.0f)
-            };
-        });
     }
 }
 

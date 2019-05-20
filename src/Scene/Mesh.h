@@ -1,7 +1,6 @@
 #pragma once
 
 #include <bgfx/bgfx.h>
-#include <mutex>
 
 struct Mesh
 {
@@ -30,6 +29,5 @@ struct Mesh
                 .end();
         }
         static bgfx::VertexDecl decl;
-        static std::once_flag initFlag;
     };
 };

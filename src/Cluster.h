@@ -36,8 +36,6 @@ public:
     void close();
     void toggleFullscreen();
 
-    void createLights(unsigned int num);
-
     enum RenderPath : int
     {
         Forward,
