@@ -11,6 +11,7 @@
 #include <bx/string.h>
 #include <bimg/bimg.h>
 #include <glm/gtc/type_ptr.hpp>
+#include <glm/gtx/component_wise.hpp>
 #include <glm/gtc/random.hpp>
 #include <spdlog/sinks/basic_file_sink.h>
 #include <thread>
@@ -49,11 +50,33 @@ int Cluster::run(int argc, char* argv[])
 
 void Cluster::initialize(int _argc, char* _argv[])
 {
-    // is _mt (thread safe) necessary?
-    spdlog::sink_ptr fileSink = std::make_shared<spdlog::sinks::basic_file_sink_mt>(config->logFile, true);
-    fileSink->set_level(spdlog::level::trace);
-    fileSink->set_pattern("[%H:%M:%S][%l] %v");
-    Sinks->add_sink(fileSink);
+    if(!ForwardRenderer::supported())
+    {
+        Log->error("Forward renderer not supported on this hardware");
+        close();
+        return;
+    }
+    if(!DeferredRenderer::supported())
+    {
+        Log->error("Deferred renderer not supported on this hardware");
+        close();
+        return;
+    }
+    if(!ClusteredRenderer::supported())
+    {
+        Log->error("Clustered renderer not supported on this hardware");
+        close();
+        return;
+    }
+
+    if(config->writeLog)
+    {
+        // is _mt (thread safe) necessary?
+        spdlog::sink_ptr fileSink = std::make_shared<spdlog::sinks::basic_file_sink_mt>(config->logFile, true);
+        fileSink->set_level(spdlog::level::trace);
+        fileSink->set_pattern("[%H:%M:%S][%l] %v");
+        Sinks->add_sink(fileSink);
+    }
 
     Log->flush_on(spdlog::level::info);
     Log->set_level(spdlog::level::trace);
@@ -71,13 +94,6 @@ void Cluster::initialize(int _argc, char* _argv[])
     renderer->initialize();
     ui->initialize();
 
-    if(!ForwardRenderer::supported())
-        Log->warn("Forward renderer not supported on this hardware");
-    if(!DeferredRenderer::supported())
-        Log->warn("Deferred renderer not supported on this hardware");
-    if(!ClusteredRenderer::supported())
-        Log->warn("Clustered renderer not supported on this hardware");
-
     Scene::init();
     // TODO multithreaded
     // textures still have to be loaded from main thread
@@ -88,6 +104,17 @@ void Cluster::initialize(int _argc, char* _argv[])
         close();
         return;
     }
+
+    /*
+    scene->pointLights.lights = {
+        // pos, flux (color)
+        { { -5.0f, 1.1f, 0.0f }, { 1.0f, 0.0f, 1.0f } },
+        { {  0.0f, 1.1f, 0.0f }, { 0.0f, 1.0f, 1.0f } },
+        { {  5.0f, 1.1f, 0.0f }, { 1.0f, 1.0f, 0.0f } }
+    };
+    scene->pointLights.update();
+    */
+    generateLights(config->lights);
 }
 
 void Cluster::onReset()
@@ -357,4 +384,27 @@ void Cluster::saveFrameBuffer(bgfx::FrameBufferHandle frameBuffer, const char* n
             saveFrame = bgfx::readTexture(texture, saveData);
         }
     }
+}
+
+void Cluster::generateLights(unsigned int count)
+{
+    // TODO normalize flux
+
+    auto& lights = scene->pointLights.lights;
+
+    size_t keep = lights.size();
+    if(count < keep)
+        keep = count;
+
+    lights.resize(count);
+
+    glm::vec3 scale = glm::abs(scene->maxBounds - scene->minBounds);
+    
+    for(size_t i = keep; i < count; i++)
+    {
+        lights[i].position = glm::linearRand(-scale * glm::vec3(0.5f, 0.0f, 0.5f), glm::vec3(scale * 0.5f));
+        lights[i].flux = glm::linearRand(glm::vec3(0.001f), glm::vec3(0.003f));
+    }
+
+    scene->pointLights.update();
 }

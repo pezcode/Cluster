@@ -17,6 +17,7 @@ struct DirectionalLight
 
 struct SpotLight
 {
+    glm::vec3 position;
     glm::vec3 direction;
     float angle; // full angle in degrees
     glm::vec3 flux; // RGB

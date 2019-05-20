@@ -1,19 +1,49 @@
 #pragma once
 
 #include "Scene/Light.h"
-
+#include <bgfx/bgfx.h>
 #include <vector>
+#include <memory>
 
-template<typename T>
-class LightList
+struct LightList
 {
-public:
+    struct Vec3Vertex
+    {
+        float x;
+        float y;
+        float z;
+        // we only need 3 floats but the buffer values end up in funny ways when using 3
+        // not sure if this is a problem with padding/stride on the CPU or if buffers need to be padded to vec4
+        float padding;
 
-    void resize(size_t size);
-
-    std::vector<T> lights;
+        static void init()
+        {
+            decl.begin()
+                .add(bgfx::Attrib::Position, 3, bgfx::AttribType::Float)
+                .skip(sizeof(float))
+                .end();
+        }
+        static bgfx::VertexDecl decl;
+    };
 };
 
-// structures for GPU?
-// cull on CPU?
-//  new class
+class PointLightList : public LightList
+{
+public:
+    PointLightList();
+
+    std::vector<PointLight> lights;
+
+    void init();
+    void shutdown();
+
+    // upload changes to GPU
+    void update();
+
+    bgfx::DynamicVertexBufferHandle positionBuffer;
+    bgfx::DynamicVertexBufferHandle fluxBuffer;
+
+private:
+    std::unique_ptr<Vec3Vertex[]> position;
+    std::unique_ptr<Vec3Vertex[]> flux;
+};

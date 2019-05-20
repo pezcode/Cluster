@@ -101,12 +101,19 @@ void ClusterUI::update(float dt)
     {
         ImGui::Begin("Settings", &app.config->showConfigWindow, ImGuiWindowFlags_AlwaysAutoResize);
 
-        ImGui::SliderInt("Lights", &app.config->lights, 0, 500);
-        //app.createLights(app.config->lights);
+        ImGui::DragInt("No. of lights", &app.config->lights, 1.0f, 0, app.config->maxLights);
+        ImGui::Checkbox("Moving lights", &app.config->movingLights);
+        if(ImGui::Button(ICON_FK_ARROW_RIGHT "  Apply", { 0, 0 }))
+            app.generateLights(app.config->lights);
+
+        ImGui::Separator();
+
         // TODO? show f-stop
         // higher f-stop = less(!) exposure
         // what is max exposure?
         ImGui::SliderFloat("Exposure", &app.scene->camera.exposure, 0.0f, 30.0f, "%.3f", 5.0f);
+
+        ImGui::Separator();
 
         // Render path radio buttons
         ImGui::Text("Render path:");

@@ -9,6 +9,7 @@
 #include <glm/gtx/component_wise.hpp>
 #include <glm/gtc/color_space.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
 
 bgfx::VertexDecl Renderer::PosTexCoord0Vertex::decl;
 
@@ -139,7 +140,7 @@ void Renderer::setViewProjection(bgfx::ViewId view)
     // view matrix
     viewMat = scene->camera.matrix();
     // projection matrix
-    bx::mtxProj(&projMat[0][0],
+    bx::mtxProj(glm::value_ptr(projMat),
                 scene->camera.fov,
                 float(width) / height,
                 scene->camera.zNear,
@@ -148,7 +149,7 @@ void Renderer::setViewProjection(bgfx::ViewId view)
 
     glm::mat4 scaleMat = glm::scale(glm::mat4(), glm::vec3(scale));
     viewMat = scaleMat * viewMat;
-    bgfx::setViewTransform(view, &viewMat[0][0], &projMat[0][0]);
+    bgfx::setViewTransform(view, glm::value_ptr(viewMat), glm::value_ptr(projMat));
 }
 
 void Renderer::setNormalMatrix(const glm::mat4& modelMat)
@@ -158,7 +159,7 @@ void Renderer::setNormalMatrix(const glm::mat4& modelMat)
     // it's enough to calculate the adjugate instead of the inverse, it always exists (requires GLM 0.9.9.3)
     //glm::mat3 normalMat = glm::transpose(glm::inverse(glm::mat3(modelViewMat)));
     glm::mat3 normalMat = modelViewMat;
-    bgfx::setUniform(normalMatrixUniform, &normalMat[0][0]);
+    bgfx::setUniform(normalMatrixUniform, glm::value_ptr(normalMat));
 }
 
 void Renderer::blitToScreen(bgfx::ViewId view)
@@ -170,7 +171,7 @@ void Renderer::blitToScreen(bgfx::ViewId view)
     bgfx::setState(BGFX_STATE_WRITE_RGB);
     bgfx::TextureHandle frameBufferTexture = bgfx::getTexture(frameBuffer);
     bgfx::setTexture(0, blitSampler, frameBufferTexture);
-    float exposure[4] = { scene->loaded ? scene->camera.exposure : 1.0f, 0.0f, 0.0f, 0.0f };
+    float exposure[4] = { scene->loaded ? scene->camera.exposure : 1.0f };
     bgfx::setUniform(exposureVecUniform, &exposure[0]);
     bgfx::setVertexBuffer(0, quadVB);
     bgfx::submit(view, blitProgram);

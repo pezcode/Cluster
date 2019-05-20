@@ -35,9 +35,7 @@ public:
 
     // sky color and lights are not populated by load
     glm::vec3 skyColor;
-    AmbientLight ambientLight;
-    //std::vector<PointLight> pointLights;
-    //LightList<>
+    PointLightList pointLights;
 
 private:
 

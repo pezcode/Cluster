@@ -20,8 +20,7 @@ Scene::Scene() :
     loaded(false),
     //skyColor({ 0.53f, 0.81f, 0.98f }), // https://en.wikipedia.org/wiki/Sky_blue#Light_sky_blue
     //skyColor({ 0.1f, 0.1f, 0.44f }),   // https://en.wikipedia.org/wiki/Midnight_blue#X11
-    skyColor({ 0.0f, 0.0f, 0.0f }),
-    ambientLight({ { 0.02f, 0.02f, 0.02f } })
+    skyColor({ 0.0f, 0.0f, 0.0f })
 {
     Assimp::DefaultLogger::set(&logSource);
 }
@@ -33,6 +32,7 @@ Scene::~Scene()
 void Scene::init()
 {
     Mesh::PosNormalTangentTex0Vertex::init();
+    LightList::Vec3Vertex::init();
 }
 
 void Scene::clear()
@@ -56,6 +56,8 @@ void Scene::clear()
                 bgfx::destroy(mat.normalTexture);
         }
         materials.clear();
+        pointLights.shutdown();
+        pointLights.lights.clear();
     }
     loaded = false;
 }
@@ -63,6 +65,8 @@ void Scene::clear()
 bool Scene::load(const char* file)
 {
     clear();
+
+    pointLights.init();
 
     Assimp::Importer importer;
     // only take triangles or higher (polygons are triangulated during import)

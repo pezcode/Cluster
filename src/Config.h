@@ -8,6 +8,8 @@ class Config
 public:
     Config();
 
+    void readArgv(int argc, char* argv[]);
+
     // Log
 
     bool writeLog; // not exposed to UI
@@ -24,6 +26,8 @@ public:
 
     const char* sceneFile; // not exposed to UI
     int lights;
+    int maxLights; // not exposed to UI
+    bool movingLights;
 
     // UI
 
@@ -31,6 +35,7 @@ public:
     bool showUI;
     bool showConfigWindow;
     bool showLog;
+
     bool showStatsOverlay;
     struct
     {
@@ -38,7 +43,6 @@ public:
         bool frameTime;
         bool gpuMemory;
     } overlays;
-    bool showBuffers;
 
-    void readArgv(int argc, char* argv[]);
+    bool showBuffers;
 };

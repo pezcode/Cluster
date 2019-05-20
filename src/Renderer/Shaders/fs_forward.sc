@@ -29,7 +29,7 @@ void main()
     // normal map
 
     vec3 normal = v_normal;
-    //if(length(mat.normal) != 0.0)
+    if(u_hasNormalTexture)
     {
         // convert normal map from tangent space -> eye space (= space of v_tangent, etc.)
         mat3 TBN = mtx3FromCols(

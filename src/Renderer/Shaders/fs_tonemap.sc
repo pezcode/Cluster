@@ -16,6 +16,7 @@ void main()
     result.rgb *= u_exposure;
 
     // tonemapping
+    //result.rgb = tonemap_exponential(result.rgb);
     //result.rgb = tonemap_reinhard(result.rgb);
     //result.rgb = tonemap_reinhard_luminance(result.rgb);
     //result.rgb = tonemap_hable(result.rgb);

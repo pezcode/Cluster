@@ -4,6 +4,7 @@
 #include <bigg.hpp>
 #include <bx/string.h>
 #include <glm/matrix.hpp>
+#include <glm/gtc/type_ptr.hpp>
 
 ForwardRenderer::ForwardRenderer(const Scene* scene) :
     Renderer(scene),
@@ -50,18 +51,17 @@ void ForwardRenderer::onRender(float dt)
 
     uint64_t state = BGFX_STATE_DEFAULT & ~BGFX_STATE_CULL_MASK;
     
-
     for(const Mesh& mesh : scene->meshes)
     {
         glm::mat4 model = glm::mat4();
-        bgfx::setTransform(&model[0][0]);
+        bgfx::setTransform(glm::value_ptr(model));
         setNormalMatrix(model);
         bgfx::setVertexBuffer(0, mesh.vertexBuffer);
         bgfx::setIndexBuffer(mesh.indexBuffer);
         const Material& mat = scene->materials[mesh.material];
         uint64_t materialState = pbr.bindMaterial(mat);
-        uint64_t lightState = lights.bindLights();
-        bgfx::setState(state | lightState | materialState);
+        uint64_t lightState = lights.bindLights(scene);
+        bgfx::setState(state | materialState | lightState);
         bgfx::submit(vDefault, program);
     }
 }

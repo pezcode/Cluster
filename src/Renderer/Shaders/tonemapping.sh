@@ -40,6 +40,12 @@ float luminance(vec3 RGB)
 // Reinhard, Hable, Duiken taken from:
 // http://filmicworlds.com/blog/filmic-tonemapping-operators/
 
+// Exponential tone mapping
+vec3 tonemap_exponential(vec3 color)
+{
+    return vec3_splat(1.0) - exp(-color);
+}
+
 // Reinhard et al
 // http://www.cs.utah.edu/~reinhard/cdrom/tonemap.pdf
 // simple version, desaturates colors

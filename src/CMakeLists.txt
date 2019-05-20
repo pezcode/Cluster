@@ -33,6 +33,8 @@ set(SOURCES
     Scene/Mesh.cpp
     Scene/Material.h
     Scene/Light.h
+    Scene/LightList.h
+    Scene/LightList.cpp
 )
 
 set(SHADERS

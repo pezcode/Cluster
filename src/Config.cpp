@@ -9,6 +9,8 @@ Config::Config() :
     //sceneFile("assets/models/duck/Duck.gltf"),
     sceneFile("assets/models/Sponza/glTF/Sponza.gltf"),
     lights(1),
+    maxLights(500),
+    movingLights(false),
     fullscreen(false),
     showUI(true),
     showConfigWindow(true),
@@ -38,6 +40,4 @@ void Config::readArgv(int argc, char* argv[])
     showStatsOverlay = false;
     showLog = false;
     showBuffers = false;
-    //fullscreen = true;
-    lights = 50;
 }
