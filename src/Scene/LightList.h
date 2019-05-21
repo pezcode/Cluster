@@ -19,8 +19,8 @@ struct LightList
         static void init()
         {
             decl.begin()
-                .add(bgfx::Attrib::Position, 3, bgfx::AttribType::Float)
-                .skip(sizeof(float))
+                .add(bgfx::Attrib::Position, 4, bgfx::AttribType::Float)
+                //.skip(sizeof(float))
                 .end();
         }
         static bgfx::VertexDecl decl;

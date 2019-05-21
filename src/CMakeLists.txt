@@ -41,11 +41,17 @@ set(SHADERS
     Renderer/Shaders/varying.def.sc
     Renderer/Shaders/vs_forward.sc
     Renderer/Shaders/fs_forward.sc
+    Renderer/Shaders/vs_deferred.sc
+    Renderer/Shaders/fs_deferred.sc
+    Renderer/Shaders/vs_clustered.sc
+    Renderer/Shaders/fs_clustered.sc
+    Renderer/Shaders/cs_clustered_lightculling.sc
     Renderer/Shaders/vs_tonemap.sc
     Renderer/Shaders/fs_tonemap.sc
     Renderer/Shaders/tonemapping.sh
     Renderer/Shaders/pbr.sh
     Renderer/Shaders/lights.sh
+    Renderer/Shaders/clusters.sh
 )
 
 add_executable(Cluster ${SOURCES} ${SHADERS})
@@ -79,11 +85,11 @@ foreach(SHADER ${SHADERS})
         add_shader("${SHADER_FILE}" FRAGMENT OUTPUT "${SHADER_DIR}" PLATFORMS dx11 glsl)
     elseif(SHADER_NAME MATCHES "^cs_")
         add_shader("${SHADER_FILE}" COMPUTE  OUTPUT "${SHADER_DIR}" PLATFORMS dx11 glsl)
-    else()
-        # add_shader does this, do it manually for includes/varying.def.sc
-        source_group("Shader Files" FILES ${SHADERS})
     endif()
 endforeach()
+
+# add_shader does this, do it manually for includes/varying.def.sc
+source_group("Shader Files" FILES ${SHADERS})
 
 file(COPY ../assets/ DESTINATION ${ASSETS_DIR})
 

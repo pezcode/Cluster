@@ -12,10 +12,10 @@
 #include <bimg/bimg.h>
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtx/component_wise.hpp>
-#include <glm/gtc/random.hpp>
 #include <spdlog/sinks/basic_file_sink.h>
 #include <thread>
-#include <algorithm> 
+#include <algorithm>
+#include <random>
 
 bx::DefaultAllocator Cluster::allocator;
 bx::AllocatorI* Cluster::iAlloc = &allocator;
@@ -398,12 +398,26 @@ void Cluster::generateLights(unsigned int count)
 
     lights.resize(count);
 
-    glm::vec3 scale = glm::abs(scene->maxBounds - scene->minBounds);
+    glm::vec3 scale = glm::abs(scene->maxBounds - scene->minBounds) * 0.75f;
+
+    // [0.01, 0.05)
+    constexpr float FLUX_MIN = 0.01f;
+    constexpr float FLUX_MAX = 0.05f;
+
+    std::random_device rd;
+    std::seed_seq seed = { rd() };
+    std::mt19937 mt(seed);
+    std::uniform_real_distribution<float> dist(0.0f, 1.0f); // [0.0, 1.0)
     
-    for(size_t i = keep; i < count; i++)
+    for(size_t i = 0; i < count; i++)
     {
-        lights[i].position = glm::linearRand(-scale * glm::vec3(0.5f, 0.0f, 0.5f), glm::vec3(scale * 0.5f));
-        lights[i].flux = glm::linearRand(glm::vec3(0.001f), glm::vec3(0.003f));
+        glm::vec3 position = glm::vec3(dist(mt), dist(mt), dist(mt)) * scale - (scale * 0.5f);
+        position.y = glm::abs(position.y);
+        glm::vec3 flux = glm::vec3(dist(mt), dist(mt), dist(mt)) * (FLUX_MAX - FLUX_MIN) + FLUX_MIN;
+        lights[i] = {
+            position,
+            flux
+        };
     }
 
     scene->pointLights.update();

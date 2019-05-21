@@ -4,11 +4,13 @@
 #include "pbr.sh"
 
 uniform vec4 u_lightCountVec;
-#define u_pointLightCount floor(u_lightCountVec.x)
+#define u_pointLightCount uint(u_lightCountVec.x)
 
+// actually vec3, but with padding
 // first three are taken by PBR texture samplers
-BUFFER_RO(b_pointLightPosition, vec3, (PBR_SAMPLER_END + 1));
-BUFFER_RO(b_pointLightFlux, vec3, (PBR_SAMPLER_END + 2));
+// OpenGL compiler doesn't like non-constants here
+BUFFER_RO(b_pointLightPosition, vec4, 3);
+BUFFER_RO(b_pointLightFlux, vec4, 4);
 
 #define LIGHTS_SAMPLER_END (PBR_SAMPLER_END + 2)
 
@@ -19,12 +21,12 @@ uint pointLightCount()
 
 vec3 pointLightPosition(uint i)
 {
-    return b_pointLightPosition[i];
+    return b_pointLightPosition[i].xyz;
 }
 
 vec3 pointLightFlux(uint i)
 {
-    return b_pointLightFlux[i];
+    return b_pointLightFlux[i].xyz;
 }
 
 /*
