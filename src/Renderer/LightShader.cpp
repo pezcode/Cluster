@@ -29,7 +29,7 @@ uint64_t LightShader::bindLights(const Scene* scene) const
     bgfx::setUniform(lightCountVecUniform, lightCountVec);
 
     bgfx::setBuffer(SAMPLER_START,     scene->pointLights.positionBuffer, bgfx::Access::Read);
-    bgfx::setBuffer(SAMPLER_START + 1, scene->pointLights.fluxBuffer,     bgfx::Access::Read);
+    bgfx::setBuffer(SAMPLER_START + 1, scene->pointLights.powerBuffer,     bgfx::Access::Read);
 
     return 0;
 }

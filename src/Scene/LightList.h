@@ -7,20 +7,18 @@
 
 struct LightList
 {
-    struct Vec3Vertex
+    // vertex buffers seem to be aligned to 16 bytes
+    struct Vec4Vertex
     {
         float x;
         float y;
         float z;
-        // we only need 3 floats but the buffer values end up in funny ways when using 3
-        // not sure if this is a problem with padding/stride on the CPU or if buffers need to be padded to vec4
-        float padding;
+        float w;
 
         static void init()
         {
             decl.begin()
                 .add(bgfx::Attrib::Position, 4, bgfx::AttribType::Float)
-                //.skip(sizeof(float))
                 .end();
         }
         static bgfx::VertexDecl decl;
@@ -40,10 +38,6 @@ public:
     // upload changes to GPU
     void update();
 
-    bgfx::DynamicVertexBufferHandle positionBuffer;
-    bgfx::DynamicVertexBufferHandle fluxBuffer;
-
-private:
-    std::unique_ptr<Vec3Vertex[]> position;
-    std::unique_ptr<Vec3Vertex[]> flux;
+    bgfx::VertexBufferHandle positionBuffer;
+    bgfx::VertexBufferHandle powerBuffer;
 };

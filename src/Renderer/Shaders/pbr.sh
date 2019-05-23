@@ -1,7 +1,6 @@
 #ifndef PBR_SH_HEADER_GUARD
 #define PBR_SH_HEADER_GUARD
 
-#define SRGB_CONVERSION_FAST
 #include "tonemapping.sh"
 
 SAMPLER2D(s_texBaseColor, 0);
@@ -130,6 +129,10 @@ float Fd_Lambert()
 vec3 BRDF(vec3 v, vec3 l, vec3 n, PBRMaterial mat)
 {
     // GLTF 2.0
+
+    // TODO move this out of BRDF call?
+    // into PBRMaterial
+    // in a loop over lights this is recalculated every time
 
     const vec3 dielectricSpecular = vec3(0.04, 0.04, 0.04);
     const vec3 black = vec3(0.0, 0.0, 0.0);

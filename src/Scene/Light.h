@@ -6,13 +6,15 @@
 struct PointLight
 {
     glm::vec3 position;
-    glm::vec3 flux; // RGB
+    // spectral power (aka flux) in W
+    // radiometric value (ie. linear physical value), not photometric (based on human eye sensitivity)
+    glm::vec3 power;
 };
 
 struct DirectionalLight
 {
     glm::vec3 direction;
-    glm::vec3 flux;
+    glm::vec3 power;
 };
 
 struct SpotLight
@@ -20,10 +22,10 @@ struct SpotLight
     glm::vec3 position;
     glm::vec3 direction;
     float angle; // full angle in degrees
-    glm::vec3 flux; // RGB
+    glm::vec3 power;
 };
 
 struct AmbientLight
 {
-    glm::vec3 flux; // RGB
+    glm::vec3 power;
 };

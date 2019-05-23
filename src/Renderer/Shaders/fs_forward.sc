@@ -22,7 +22,7 @@ uniform vec4 u_sceneScaleVec;
 
 void main()
 {
-    const vec3 ambientLightFlux = vec3(0.02, 0.02, 0.02);
+    const vec3 ambientLightpower = vec3(0.02, 0.02, 0.02);
 
     PBRMaterial mat = pbrMaterial(v_texcoord0);
 
@@ -47,23 +47,24 @@ void main()
     uint lights = pointLightCount();
     for(uint i = 0; i < lights; i++)
     {
+        // TODO shade in world space again
+        // saves us one matrix multiplication per light
         vec3 lightPos = mul(u_view, vec4(pointLightPosition(i), 1.0)).xyz;
-        vec3 flux = pointLightFlux(i);
-
-        vec3 L = normalize(lightPos - v_eyepos);
         float dist = distance(lightPos, v_eyepos) / u_sceneScale;
-        // TODO basic distance culling
-        // needs to factor in flux
-        //if(dist < 10.0)
+        // TODO determine light radius automatically
+        float maxLightRadius = 10.0;
+        float attenuation = smoothAttenuation(dist, maxLightRadius);
+        if(attenuation > 0.0)
         {
-        float attenuation = 1.0 / (dist * dist);
-        vec3 radianceIn   = flux * attenuation; 
-        float NoL = clamp(dot(N, L), 0.0, 1.0);
-        radianceOut += BRDF(V, L, N, mat) * radianceIn * NoL;
+            vec3 intensity = pointLightIntensity(i);
+            vec3 L = normalize(lightPos - v_eyepos);
+            vec3 radianceIn = intensity * attenuation;
+            float NoL = clamp(dot(N, L), 0.0, 1.0);
+            radianceOut += BRDF(V, L, N, mat) * radianceIn * NoL;
         }
     }
 
-    vec3 ambient = ambientLightFlux * mat.albedo.rgb; // * ambientOcclusion
+    vec3 ambient = ambientLightpower * mat.albedo.rgb; // * ambientOcclusion
     vec3 color = radianceOut + ambient;
     
     // output goes straight to HDR framebuffer, no clamping

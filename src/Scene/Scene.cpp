@@ -32,7 +32,7 @@ Scene::~Scene()
 void Scene::init()
 {
     Mesh::PosNormalTangentTex0Vertex::init();
-    LightList::Vec3Vertex::init();
+    LightList::Vec4Vertex::init();
 }
 
 void Scene::clear()
@@ -150,45 +150,49 @@ Mesh Scene::loadMesh(const aiMesh* mesh)
 
     // vertices
 
-    const bgfx::Memory* vMem = bgfx::alloc(mesh->mNumVertices * sizeof(Mesh::PosNormalTangentTex0Vertex));
-    Mesh::PosNormalTangentTex0Vertex* vertices = (Mesh::PosNormalTangentTex0Vertex*)vMem->data;
+    uint32_t stride = Mesh::PosNormalTangentTex0Vertex::decl.getStride();
+
+    const bgfx::Memory* vertexMem = bgfx::alloc(mesh->mNumVertices * stride);
 
     for(unsigned int i = 0; i < mesh->mNumVertices; i++)
     {
+        size_t offset = i * stride;
+        Mesh::PosNormalTangentTex0Vertex& vertex = *(Mesh::PosNormalTangentTex0Vertex*)(vertexMem->data + offset);
+
         aiVector3D pos = mesh->mVertices[i];
-        vertices[i].x = pos.x;
-        vertices[i].y = pos.y;
-        vertices[i].z = pos.z;
+        vertex.x = pos.x;
+        vertex.y = pos.y;
+        vertex.z = pos.z;
 
         minBounds = glm::min(minBounds, { pos.x, pos.y, pos.z });
         maxBounds = glm::max(maxBounds, { pos.x, pos.y, pos.z });
 
         aiVector3D nrm = mesh->mNormals[i];
-        vertices[i].nx = nrm.x;
-        vertices[i].ny = nrm.y;
-        vertices[i].nz = nrm.z;
+        vertex.nx = nrm.x;
+        vertex.ny = nrm.y;
+        vertex.nz = nrm.z;
 
         aiVector3D tan = mesh->mTangents[i];
-        vertices[i].tx = tan.x;
-        vertices[i].ty = tan.y;
-        vertices[i].tz = tan.z;
+        vertex.tx = tan.x;
+        vertex.ty = tan.y;
+        vertex.tz = tan.z;
 
         aiVector3D bit = mesh->mBitangents[i];
-        vertices[i].bx = bit.x;
-        vertices[i].by = bit.y;
-        vertices[i].bz = bit.z;
+        vertex.bx = bit.x;
+        vertex.by = bit.y;
+        vertex.bz = bit.z;
 
         if(hasTexture)
         {
             aiVector3D uv = mesh->mTextureCoords[coords][i];
-            vertices[i].u = uv.x;
-            vertices[i].v = uv.y;
+            vertex.u = uv.x;
+            vertex.v = uv.y;
         }
     }
 
-    bgfx::VertexBufferHandle vbh = bgfx::createVertexBuffer(vMem, Mesh::PosNormalTangentTex0Vertex::decl);
+    bgfx::VertexBufferHandle vbh = bgfx::createVertexBuffer(vertexMem, Mesh::PosNormalTangentTex0Vertex::decl);
 
-    // indices
+    // indices (triangles)
 
     const bgfx::Memory* iMem = bgfx::alloc(mesh->mNumFaces * 3 * sizeof(uint16_t));
     uint16_t* indices = (uint16_t*)iMem->data;

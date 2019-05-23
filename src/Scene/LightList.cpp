@@ -2,45 +2,49 @@
 
 #include <glm/gtc/type_ptr.hpp>
 
-bgfx::VertexDecl LightList::Vec3Vertex::decl;
+bgfx::VertexDecl LightList::Vec4Vertex::decl;
 
 PointLightList::PointLightList() :
-    position(nullptr),
-    flux(nullptr),
     positionBuffer(BGFX_INVALID_HANDLE),
-    fluxBuffer(BGFX_INVALID_HANDLE)
+    powerBuffer(BGFX_INVALID_HANDLE)
 {
 }
 
 void PointLightList::init()
 {
-    positionBuffer = bgfx::createDynamicVertexBuffer(1, Vec3Vertex::decl, BGFX_BUFFER_COMPUTE_READ | BGFX_BUFFER_ALLOW_RESIZE);
-    fluxBuffer     = bgfx::createDynamicVertexBuffer(1, Vec3Vertex::decl, BGFX_BUFFER_COMPUTE_READ | BGFX_BUFFER_ALLOW_RESIZE);
+
 }
 
 void PointLightList::shutdown()
 {
-    bgfx::destroy(positionBuffer);
-    bgfx::destroy(fluxBuffer);
-    positionBuffer = fluxBuffer = BGFX_INVALID_HANDLE;
-
-    position.release();
-    flux.release();
+    if(bgfx::isValid(positionBuffer))
+        bgfx::destroy(positionBuffer);
+    if(bgfx::isValid(powerBuffer))
+        bgfx::destroy(powerBuffer);
+    positionBuffer = powerBuffer = BGFX_INVALID_HANDLE;
 }
 
 void PointLightList::update()
 {
-    // TODO bgfx::alloc in here, pass to bgfx, create new fixed vertex buffer
+    // is memory cleared to 0?
+    const bgfx::Memory* memPosition = bgfx::alloc(uint32_t(sizeof(Vec4Vertex) * lights.size()));
+    const bgfx::Memory* memPower    = bgfx::alloc(uint32_t(sizeof(Vec4Vertex) * lights.size()));
 
-    position = std::make_unique<Vec3Vertex[]>(lights.size());
-    flux     = std::make_unique<Vec3Vertex[]>(lights.size());
+    uint8_t* position = memPosition->data;
+    uint8_t* power    = memPower->data;
+
+    size_t stride = Vec4Vertex::decl.getStride();
+    size_t filled = 3 * sizeof(float);
 
     for(size_t i = 0; i < lights.size(); i++)
     {
-        memcpy(&position[i], glm::value_ptr(lights[i].position), 3 * sizeof(float));
-        memcpy(&flux[i],     glm::value_ptr(lights[i].flux),     3 * sizeof(float));
+        size_t offset = i * stride;
+        memcpy(&position[offset], glm::value_ptr(lights[i].position), filled);
+        memcpy(&power[offset],    glm::value_ptr(lights[i].power),    filled);
     }
 
-    bgfx::update(positionBuffer, 0, bgfx::makeRef(position.get(), (uint32_t)(sizeof(Vec3Vertex) * lights.size())));
-    bgfx::update(fluxBuffer,     0, bgfx::makeRef(flux.get(),     (uint32_t)(sizeof(Vec3Vertex) * lights.size())));
+    // initially this used dynamic vertex buffers
+    // but apparently they normalize input regardless of decl and often fail to send data
+    positionBuffer = bgfx::createVertexBuffer(memPosition, Vec4Vertex::decl, BGFX_BUFFER_COMPUTE_READ);
+    powerBuffer    = bgfx::createVertexBuffer(memPower,    Vec4Vertex::decl, BGFX_BUFFER_COMPUTE_READ);
 }

@@ -107,7 +107,7 @@ void Cluster::initialize(int _argc, char* _argv[])
 
     /*
     scene->pointLights.lights = {
-        // pos, flux (color)
+        // pos, power (color)
         { { -5.0f, 1.1f, 0.0f }, { 1.0f, 0.0f, 1.0f } },
         { {  0.0f, 1.1f, 0.0f }, { 0.0f, 1.0f, 1.0f } },
         { {  5.0f, 1.1f, 0.0f }, { 1.0f, 1.0f, 0.0f } }
@@ -333,35 +333,21 @@ void Cluster::setRenderPath(RenderPath path)
     switch(path)
     {
         case Forward:
-            if(!ForwardRenderer::supported())
-                Log->error("Forward renderer not supported");
-            else
-                renderer = std::make_unique<ForwardRenderer>(scene.get());
+            renderer = std::make_unique<ForwardRenderer>(scene.get());
             break;
         case Deferred:
-            if(!DeferredRenderer::supported())
-                Log->error("Deferred renderer not supported");
-            else
-                renderer = std::make_unique<DeferredRenderer>(scene.get());
+            renderer = std::make_unique<DeferredRenderer>(scene.get());
             break;
         case Clustered:
-            if(!ClusteredRenderer::supported())
-                Log->error("Clustered renderer not supported");
-            else
-                renderer = std::make_unique<ClusteredRenderer>(scene.get());
+            renderer = std::make_unique<ClusteredRenderer>(scene.get());
             break;
         default:
-            renderer = nullptr;
+            assert(false);
             break;
     }
 
-    // TODO error out if no renderer
-
-    if(renderer)
-    {
-        renderer->reset(getWidth(), getHeight());
-        renderer->initialize();
-    }
+    renderer->reset(getWidth(), getHeight());
+    renderer->initialize();
 
     config->renderPath = path;
 }
@@ -388,7 +374,7 @@ void Cluster::saveFrameBuffer(bgfx::FrameBufferHandle frameBuffer, const char* n
 
 void Cluster::generateLights(unsigned int count)
 {
-    // TODO normalize flux
+    // TODO? normalize power
 
     auto& lights = scene->pointLights.lights;
 
@@ -400,23 +386,22 @@ void Cluster::generateLights(unsigned int count)
 
     glm::vec3 scale = glm::abs(scene->maxBounds - scene->minBounds) * 0.75f;
 
-    // [0.01, 0.05)
-    constexpr float FLUX_MIN = 0.01f;
-    constexpr float FLUX_MAX = 0.05f;
+    constexpr float POWER_MIN = 10.0f;
+    constexpr float POWER_MAX = 50.0f;
 
     std::random_device rd;
     std::seed_seq seed = { rd() };
     std::mt19937 mt(seed);
-    std::uniform_real_distribution<float> dist(0.0f, 1.0f); // [0.0, 1.0)
+    std::uniform_real_distribution<float> dist(0.0f, 1.0f);
     
-    for(size_t i = 0; i < count; i++)
+    for(size_t i = keep; i < count; i++)
     {
         glm::vec3 position = glm::vec3(dist(mt), dist(mt), dist(mt)) * scale - (scale * 0.5f);
         position.y = glm::abs(position.y);
-        glm::vec3 flux = glm::vec3(dist(mt), dist(mt), dist(mt)) * (FLUX_MAX - FLUX_MIN) + FLUX_MIN;
+        glm::vec3 power = glm::vec3(dist(mt), dist(mt), dist(mt)) * (POWER_MAX - POWER_MIN) + POWER_MIN;
         lights[i] = {
             position,
-            flux
+            power
         };
     }
 

@@ -2,7 +2,6 @@ $input v_texcoord0
 
 #include <bgfx_shader.sh>
 
-#define SRGB_CONVERSION_FAST
 #include "tonemapping.sh"
 
 uniform vec4 u_exposureVec;
