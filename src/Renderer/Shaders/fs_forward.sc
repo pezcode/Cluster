@@ -1,4 +1,4 @@
-$input v_eyepos, v_normal, v_tangent, v_bitangent, v_texcoord0
+$input v_worldpos, v_normal, v_tangent, v_bitangent, v_texcoord0
 
 // all unit-vectors need to be normalized in the fragment shader, the interpolation of vertex shader output doesn't preserve length
 
@@ -17,8 +17,13 @@ mat3 mtx3FromCols(vec3 c0, vec3 c1, vec3 c2)
 #endif
 }
 
-uniform vec4 u_sceneScaleVec;
-#define u_sceneScale u_sceneScaleVec.x
+// needed when attenuating light intensity by distance and the scene is scaled
+// final scale happens in view matrix (to improve z-buffer precision)
+// but shading is done in world space so no need for this
+//uniform vec4 u_sceneScaleVec;
+//#define u_sceneScale u_sceneScaleVec.x
+
+uniform vec4 u_camPos;
 
 void main()
 {
@@ -28,7 +33,7 @@ void main()
 
     // normal map
 
-    // convert normal map from tangent space -> eye space (= space of v_tangent, etc.)
+    // convert normal map from tangent space -> world space (= space of v_tangent, etc.)
     mat3 TBN = mtx3FromCols(
         normalize(v_tangent),
         normalize(v_bitangent),
@@ -38,26 +43,27 @@ void main()
     
     // shading
 
-    vec3 camPos = vec3(0.0, 0.0, 0.0);
+    // TODO determine light radius automatically
+    // or send as z component
+    const float maxLightRadius = 10.0;
 
-    vec3 V = normalize(camPos - v_eyepos);
+    vec3 camPos = u_camPos;
+    vec3 fragPos = v_worldpos;
+
+    vec3 V = normalize(camPos - fragPos);
 
     vec3 radianceOut = vec3_splat(0.0);
 
     uint lights = pointLightCount();
     for(uint i = 0; i < lights; i++)
     {
-        // TODO shade in world space again
-        // saves us one matrix multiplication per light
-        vec3 lightPos = mul(u_view, vec4(pointLightPosition(i), 1.0)).xyz;
-        float dist = distance(lightPos, v_eyepos) / u_sceneScale;
-        // TODO determine light radius automatically
-        float maxLightRadius = 10.0;
+        vec3 lightPos = pointLightPosition(i);
+        float dist = distance(lightPos, fragPos); // / u_sceneScale;
         float attenuation = smoothAttenuation(dist, maxLightRadius);
         if(attenuation > 0.0)
         {
             vec3 intensity = pointLightIntensity(i);
-            vec3 L = normalize(lightPos - v_eyepos);
+            vec3 L = normalize(lightPos - fragPos);
             vec3 radianceIn = intensity * attenuation;
             float NoL = clamp(dot(N, L), 0.0, 1.0);
             radianceOut += BRDF(V, L, N, mat) * radianceIn * NoL;

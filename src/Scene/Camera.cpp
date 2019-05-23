@@ -9,7 +9,7 @@ const glm::vec3 Camera::Z = { 0.0f, 0.0f, 1.0f };
 
 void Camera::move(glm::vec3 delta)
 {
-    position += delta;
+    pos += delta;
 }
 
 void Camera::rotate(glm::vec2 delta)
@@ -39,7 +39,7 @@ void Camera::zoom(float offset)
 
 void Camera::lookAt(const glm::vec3& position, const glm::vec3& target, const glm::vec3& up)
 {
-    this->position = position;
+    pos = position;
 
     // model rotation
     // maps vectors to camera space (x, y, z)
@@ -57,9 +57,14 @@ void Camera::lookAt(const glm::vec3& position, const glm::vec3& target, const gl
     invRotation = glm::conjugate(rotation);
 }
 
-const glm::mat4 Camera::matrix() const
+glm::vec3 Camera::position() const
 {
-    return glm::toMat4(rotation) * glm::translate(glm::mat4(), -position);
+    return pos;
+}
+
+glm::mat4 Camera::matrix() const
+{
+    return glm::toMat4(rotation) * glm::translate(glm::mat4(), -pos);
 }
 
 glm::vec3 Camera::forward() const

@@ -25,7 +25,8 @@ struct Camera
 
     void lookAt(const glm::vec3& position, const glm::vec3& target, const glm::vec3& up);
 
-    const glm::mat4 matrix() const;
+    glm::vec3 position() const;
+    glm::mat4 matrix() const;
 
     // camera vectors in world-space coordinates
     glm::vec3 forward() const;
@@ -41,7 +42,7 @@ private:
 
     glm::vec3 orthUp = Y;
 
-    glm::vec3 position;
+    glm::vec3 pos;
     glm::quat rotation;
     glm::quat invRotation;
 };

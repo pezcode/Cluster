@@ -92,6 +92,7 @@ private:
 
     bgfx::ProgramHandle blitProgram;
     bgfx::UniformHandle blitSampler;
+    bgfx::UniformHandle camPosUniform;
     bgfx::UniformHandle normalMatrixUniform;
     bgfx::UniformHandle exposureVecUniform;
     bgfx::UniformHandle sceneScaleVecUniform;

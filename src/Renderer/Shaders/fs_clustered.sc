@@ -1,4 +1,4 @@
-$input v_eyepos, v_normal, v_tangent, v_bitangent, v_texcoord0
+$input v_worldpos, v_normal, v_tangent, v_bitangent, v_texcoord0
 
 // all unit-vectors need to be normalized in the fragment shader, the interpolation of vertex shader output doesn't preserve length
 
@@ -33,7 +33,9 @@ void main()
     float scale = DEPTH_SLICES / log(5.0 / 0.1); //u_clusterSliceScale;
     float bias = -DEPTH_SLICES * log(0.1) / log(5.0 / 0.1); //u_clusterSliceBias;
 
-    uint slice = uint(log(v_eyepos.z / u_sceneScale) * scale + u_clusterSliceBias);
+    vec3 eyepos = mul(u_view, vec4(v_worldpos, 1.0)).xyz;
+
+    uint slice = uint(log(eyepos.z / u_sceneScale) * scale + u_clusterSliceBias);
     vec3 color = colors[slice % 6];
 
     gl_FragColor = vec4(color, 1.0);

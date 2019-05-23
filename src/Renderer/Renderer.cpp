@@ -23,6 +23,7 @@ Renderer::Renderer(const Scene* scene) :
     frameBuffer(BGFX_INVALID_HANDLE),
     blitProgram(BGFX_INVALID_HANDLE),
     blitSampler(BGFX_INVALID_HANDLE),
+    camPosUniform(BGFX_INVALID_HANDLE),
     normalMatrixUniform(BGFX_INVALID_HANDLE),
     exposureVecUniform(BGFX_INVALID_HANDLE),
     sceneScaleVecUniform(BGFX_INVALID_HANDLE)
@@ -38,6 +39,7 @@ void Renderer::initialize()
     PosTexCoord0Vertex::init();
 
     blitSampler = bgfx::createUniform("s_texColor", bgfx::UniformType::Sampler);
+    camPosUniform = bgfx::createUniform("u_camPos", bgfx::UniformType::Vec4);
     normalMatrixUniform = bgfx::createUniform("u_normalMatrix", bgfx::UniformType::Mat3);
     exposureVecUniform = bgfx::createUniform("u_exposureVec", bgfx::UniformType::Vec4);
     sceneScaleVecUniform = bgfx::createUniform("u_sceneScaleVec", bgfx::UniformType::Vec4);
@@ -86,11 +88,15 @@ void Renderer::render(float dt)
 {
     time += dt;
 
+    glm::vec4 camPos = glm::vec4(scene->camera.position(), 1.0f);
+    bgfx::setUniform(camPosUniform, glm::value_ptr(camPos));
+
     if(scene->loaded)
     {
         // scale scene down to camera far plane
-        scale = 1.0f / glm::compMax(glm::abs(scene->maxBounds - scene->minBounds)) / glm::sqrt(2.0f) * scene->camera.zFar;
-        float scaleVec[4] = { scale, 0.0f, 0.0f, 0.0f };
+        float extent = glm::compMax(glm::abs(scene->maxBounds - scene->minBounds)) * glm::sqrt(2.0f);
+        scale = scene->camera.zFar / extent;
+        float scaleVec[4] = { scale };
         bgfx::setUniform(sceneScaleVecUniform, &scale);
         // tonemapping expects linear colors
         glm::vec3 linear = glm::convertSRGBToLinear(scene->skyColor);
@@ -116,6 +122,7 @@ void Renderer::shutdown()
 
     bgfx::destroy(blitProgram);
     bgfx::destroy(blitSampler);
+    bgfx::destroy(camPosUniform);
     bgfx::destroy(normalMatrixUniform);
     bgfx::destroy(exposureVecUniform);
     bgfx::destroy(sceneScaleVecUniform);
@@ -124,7 +131,7 @@ void Renderer::shutdown()
         bgfx::destroy(frameBuffer);
 
     blitProgram = BGFX_INVALID_HANDLE;
-    blitSampler = normalMatrixUniform = exposureVecUniform = sceneScaleVecUniform = BGFX_INVALID_HANDLE;
+    blitSampler = camPosUniform = normalMatrixUniform = exposureVecUniform = sceneScaleVecUniform = BGFX_INVALID_HANDLE;
     quadVB = BGFX_INVALID_HANDLE;
     frameBuffer = BGFX_INVALID_HANDLE;
 }
@@ -154,11 +161,14 @@ void Renderer::setViewProjection(bgfx::ViewId view)
 
 void Renderer::setNormalMatrix(const glm::mat4& modelMat)
 {
-    glm::mat4 modelViewMat = viewMat * modelMat;
+    // usually the normal matrix is based on the model view matrix
+    // but shading is done in world space (not eye space) so it's just the model matrix
+    //glm::mat4 modelViewMat = viewMat * modelMat;
+
     // if we don't do non-uniform scaling, the normal matrix is the same as the model-view matrix
     // it's enough to calculate the adjugate instead of the inverse, it always exists (requires GLM 0.9.9.3)
-    //glm::mat3 normalMat = glm::transpose(glm::inverse(glm::mat3(modelViewMat)));
-    glm::mat3 normalMat = modelViewMat;
+    //glm::mat3 normalMat = glm::transpose(glm::inverse(glm::mat3(modelMat)));
+    glm::mat3 normalMat = modelMat;
     bgfx::setUniform(normalMatrixUniform, glm::value_ptr(normalMat));
 }
 
