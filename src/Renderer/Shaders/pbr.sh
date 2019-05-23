@@ -17,6 +17,20 @@ uniform vec4 u_hasTextures;
 #define u_hasMetallicRoughnessTexture (u_hasTextures.y != 0.0f)
 #define u_hasNormalTexture            (u_hasTextures.z != 0.0f)
 
+struct PBRMaterial
+{
+    vec4 albedo;
+    float metallic;
+    float roughness;
+    vec3 normal;
+
+    // GLTF 2.0 inputs
+
+    vec3 diffuseColor; // this becomes black for higher metalness
+    vec3 F0; // Fresnel reflectance at normal incidence
+    float a; // remapped roughness (^2)
+};
+
 vec4 pbrBaseColor(vec2 texcoord)
 {
     if(u_hasBaseColorTexture)
@@ -57,22 +71,28 @@ vec3 pbrNormal(vec2 texcoord)
     }
 }
 
-struct PBRMaterial
-{
-    vec4 albedo;
-    float metallic;
-    float roughness;
-    vec3 normal;
-};
-
 PBRMaterial pbrMaterial(vec2 texcoord)
 {
     PBRMaterial mat;
+
+    // Read textures/uniforms
+
     mat.albedo = pbrBaseColor(texcoord);
     vec2 metallicRoughness = pbrMetallicRoughness(texcoord);
     mat.metallic  = metallicRoughness.r;
     mat.roughness = metallicRoughness.g;
     mat.normal = pbrNormal(texcoord);
+
+    // Taken directly from GLTF 2.0 specs
+    // this can be precalculated instead of evaluating it in the BRDF for every light
+
+    const vec3 dielectricSpecular = vec3(0.04, 0.04, 0.04);
+    const vec3 black = vec3(0.0, 0.0, 0.0);
+
+    mat.diffuseColor = mix(mat.albedo.rgb * (1.0 - dielectricSpecular.r), black, mat.metallic);
+    mat.F0 = mix(dielectricSpecular, mat.albedo.rgb, mat.metallic);
+    mat.a = mat.roughness * mat.roughness;
+
     return mat;
 }
 
@@ -128,19 +148,6 @@ float Fd_Lambert()
 
 vec3 BRDF(vec3 v, vec3 l, vec3 n, PBRMaterial mat)
 {
-    // GLTF 2.0
-
-    // TODO move this out of BRDF call?
-    // into PBRMaterial
-    // in a loop over lights this is recalculated every time
-
-    const vec3 dielectricSpecular = vec3(0.04, 0.04, 0.04);
-    const vec3 black = vec3(0.0, 0.0, 0.0);
-
-    vec3 diffuseColor = mix(mat.albedo.rgb * (1.0 - dielectricSpecular.r), black, mat.metallic);
-    vec3 F0 = mix(dielectricSpecular, mat.albedo.rgb, mat.metallic);
-    float a = mat.roughness * mat.roughness;
-
     /*
     V is the normalized vector from the shading location to the eye
     L is the normalized vector from the shading location to the light
@@ -156,13 +163,13 @@ vec3 BRDF(vec3 v, vec3 l, vec3 n, PBRMaterial mat)
     float LoH = clamp(dot(l, h), 0.0, 1.0);
 
     // specular BRDF
-    float D = D_GGX(NoH, a);
-    vec3  F = F_Schlick(LoH, F0);
-    float V = V_SmithGGXCorrelated(NoV, NoL, a);
+    float D = D_GGX(NoH, mat.a);
+    vec3 F = F_Schlick(LoH, mat.F0);
+    float V = V_SmithGGXCorrelated(NoV, NoL, mat.a);
     vec3 Fr = (D * V) * F;
 
     // diffuse BRDF
-    vec3 Fd = diffuseColor * Fd_Lambert();
+    vec3 Fd = mat.diffuseColor * Fd_Lambert();
 
     vec3 kD = (1.0 - F) * (1.0 - mat.metallic);
     return kD * Fd + Fr;
