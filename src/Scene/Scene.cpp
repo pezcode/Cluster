@@ -39,7 +39,6 @@ void Scene::clear()
 {
     if(loaded)
     {
-        minBounds = maxBounds = { 0.0f, 0.0f, 0.0f };
         for(const Mesh& mesh : meshes)
         {
             bgfx::destroy(mesh.vertexBuffer);
@@ -59,6 +58,8 @@ void Scene::clear()
         pointLights.shutdown();
         pointLights.lights.clear();
     }
+    minBounds = maxBounds = { 0.0f, 0.0f, 0.0f };
+    camera = Camera();
     loaded = false;
 }
 
@@ -129,7 +130,15 @@ bool Scene::load(const char* file)
                 camera = loadCamera(scene->mCameras[0]);
             }
             else
+            {
                 Log->info("No camera, using default");
+
+                // choose appropriate camera planes
+                glm::vec3 extent = glm::abs(maxBounds - minBounds);
+                float diagonal = glm::sqrt(glm::dot(extent, extent));
+                camera.zFar = diagonal;
+                camera.zNear = camera.zFar / 50.0f;
+            }
 
             loaded = true;
         }
@@ -341,7 +350,7 @@ bgfx::TextureHandle Scene::loadTexture(const char* file)
                                                             (bgfx::TextureFormat::Enum)image->m_format,
                                                             BGFX_TEXTURE_NONE | BGFX_SAMPLER_MIN_ANISOTROPIC | BGFX_SAMPLER_MAG_ANISOTROPIC,
                                                             mem);
-            bgfx::setName(tex, file); // causes debug errors with DirectX SetPrivateProperty duplicate
+            //bgfx::setName(tex, file); // causes debug errors with DirectX SetPrivateProperty duplicate
             return tex;
         }
         else

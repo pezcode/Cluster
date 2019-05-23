@@ -75,7 +75,6 @@ protected:
     static const char* shaderDir();
 
     const Scene* scene;
-    float scale;
 
     uint16_t width;
     uint16_t height;
@@ -95,6 +94,5 @@ private:
     bgfx::UniformHandle camPosUniform;
     bgfx::UniformHandle normalMatrixUniform;
     bgfx::UniformHandle exposureVecUniform;
-    bgfx::UniformHandle sceneScaleVecUniform;
     bgfx::VertexBufferHandle quadVB;
 };

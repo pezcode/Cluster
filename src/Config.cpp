@@ -1,5 +1,7 @@
 #include "Config.h"
 
+#include <bx/commandline.h>
+
 Config::Config() :
     writeLog(true),
     logFile("Cluster.log"),
@@ -23,6 +25,8 @@ Config::Config() :
 
 void Config::readArgv(int argc, char* argv[])
 {
+    bx::CommandLine cmdLine(argc, argv);
+
     // bgfx OpenGL renderer uses version 2.1
     // can be built with BGFX_CONFIG_RENDERER_OPENGL=43
     // this adds compute shaders and texture copy
@@ -34,6 +38,8 @@ void Config::readArgv(int argc, char* argv[])
 
     // DX11, DX12, OpenGL all work
     // Vulkan doesn't support framebuffer textures
+
+    //cmdLine.hasArg("gl");
 
     renderer = bgfx::RendererType::Direct3D11;
 

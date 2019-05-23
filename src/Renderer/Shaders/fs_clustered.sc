@@ -8,9 +8,6 @@ $input v_worldpos, v_normal, v_tangent, v_bitangent, v_texcoord0
 #include "lights.sh"
 #include "clusters.sh"
 
-uniform vec4 u_sceneScaleVec;
-#define u_sceneScale u_sceneScaleVec.x
-
 uniform vec4 u_clusterSliceScaleBiasVec;
 #define u_clusterSliceScale u_clusterSliceScaleBiasVec.x
 #define u_clusterSliceBias  u_clusterSliceScaleBiasVec.y
@@ -35,7 +32,7 @@ void main()
 
     vec3 eyepos = mul(u_view, vec4(v_worldpos, 1.0)).xyz;
 
-    uint slice = uint(log(eyepos.z / u_sceneScale) * scale + u_clusterSliceBias);
+    uint slice = uint(log(eyepos.z) * scale + u_clusterSliceBias);
     vec3 color = colors[slice % 6];
 
     gl_FragColor = vec4(color, 1.0);

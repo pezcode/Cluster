@@ -15,7 +15,6 @@ bgfx::VertexDecl Renderer::PosTexCoord0Vertex::decl;
 
 Renderer::Renderer(const Scene* scene) :
     scene(scene),
-    scale(1.0f),
     width(0),
     height(0),
     clearColor(0),
@@ -25,8 +24,7 @@ Renderer::Renderer(const Scene* scene) :
     blitSampler(BGFX_INVALID_HANDLE),
     camPosUniform(BGFX_INVALID_HANDLE),
     normalMatrixUniform(BGFX_INVALID_HANDLE),
-    exposureVecUniform(BGFX_INVALID_HANDLE),
-    sceneScaleVecUniform(BGFX_INVALID_HANDLE)
+    exposureVecUniform(BGFX_INVALID_HANDLE)
 {
 }
 
@@ -42,7 +40,6 @@ void Renderer::initialize()
     camPosUniform = bgfx::createUniform("u_camPos", bgfx::UniformType::Vec4);
     normalMatrixUniform = bgfx::createUniform("u_normalMatrix", bgfx::UniformType::Mat3);
     exposureVecUniform = bgfx::createUniform("u_exposureVec", bgfx::UniformType::Vec4);
-    sceneScaleVecUniform = bgfx::createUniform("u_sceneScaleVec", bgfx::UniformType::Vec4);
 
     // TODO use triangle covering screen (less fragment overdraw)
     float BOTTOM = -1.0f, TOP = 1.0f, LEFT = -1.0f, RIGHT = 1.0f;
@@ -88,16 +85,11 @@ void Renderer::render(float dt)
 {
     time += dt;
 
-    glm::vec4 camPos = glm::vec4(scene->camera.position(), 1.0f);
-    bgfx::setUniform(camPosUniform, glm::value_ptr(camPos));
-
     if(scene->loaded)
     {
-        // scale scene down to camera far plane
-        float extent = glm::compMax(glm::abs(scene->maxBounds - scene->minBounds)) * glm::sqrt(2.0f);
-        scale = scene->camera.zFar / extent;
-        float scaleVec[4] = { scale };
-        bgfx::setUniform(sceneScaleVecUniform, &scale);
+        glm::vec4 camPos = glm::vec4(scene->camera.position(), 1.0f);
+        bgfx::setUniform(camPosUniform, glm::value_ptr(camPos));
+
         // tonemapping expects linear colors
         glm::vec3 linear = glm::convertSRGBToLinear(scene->skyColor);
         glm::u8vec3 result = glm::round(glm::clamp(linear, 0.0f, 1.0f) * 255.0f);
@@ -105,7 +97,6 @@ void Renderer::render(float dt)
     }
     else
     {
-        scale = 1.0f;
         clearColor = 0x303030FF;
     }
 
@@ -125,13 +116,12 @@ void Renderer::shutdown()
     bgfx::destroy(camPosUniform);
     bgfx::destroy(normalMatrixUniform);
     bgfx::destroy(exposureVecUniform);
-    bgfx::destroy(sceneScaleVecUniform);
     bgfx::destroy(quadVB);
     if(bgfx::isValid(frameBuffer))
         bgfx::destroy(frameBuffer);
 
     blitProgram = BGFX_INVALID_HANDLE;
-    blitSampler = camPosUniform = normalMatrixUniform = exposureVecUniform = sceneScaleVecUniform = BGFX_INVALID_HANDLE;
+    blitSampler = camPosUniform = normalMatrixUniform = exposureVecUniform = BGFX_INVALID_HANDLE;
     quadVB = BGFX_INVALID_HANDLE;
     frameBuffer = BGFX_INVALID_HANDLE;
 }
@@ -153,9 +143,6 @@ void Renderer::setViewProjection(bgfx::ViewId view)
                 scene->camera.zNear,
                 scene->camera.zFar,
                 bgfx::getCaps()->homogeneousDepth);
-
-    glm::mat4 scaleMat = glm::scale(glm::mat4(), glm::vec3(scale));
-    viewMat = scaleMat * viewMat;
     bgfx::setViewTransform(view, glm::value_ptr(viewMat), glm::value_ptr(projMat));
 }
 

@@ -17,12 +17,6 @@ mat3 mtx3FromCols(vec3 c0, vec3 c1, vec3 c2)
 #endif
 }
 
-// needed when attenuating light intensity by distance and the scene is scaled
-// final scale happens in view matrix (to improve z-buffer precision)
-// but shading is done in world space so no need for this
-//uniform vec4 u_sceneScaleVec;
-//#define u_sceneScale u_sceneScaleVec.x
-
 uniform vec4 u_camPos;
 
 void main()
@@ -58,7 +52,7 @@ void main()
     for(uint i = 0; i < lights; i++)
     {
         vec3 lightPos = pointLightPosition(i);
-        float dist = distance(lightPos, fragPos); // / u_sceneScale;
+        float dist = distance(lightPos, fragPos);
         float attenuation = smoothAttenuation(dist, maxLightRadius);
         if(attenuation > 0.0)
         {

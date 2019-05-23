@@ -386,8 +386,8 @@ void Cluster::generateLights(unsigned int count)
 
     glm::vec3 scale = glm::abs(scene->maxBounds - scene->minBounds) * 0.75f;
 
-    constexpr float POWER_MIN = 10.0f;
-    constexpr float POWER_MAX = 20.0f;
+    constexpr float POWER_MIN = 100.0f;
+    constexpr float POWER_MAX = 200.0f;
 
     std::random_device rd;
     std::seed_seq seed = { rd() };
@@ -398,7 +398,8 @@ void Cluster::generateLights(unsigned int count)
     {
         glm::vec3 position = glm::vec3(dist(mt), dist(mt), dist(mt)) * scale - (scale * 0.5f);
         position.y = glm::abs(position.y);
-        glm::vec3 power = glm::vec3(dist(mt), dist(mt), dist(mt)) * (POWER_MAX - POWER_MIN) + POWER_MIN;
+        glm::vec3 color = glm::vec3(dist(mt), dist(mt), dist(mt));
+        glm::vec3 power = color * (dist(mt) * (POWER_MAX - POWER_MIN) + POWER_MIN);
         lights[i] = {
             position,
             power
