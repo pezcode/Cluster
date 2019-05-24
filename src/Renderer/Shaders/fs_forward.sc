@@ -41,7 +41,7 @@ void main()
     // or send as z component
     const float maxLightRadius = 10.0;
 
-    vec3 camPos = u_camPos;
+    vec3 camPos = u_camPos.xyz;
     vec3 fragPos = v_worldpos;
 
     vec3 V = normalize(camPos - fragPos);

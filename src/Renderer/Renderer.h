@@ -89,10 +89,10 @@ private:
     glm::mat4 viewMat;
     glm::mat4 projMat;
 
+    bgfx::VertexBufferHandle blitTriangleBuffer;
     bgfx::ProgramHandle blitProgram;
     bgfx::UniformHandle blitSampler;
     bgfx::UniformHandle camPosUniform;
     bgfx::UniformHandle normalMatrixUniform;
     bgfx::UniformHandle exposureVecUniform;
-    bgfx::VertexBufferHandle quadVB;
 };

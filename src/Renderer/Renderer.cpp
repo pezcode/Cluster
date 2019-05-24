@@ -20,6 +20,7 @@ Renderer::Renderer(const Scene* scene) :
     clearColor(0),
     time(0.0f),
     frameBuffer(BGFX_INVALID_HANDLE),
+    blitTriangleBuffer(BGFX_INVALID_HANDLE),
     blitProgram(BGFX_INVALID_HANDLE),
     blitSampler(BGFX_INVALID_HANDLE),
     camPosUniform(BGFX_INVALID_HANDLE),
@@ -41,22 +42,16 @@ void Renderer::initialize()
     normalMatrixUniform = bgfx::createUniform("u_normalMatrix", bgfx::UniformType::Mat3);
     exposureVecUniform = bgfx::createUniform("u_exposureVec", bgfx::UniformType::Vec4);
 
-    // TODO use triangle covering screen (less fragment overdraw)
-    float BOTTOM = -1.0f, TOP = 1.0f, LEFT = -1.0f, RIGHT = 1.0f;
-    PosTexCoord0Vertex vertices[6] = {
-        { BOTTOM, LEFT }, { TOP, LEFT },  { TOP, RIGHT },
-        { BOTTOM, LEFT }, { TOP, RIGHT }, { BOTTOM, RIGHT }
+    float bottomUV = bgfx::getCaps()->originBottomLeft ? 0.0f :  1.0f;
+    float topUV    = bgfx::getCaps()->originBottomLeft ? 2.0f : -1.0f; 
+    constexpr float BOTTOM = -1.0f, TOP = 3.0f, LEFT = -1.0f, RIGHT = 3.0f;
+    PosTexCoord0Vertex vertices[3] = {
+        { LEFT,  BOTTOM, 0.0f, 0.0f, bottomUV },
+        { LEFT,  TOP,    0.0f, 0.0f, topUV },
+        { RIGHT, BOTTOM, 0.0f, 2.0f, bottomUV }
     };
-    bool flipV = !bgfx::getCaps()->originBottomLeft;
-    for(PosTexCoord0Vertex& v : vertices)
-    {
-        v.z = 0.0f;
-        v.u = (v.x + 1.0f) * 0.5f;
-        v.v = (v.y + 1.0f) * 0.5f;
-        if(flipV)
-            v.v = 1.0f - v.v;
-    }
-    quadVB = bgfx::createVertexBuffer(bgfx::copy(&vertices, sizeof(vertices)), PosTexCoord0Vertex::decl);
+
+    blitTriangleBuffer = bgfx::createVertexBuffer(bgfx::copy(&vertices, sizeof(vertices)), PosTexCoord0Vertex::decl);
 
     char vsName[128], fsName[128];
     bx::snprintf(vsName, BX_COUNTOF(vsName), "%s%s", shaderDir(), "vs_tonemap.bin");
@@ -116,13 +111,13 @@ void Renderer::shutdown()
     bgfx::destroy(camPosUniform);
     bgfx::destroy(normalMatrixUniform);
     bgfx::destroy(exposureVecUniform);
-    bgfx::destroy(quadVB);
+    bgfx::destroy(blitTriangleBuffer);
     if(bgfx::isValid(frameBuffer))
         bgfx::destroy(frameBuffer);
 
     blitProgram = BGFX_INVALID_HANDLE;
     blitSampler = camPosUniform = normalMatrixUniform = exposureVecUniform = BGFX_INVALID_HANDLE;
-    quadVB = BGFX_INVALID_HANDLE;
+    blitTriangleBuffer = BGFX_INVALID_HANDLE;
     frameBuffer = BGFX_INVALID_HANDLE;
 }
 
@@ -168,9 +163,9 @@ void Renderer::blitToScreen(bgfx::ViewId view)
     bgfx::setState(BGFX_STATE_WRITE_RGB);
     bgfx::TextureHandle frameBufferTexture = bgfx::getTexture(frameBuffer);
     bgfx::setTexture(0, blitSampler, frameBufferTexture);
-    float exposure[4] = { scene->loaded ? scene->camera.exposure : 1.0f };
-    bgfx::setUniform(exposureVecUniform, &exposure[0]);
-    bgfx::setVertexBuffer(0, quadVB);
+    float exposureVec[4] = { scene->loaded ? scene->camera.exposure : 1.0f };
+    bgfx::setUniform(exposureVecUniform, exposureVec);
+    bgfx::setVertexBuffer(0, blitTriangleBuffer);
     bgfx::submit(view, blitProgram);
 }
 
