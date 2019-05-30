@@ -34,12 +34,28 @@ void main()
         normalize(v_normal)
     );
     vec3 N = normalize(mul(TBN, mat.normal));
+
+    // specular anti-aliasing
+
+    // Frostbite clamps roughness to 0.045 (0.045^2 = 0.002025)
+    mat.a = max(mat.a, 0.002025);
+
+    // http://www.jp.square-enix.com/tech/library/pdf/ImprovedGeometricSpecularAA.pdf
+    // normal-based isotropic filtering
+    // this is originally meant for deferred rendering but is a bit simpler to implement than the forward version
+    // saves us from calculating uv offsets and sampling textures for every light
+
+    const float SIGMA2 = 0.25; // squared std dev of pixel filter kernel (in pixels)
+    const float KAPPA = 0.18; // clamping threshold
+
+    vec3 dndu = dFdx(N);
+    vec3 dndv = dFdy(N);
+    float variance = SIGMA2 * (dot(dndu, dndu) + dot(dndv, dndv));
+    float kernelRoughness2 = min(2.0 * variance, KAPPA);
+    float filteredRoughness2 = clamp(mat.a + kernelRoughness2, 0.0, 1.0);
+    mat.a = filteredRoughness2;
     
     // shading
-
-    // TODO determine light radius automatically
-    // or send as z component
-    const float maxLightRadius = 10.0;
 
     vec3 camPos = u_camPos.xyz;
     vec3 fragPos = v_worldpos;
@@ -51,14 +67,13 @@ void main()
     uint lights = pointLightCount();
     for(uint i = 0; i < lights; i++)
     {
-        vec3 lightPos = pointLightPosition(i);
-        float dist = distance(lightPos, fragPos);
-        float attenuation = smoothAttenuation(dist, maxLightRadius);
-        if(attenuation > 0.0)
+        PointLight light = getPointLight(i);
+        float dist = distance(light.position, fragPos);
+        if(dist < light.radius)
         {
-            vec3 intensity = pointLightIntensity(i);
-            vec3 L = normalize(lightPos - fragPos);
-            vec3 radianceIn = intensity * attenuation;
+            float attenuation = smoothAttenuation(dist, light.radius);
+            vec3 L = normalize(light.position - fragPos);
+            vec3 radianceIn = light.intensity * attenuation;
             float NoL = clamp(dot(N, L), 0.0, 1.0);
             radianceOut += BRDF(V, L, N, mat) * radianceIn * NoL;
         }

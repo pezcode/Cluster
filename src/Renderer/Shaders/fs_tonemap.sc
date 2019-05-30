@@ -19,9 +19,11 @@ void main()
     //result.rgb = tonemap_reinhard(result.rgb);
     //result.rgb = tonemap_reinhard_luminance(result.rgb);
     //result.rgb = tonemap_hable(result.rgb);
-    result.rgb = tonemap_duiker(result.rgb);
-    //result.rgb = tonemap_aces(result.rgb);
+    //result.rgb = tonemap_duiker(result.rgb);
+    result.rgb = tonemap_aces(result.rgb);
     //result.rgb = tonemap_aces_luminance(result.rgb);
+
+    //result.rgb = clamp(result.rgb, 0.0, 1.0);
 
     // gamma correction
     result.rgb = LinearTosRGB(result.rgb);

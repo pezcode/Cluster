@@ -143,6 +143,9 @@ float V_SmithGGXCorrelated(float NoV, float NoL, float a)
 // uniform color
 float Fd_Lambert()
 {
+    // normalize to conserve energy
+    // cos integrates to pi over the hemisphere
+    // incoming light is multiplied by cos and BRDF
     return 1.0 / PI;
 }
 

@@ -7,12 +7,19 @@ uniform vec4 u_lightCountVec;
 #define u_pointLightCount uint(u_lightCountVec.x)
 
 // actually vec3, but with padding
-// first three are taken by PBR texture samplers
-// OpenGL compiler doesn't like non-constants here
+// first three samplers are taken by PBR texture samplers
+// GLSL compiler doesn't like non-constants here
 BUFFER_RO(b_pointLightPosition, vec4, 3);
-BUFFER_RO(b_pointLightpower, vec4, 4);
+BUFFER_RO(b_pointLightPower, vec4, 4);
 
 #define LIGHTS_SAMPLER_END (PBR_SAMPLER_END + 2)
+
+struct PointLight
+{
+    vec3 position;
+    vec3 intensity;
+    float radius;
+};
 
 // primary source:
 // https://seblagarde.files.wordpress.com/2015/07/course_notes_moving_frostbite_to_pbr_v32.pdf
@@ -38,26 +45,25 @@ float smoothAttenuation(float distance, float radius)
     return nom * nom * distanceAttenuation(distance);
 }
 
+float calculateLightRadius(vec3 position, vec3 intensity)
+{
+    const float MAX_RADIUS = 10.0;
+    return MAX_RADIUS;
+}
+
 uint pointLightCount()
 {
     return u_pointLightCount;
 }
 
-vec3 pointLightPosition(uint i)
+PointLight getPointLight(uint i)
 {
-    return b_pointLightPosition[i].xyz;
+    PointLight light;
+    light.position = b_pointLightPosition[i].xyz;
+    // scale by area of unit sphere
+    light.intensity = b_pointLightPower[i].xyz * INV_4PI;
+    light.radius = calculateLightRadius(light.position, light.intensity);
+    return light;
 }
-
-vec3 pointLightIntensity(uint i)
-{
-    return b_pointLightpower[i].xyz * INV_4PI;
-}
-
-/*
-vec3 shadePointLight(vec3 N, vec3 L, vec3 eye, vec3 pos, vec3 power, PBRMaterial mat)
-{
-
-}
-*/
 
 #endif // LIGHTS_SH_HEADER_GUARD
