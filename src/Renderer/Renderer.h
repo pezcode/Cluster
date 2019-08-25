@@ -18,6 +18,20 @@ public:
     void render(float dt);
     void shutdown();
 
+    enum TonemappingMode : int
+    {
+        NONE = 0,
+        EXPONENTIAL,
+        REINHARD,
+        REINHARD_LUM,
+        HABLE,
+        DUIKER,
+        ACES,
+        ACES_LUM
+    };
+
+    void setTonemappingMode(TonemappingMode mode);
+
     static bool supported();
 
     // subclasses should override these
@@ -74,6 +88,8 @@ protected:
     static bgfx::FrameBufferHandle createFrameBuffer(bool hdr = true, bool depth = true);
     static const char* shaderDir();
 
+    TonemappingMode tonemappingMode;
+
     const Scene* scene;
 
     uint16_t width;
@@ -95,4 +111,5 @@ private:
     bgfx::UniformHandle camPosUniform;
     bgfx::UniformHandle normalMatrixUniform;
     bgfx::UniformHandle exposureVecUniform;
+    bgfx::UniformHandle tonemappingModeVecUniform;
 };

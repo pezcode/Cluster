@@ -1,12 +1,14 @@
 #include "Config.h"
 
 #include <bx/commandline.h>
+#include "Renderer/Renderer.h"
 
 Config::Config() :
     writeLog(true),
     logFile("Cluster.log"),
     renderer(bgfx::RendererType::Count), // default renderer, chosen by platform
     renderPath(Cluster::Forward),
+    tonemappingMode(Renderer::TonemappingMode::ACES),
     vsync(false),
     //sceneFile("assets/models/duck/Duck.gltf"),
     sceneFile("assets/models/Sponza/glTF/Sponza.gltf"),

@@ -113,6 +113,21 @@ void ClusterUI::update(float dt)
         // what is max exposure?
         ImGui::SliderFloat("Exposure", &app.scene->camera.exposure, 0.0f, 30.0f, "%.3f", 5.0f);
 
+        const char* operators[] = {
+            "None",
+            "Exponential",
+            "Reinhard",
+            "Reinhard - Luminance",
+            "Hable (Uncharted 2)",
+            "Duiker (Kodak curve)",
+            "ACES",
+            "ACES - Luminance"
+        };
+        int tonemappingMode = app.config->tonemappingMode;
+        ImGui::Combo("Tonemapping", &tonemappingMode, operators, IM_ARRAYSIZE(operators));
+        app.config->tonemappingMode = (Renderer::TonemappingMode)tonemappingMode;
+        app.renderer->setTonemappingMode(app.config->tonemappingMode);
+
         ImGui::Separator();
 
         // Render path radio buttons

@@ -14,6 +14,7 @@
 bgfx::VertexDecl Renderer::PosTexCoord0Vertex::decl;
 
 Renderer::Renderer(const Scene* scene) :
+    tonemappingMode(TonemappingMode::NONE),
     scene(scene),
     width(0),
     height(0),
@@ -25,7 +26,8 @@ Renderer::Renderer(const Scene* scene) :
     blitSampler(BGFX_INVALID_HANDLE),
     camPosUniform(BGFX_INVALID_HANDLE),
     normalMatrixUniform(BGFX_INVALID_HANDLE),
-    exposureVecUniform(BGFX_INVALID_HANDLE)
+    exposureVecUniform(BGFX_INVALID_HANDLE),
+    tonemappingModeVecUniform(BGFX_INVALID_HANDLE)
 {
 }
 
@@ -41,6 +43,7 @@ void Renderer::initialize()
     camPosUniform = bgfx::createUniform("u_camPos", bgfx::UniformType::Vec4);
     normalMatrixUniform = bgfx::createUniform("u_normalMatrix", bgfx::UniformType::Mat3);
     exposureVecUniform = bgfx::createUniform("u_exposureVec", bgfx::UniformType::Vec4);
+    tonemappingModeVecUniform = bgfx::createUniform("u_tonemappingModeVec", bgfx::UniformType::Vec4);
 
     float bottomUV = bgfx::getCaps()->originBottomLeft ? 0.0f :  1.0f;
     float topUV    = bgfx::getCaps()->originBottomLeft ? 2.0f : -1.0f;
@@ -111,14 +114,20 @@ void Renderer::shutdown()
     bgfx::destroy(camPosUniform);
     bgfx::destroy(normalMatrixUniform);
     bgfx::destroy(exposureVecUniform);
+    bgfx::destroy(tonemappingModeVecUniform);
     bgfx::destroy(blitTriangleBuffer);
     if(bgfx::isValid(frameBuffer))
         bgfx::destroy(frameBuffer);
 
     blitProgram = BGFX_INVALID_HANDLE;
-    blitSampler = camPosUniform = normalMatrixUniform = exposureVecUniform = BGFX_INVALID_HANDLE;
+    blitSampler = camPosUniform = normalMatrixUniform = exposureVecUniform = tonemappingModeVecUniform = BGFX_INVALID_HANDLE;
     blitTriangleBuffer = BGFX_INVALID_HANDLE;
     frameBuffer = BGFX_INVALID_HANDLE;
+}
+
+void Renderer::setTonemappingMode(TonemappingMode mode)
+{
+    tonemappingMode = mode;
 }
 
 bool Renderer::supported()
@@ -166,6 +175,8 @@ void Renderer::blitToScreen(bgfx::ViewId view)
     bgfx::setTexture(0, blitSampler, frameBufferTexture);
     float exposureVec[4] = { scene->loaded ? scene->camera.exposure : 1.0f };
     bgfx::setUniform(exposureVecUniform, exposureVec);
+    float tonemappingModeVec[4] = { (float)tonemappingMode };
+    bgfx::setUniform(tonemappingModeVecUniform, tonemappingModeVec);
     bgfx::setVertexBuffer(0, blitTriangleBuffer);
     bgfx::submit(view, blitProgram);
 }

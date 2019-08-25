@@ -92,6 +92,7 @@ void Cluster::initialize(int _argc, char* _argv[])
         toggleFullscreen();
 
     renderer->initialize();
+    renderer->setTonemappingMode(config->tonemappingMode);
     ui->initialize();
 
     Scene::init();
@@ -167,7 +168,7 @@ void Cluster::onCursorPos(double xpos, double ypos)
     constexpr float angularVelocity = 180.0f / 600.0f; // degrees/pixel
 
     if(mouseX >= 0.0f && mouseY >= 0.0f)
-    {   
+    {
         if(glfwGetMouseButton(mWindow, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS)
         {
             scene->camera.rotate(glm::vec3(-(ypos - mouseY), -(xpos - mouseX), 0.0f) * angularVelocity);
@@ -221,6 +222,7 @@ void Cluster::update(float dt)
             saveData = nullptr;
         }).detach();
     }
+
     renderer->render(dt);
     ui->update(dt);
 }
@@ -395,7 +397,7 @@ void Cluster::generateLights(unsigned int count)
     std::seed_seq seed = { rd() };
     std::mt19937 mt(seed);
     std::uniform_real_distribution<float> dist(0.0f, 1.0f);
-    
+
     for(size_t i = keep; i < count; i++)
     {
         glm::vec3 position = glm::vec3(dist(mt), dist(mt), dist(mt)) * scale - (scale * 0.5f);

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <bgfx/bgfx.h>
+#include "Renderer/Renderer.h"
 #include "Cluster.h"
 
 class Config
@@ -19,6 +20,7 @@ public:
 
     bgfx::RendererType::Enum renderer; // not exposed to UI
     Cluster::RenderPath renderPath;
+    Renderer::TonemappingMode tonemappingMode;
 
     bool vsync; // not exposed to UI
 
