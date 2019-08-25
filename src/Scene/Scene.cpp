@@ -20,7 +20,8 @@ Scene::Scene() :
     loaded(false),
     //skyColor({ 0.53f, 0.81f, 0.98f }), // https://en.wikipedia.org/wiki/Sky_blue#Light_sky_blue
     //skyColor({ 0.1f, 0.1f, 0.44f }),   // https://en.wikipedia.org/wiki/Midnight_blue#X11
-    skyColor({ 0.0f, 0.0f, 0.0f })
+    skyColor({ 0.0f, 0.0f, 0.0f }),
+    ambientLight({ { 0.03f, 0.03f, 0.03f } })
 {
     Assimp::DefaultLogger::set(&logSource);
 }
@@ -43,6 +44,7 @@ void Scene::clear()
         {
             bgfx::destroy(mesh.vertexBuffer);
             bgfx::destroy(mesh.indexBuffer);
+            //bgfx::destroy(mesh.occlusionQuery);
         }
         meshes.clear();
         for(const Material& mat : materials)
@@ -83,7 +85,7 @@ bool Scene::load(const char* file)
                                          // something here is wrong, Renderer::blit culls CW, but quad triangles are in CW
         //aiProcess_FlipWindingOrder   | // flag in bgfx::setState(), default is to cull(!) CW
         aiProcess_MakeLeftHanded       | // we set GLM_FORCE_LEFT_HANDED and use left-handed bx matrix functions
-        aiProcess_FlipUVs;               // bimg loads textures with flipped Y
+        aiProcess_FlipUVs;               // bimg loads textures with flipped Y (top left is 0,0)
 
     const aiScene* scene = importer.ReadFile(file, flags);
     if(scene)
@@ -186,11 +188,6 @@ Mesh Scene::loadMesh(const aiMesh* mesh)
         vertex.ty = tan.y;
         vertex.tz = tan.z;
 
-        aiVector3D bit = mesh->mBitangents[i];
-        vertex.bx = bit.x;
-        vertex.by = bit.y;
-        vertex.bz = bit.z;
-
         if(hasTexture)
         {
             aiVector3D uv = mesh->mTextureCoords[coords][i];
@@ -217,7 +214,9 @@ Mesh Scene::loadMesh(const aiMesh* mesh)
 
     bgfx::IndexBufferHandle ibh = bgfx::createIndexBuffer(iMem);
 
-    return { vbh, ibh, mesh->mMaterialIndex };
+    //bgfx::OcclusionQueryHandle oq = bgfx::createOcclusionQuery();
+
+    return { vbh, ibh, mesh->mMaterialIndex/*, oq*/ };
 }
 
 Material Scene::loadMaterial(const aiMaterial* material, const char* dir)

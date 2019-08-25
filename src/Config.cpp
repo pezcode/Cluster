@@ -5,7 +5,7 @@
 Config::Config() :
     writeLog(true),
     logFile("Cluster.log"),
-    renderer(bgfx::RendererType::Count),
+    renderer(bgfx::RendererType::Count), // default renderer, chosen by platform
     renderPath(Cluster::Forward),
     vsync(false),
     //sceneFile("assets/models/duck/Duck.gltf"),
@@ -27,21 +27,17 @@ void Config::readArgv(int argc, char* argv[])
 {
     bx::CommandLine cmdLine(argc, argv);
 
-    // bgfx OpenGL renderer uses version 2.1
-    // can be built with BGFX_CONFIG_RENDERER_OPENGL=43
-    // this adds compute shaders and texture copy
-    // somehow this also makes it the only usable renderer
-    // passing D3D11 as renderer will still use OpenGL with that define
-
     // DX 9.0c (shader model 3.0) doesn't allow indexing into the light buffer
     // so shaders for DX9 aren't even compiled anymore
 
-    // DX11, DX12, OpenGL all work
-    // Vulkan doesn't support framebuffer textures
+    // DX11 and OpenGL work
+    // DX12 just instantly quits
+    // Vulkan? need to update bgfx/bigg
 
     //cmdLine.hasArg("gl");
 
-    renderer = bgfx::RendererType::Direct3D11;
+    //renderer = bgfx::RendererType::OpenGL;
+    //renderer = bgfx::RendererType::Direct3D12;
 
     showStatsOverlay = false;
     showLog = false;

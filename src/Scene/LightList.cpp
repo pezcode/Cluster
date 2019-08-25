@@ -2,6 +2,7 @@
 
 #include <glm/gtc/type_ptr.hpp>
 
+// initialized in Scene::init
 bgfx::VertexDecl LightList::Vec4Vertex::decl;
 
 PointLightList::PointLightList() :

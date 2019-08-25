@@ -1,25 +1,30 @@
 #include "LightShader.h"
 
 #include "Scene/Scene.h"
+#include "Renderer/Samplers.h"
 #include <cassert>
 
 LightShader::LightShader() :
-    lightCountVecUniform(BGFX_INVALID_HANDLE)
+    lightCountVecUniform(BGFX_INVALID_HANDLE),
+    ambientLightIrradianceUniform(BGFX_INVALID_HANDLE)
 {
 }
 
 void LightShader::initialize()
 {
-    lightCountVecUniform = bgfx::createUniform("u_lightCountVec", bgfx::UniformType::Vec4);   
+    lightCountVecUniform = bgfx::createUniform("u_lightCountVec", bgfx::UniformType::Vec4);
+    ambientLightIrradianceUniform = bgfx::createUniform("u_ambientLightIrradiance", bgfx::UniformType::Vec4);
 }
 
 void LightShader::shutdown()
 {
     bgfx::destroy(lightCountVecUniform);
-    lightCountVecUniform = BGFX_INVALID_HANDLE;
+    bgfx::destroy(ambientLightIrradianceUniform);
+
+    lightCountVecUniform = ambientLightIrradianceUniform = BGFX_INVALID_HANDLE;
 }
 
-uint64_t LightShader::bindLights(const Scene* scene) const
+void LightShader::bindLights(const Scene* scene) const
 {
     assert(scene != nullptr);
 
@@ -28,8 +33,11 @@ uint64_t LightShader::bindLights(const Scene* scene) const
     float lightCountVec[4] = { (float)scene->pointLights.lights.size() };
     bgfx::setUniform(lightCountVecUniform, lightCountVec);
 
-    bgfx::setBuffer(SAMPLER_START,     scene->pointLights.positionBuffer, bgfx::Access::Read);
-    bgfx::setBuffer(SAMPLER_START + 1, scene->pointLights.powerBuffer,     bgfx::Access::Read);
+    float ambientLightIrradiance[4] = { scene->ambientLight.irradiance.r,
+                                        scene->ambientLight.irradiance.g,
+                                        scene->ambientLight.irradiance.b };
+    bgfx::setUniform(ambientLightIrradianceUniform, ambientLightIrradiance);
 
-    return 0;
+    bgfx::setBuffer(Samplers::LIGHTS_POINTLIGHT_POSITION, scene->pointLights.positionBuffer, bgfx::Access::Read);
+    bgfx::setBuffer(Samplers::LIGHTS_POINTLIGHT_POWER,    scene->pointLights.powerBuffer,    bgfx::Access::Read);
 }

@@ -18,11 +18,7 @@ ForwardRenderer::~ForwardRenderer()
 
 bool ForwardRenderer::supported()
 {
-    if(Renderer::supported())
-    {
-        return true;
-    }
-    return false;
+    return Renderer::supported();
 }
 
 void ForwardRenderer::onInitialize()
@@ -50,7 +46,7 @@ void ForwardRenderer::onRender(float dt)
     setViewProjection(vDefault);
 
     uint64_t state = BGFX_STATE_DEFAULT & ~BGFX_STATE_CULL_MASK;
-    
+
     for(const Mesh& mesh : scene->meshes)
     {
         glm::mat4 model = glm::mat4();
@@ -60,8 +56,8 @@ void ForwardRenderer::onRender(float dt)
         bgfx::setIndexBuffer(mesh.indexBuffer);
         const Material& mat = scene->materials[mesh.material];
         uint64_t materialState = pbr.bindMaterial(mat);
-        uint64_t lightState = lights.bindLights(scene);
-        bgfx::setState(state | materialState | lightState);
+        lights.bindLights(scene);
+        bgfx::setState(state | materialState);
         bgfx::submit(vDefault, program);
     }
 }

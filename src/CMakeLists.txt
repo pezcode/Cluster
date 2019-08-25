@@ -24,7 +24,10 @@ set(SOURCES
     Renderer/PBRShader.cpp
     Renderer/LightShader.h
     Renderer/LightShader.cpp
-    
+    Renderer/ClusterShader.h
+    Renderer/ClusterShader.cpp
+    Renderer/Samplers.h
+
     Scene/Scene.h
     Scene/Scene.cpp
     Scene/Camera.h
@@ -45,13 +48,16 @@ set(SHADERS
     Renderer/Shaders/fs_deferred.sc
     Renderer/Shaders/vs_clustered.sc
     Renderer/Shaders/fs_clustered.sc
+    Renderer/Shaders/cs_clustered_clusterbuilding.sc
     Renderer/Shaders/cs_clustered_lightculling.sc
     Renderer/Shaders/vs_tonemap.sc
     Renderer/Shaders/fs_tonemap.sc
+    Renderer/Shaders/samplers.sh
     Renderer/Shaders/tonemapping.sh
     Renderer/Shaders/pbr.sh
     Renderer/Shaders/lights.sh
     Renderer/Shaders/clusters.sh
+    Renderer/Shaders/util.sh
 )
 
 add_executable(Cluster ${SOURCES} ${SHADERS})

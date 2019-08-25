@@ -33,8 +33,9 @@ public:
     std::vector<Mesh> meshes;
     std::vector<Material> materials;
 
-    // sky color and lights are not populated by load
+    // these are not populated by load
     glm::vec3 skyColor;
+    AmbientLight ambientLight;
     PointLightList pointLights;
 
 private:

@@ -7,10 +7,6 @@ struct Material;
 class PBRShader
 {
 public:
-
-    static constexpr uint8_t SAMPLER_START = 0;
-    static constexpr uint8_t SAMPLER_END   = SAMPLER_START + 2;
-
     PBRShader();
 
     void initialize();

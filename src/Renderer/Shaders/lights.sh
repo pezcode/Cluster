@@ -1,24 +1,27 @@
 #ifndef LIGHTS_SH_HEADER_GUARD
 #define LIGHTS_SH_HEADER_GUARD
 
-#include "pbr.sh"
+#include "samplers.sh"
 
 uniform vec4 u_lightCountVec;
 #define u_pointLightCount uint(u_lightCountVec.x)
 
-// actually vec3, but with padding
-// first three samplers are taken by PBR texture samplers
-// GLSL compiler doesn't like non-constants here
-BUFFER_RO(b_pointLightPosition, vec4, 3);
-BUFFER_RO(b_pointLightPower, vec4, 4);
+uniform vec4 u_ambientLightIrradiance;
 
-#define LIGHTS_SAMPLER_END (PBR_SAMPLER_END + 2)
+// actually vec3, but with padding
+BUFFER_RO(b_pointLightPosition, vec4, SAMPLER_LIGHTS_POINTLIGHT_POSITION);
+BUFFER_RO(b_pointLightPower,    vec4, SAMPLER_LIGHTS_POINTLIGHT_POWER);
 
 struct PointLight
 {
     vec3 position;
     vec3 intensity;
     float radius;
+};
+
+struct AmbientLight
+{
+    vec3 irradiance;
 };
 
 // primary source:
@@ -63,6 +66,13 @@ PointLight getPointLight(uint i)
     // scale by area of unit sphere
     light.intensity = b_pointLightPower[i].xyz * INV_4PI;
     light.radius = calculateLightRadius(light.position, light.intensity);
+    return light;
+}
+
+AmbientLight getAmbientLight()
+{
+    AmbientLight light;
+    light.irradiance = u_ambientLightIrradiance.xyz;
     return light;
 }
 

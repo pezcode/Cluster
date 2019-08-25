@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Renderer.h"
+#include "ClusterShader.h"
 
 class ClusteredRenderer : public Renderer
 {
@@ -15,9 +16,9 @@ public:
     virtual void onShutdown() override;
 
 private:
-    static const uint32_t CLUSTER_WIDTH  = 32;
-    static const uint32_t CLUSTER_HEIGHT = 32;
-
-    bgfx::ProgramHandle lightingProgram;
+    bgfx::ProgramHandle clusterBuildingComputeProgram;
     bgfx::ProgramHandle lightCullingComputeProgram;
+    bgfx::ProgramHandle lightingProgram;
+
+    ClusterShader clusters;
 };

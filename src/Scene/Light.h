@@ -8,6 +8,7 @@ struct PointLight
     glm::vec3 position;
     // spectral power (aka flux) in W
     // radiometric value (ie. linear physical value), not photometric (based on human eye sensitivity)
+    // TODO does this make sense? shouldn't this be photometric
     glm::vec3 power;
 };
 
@@ -27,5 +28,5 @@ struct SpotLight
 
 struct AmbientLight
 {
-    glm::vec3 power;
+    glm::vec3 irradiance;
 };

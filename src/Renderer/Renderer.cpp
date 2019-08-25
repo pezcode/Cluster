@@ -43,7 +43,7 @@ void Renderer::initialize()
     exposureVecUniform = bgfx::createUniform("u_exposureVec", bgfx::UniformType::Vec4);
 
     float bottomUV = bgfx::getCaps()->originBottomLeft ? 0.0f :  1.0f;
-    float topUV    = bgfx::getCaps()->originBottomLeft ? 2.0f : -1.0f; 
+    float topUV    = bgfx::getCaps()->originBottomLeft ? 2.0f : -1.0f;
     constexpr float BOTTOM = -1.0f, TOP = 3.0f, LEFT = -1.0f, RIGHT = 3.0f;
     PosTexCoord0Vertex vertices[3] = {
         { LEFT,  BOTTOM, 0.0f, 0.0f, bottomUV },
@@ -137,7 +137,8 @@ void Renderer::setViewProjection(bgfx::ViewId view)
                 float(width) / height,
                 scene->camera.zNear,
                 scene->camera.zFar,
-                bgfx::getCaps()->homogeneousDepth);
+                bgfx::getCaps()->homogeneousDepth,
+                bx::Handness::Left);
     bgfx::setViewTransform(view, glm::value_ptr(viewMat), glm::value_ptr(projMat));
 }
 
@@ -199,7 +200,7 @@ bgfx::FrameBufferHandle Renderer::createFrameBuffer(bool hdr, bool depth)
     }
 
     bgfx::FrameBufferHandle fb = bgfx::createFrameBuffer(attachments, textures, true);
-    
+
     if(!bgfx::isValid(fb))
         Log->warn("Failed to create framebuffer");
 

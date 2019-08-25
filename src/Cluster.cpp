@@ -105,16 +105,18 @@ void Cluster::initialize(int _argc, char* _argv[])
         return;
     }
 
-    /*
+    scene->camera.move({ -7.0f, 2.0f, 0.0f });
+    scene->camera.rotate({ -45.0f, -90.0f });
+
     scene->pointLights.lights = {
-        // pos, power (color)
-        { { -5.0f, 1.1f, 0.0f }, { 1.0f, 0.0f, 1.0f } },
-        { {  0.0f, 1.1f, 0.0f }, { 0.0f, 1.0f, 1.0f } },
-        { {  5.0f, 1.1f, 0.0f }, { 1.0f, 1.0f, 0.0f } }
+        // pos, power
+        { { -5.0f, 0.3f, 0.0f }, { 100.0f, 100.0f, 100.0f } },
+        { {  0.0f, 0.3f, 0.0f }, { 100.0f, 100.0f, 100.0f } },
+        { {  5.0f, 0.3f, 0.0f }, { 100.0f, 100.0f, 100.0f } }
     };
     scene->pointLights.update();
-    */
-    generateLights(config->lights);
+
+    //generateLights(config->lights);
 }
 
 void Cluster::onReset()

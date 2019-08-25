@@ -1,6 +1,7 @@
 #include "PBRShader.h"
 
 #include "Scene/Material.h"
+#include "Renderer/Samplers.h"
 
 PBRShader::PBRShader() :
     baseColorFactorUniform(BGFX_INVALID_HANDLE),
@@ -43,15 +44,15 @@ uint64_t PBRShader::bindMaterial(const Material& material)
     bgfx::setUniform(metallicRoughnessFactorUniform, &metallicRoughnessValues[0]);
 
     if(bgfx::isValid(material.baseColorTexture))
-        bgfx::setTexture(0, baseColorSampler, material.baseColorTexture);
+        bgfx::setTexture(Samplers::PBR_BASECOLOR, baseColorSampler, material.baseColorTexture);
     else
         hasTexturesValues[0] = 0.0f;
     if(bgfx::isValid(material.metallicRoughnessTexture))
-        bgfx::setTexture(1, metallicRoughnessSampler, material.metallicRoughnessTexture);
+        bgfx::setTexture(Samplers::PBR_METALROUGHNESS, metallicRoughnessSampler, material.metallicRoughnessTexture);
     else
         hasTexturesValues[1] = 0.0f;
     if(bgfx::isValid(material.normalTexture))
-        bgfx::setTexture(2, normalSampler, material.normalTexture);
+        bgfx::setTexture(Samplers::PBR_NORMAL, normalSampler, material.normalTexture);
     else
         hasTexturesValues[2] = 0.0f;
 
