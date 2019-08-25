@@ -90,8 +90,8 @@ void ClusterUI::update(float dt)
     const Renderer::TextureBuffer* buffers = app.renderer->buffers;
 
     // test
-    Renderer::TextureBuffer temp[2] = { { bgfx::getTexture(app.renderer->frameBuffer), "Output" }, { 0, nullptr } };
-    buffers = temp;
+    //Renderer::TextureBuffer temp[2] = { { bgfx::getTexture(app.renderer->frameBuffer), "Output" }, { 0, nullptr } };
+    //buffers = temp;
 
     //ImGui::ShowDemoWindow();
 
@@ -298,24 +298,30 @@ void ClusterUI::update(float dt)
 
         ImGuiIO& io = ImGui::GetIO();
 
-        ImVec4 tint_col = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);
-        ImVec4 border_col = ImVec4(1.0f, 1.0f, 1.0f, 0.5f);
+        ImVec4 tintColor = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);
+        ImVec4 borderColor = ImVec4(1.0f, 1.0f, 1.0f, 0.5f);
 
         for(size_t i = 0; buffers[i].name != nullptr; i++)
         {
             ImGui::Text(buffers[i].name);
-            ImTextureID tex_id = ImTextureID(uintptr_t(buffers[i].handle.idx));
-            ImVec2 tex_size = io.DisplaySize;
-            tex_size = { 128.0f, 128.0f };
-            ImGui::Image(tex_id, tex_size, ImVec2(0, 0), ImVec2(1, 1), tint_col, border_col);
-            imageTooltip(tex_id, tex_size, 32);
+            ImTextureID texId = ImTextureID(uintptr_t(buffers[i].handle.idx));
+            ImVec2 texSize = io.DisplaySize;
+            texSize = { 128.0f, 128.0f };
+            ImVec2 topLeft = ImVec2(0.0f, 0.0f);
+            ImVec2 bottomRight = ImVec2(1.0f, 1.0f);
+            if(bgfx::getCaps()->originBottomLeft)
+            {
+                std::swap(topLeft.y, bottomRight.y);
+            }
+            ImGui::Image(texId, texSize, topLeft, bottomRight, tintColor, borderColor);
+            //imageTooltip(texId, texSize, 32, tintColor, borderColor);
         }
 
         // move window to bottom right
-        ImVec2 display_size = io.DisplaySize;
-        ImVec2 window_size = ImGui::GetWindowSize();
-        ImVec2 window_pos(display_size.x - window_size.x - padding.x, display_size.y - window_size.y - padding.y);
-        ImGui::SetWindowPos(window_pos);
+        ImVec2 displaySize = io.DisplaySize;
+        ImVec2 windowSize = ImGui::GetWindowSize();
+        ImVec2 windowPos(displaySize.x - windowSize.x - padding.x, displaySize.y - windowSize.y - padding.y);
+        ImGui::SetWindowPos(windowPos);
 
         ImGui::End();
     }
@@ -344,34 +350,27 @@ void ClusterUI::log(const char* message, spdlog::level::level_enum level)
     logEntries.push_back({ level, vecLen });
 }
 
-void ClusterUI::imageTooltip(ImTextureID tex, ImVec2 tex_size, float region_size)
+// TODO this is not working correctly
+void ClusterUI::imageTooltip(ImTextureID tex, ImVec2 texSize, float regionSize, ImVec4 tintColor, ImVec4 borderColor)
 {
     ImGuiIO& io = ImGui::GetIO();
     if(ImGui::IsItemHovered())
     {
         ImGui::BeginTooltip();
         ImVec2 pos = ImGui::GetCursorScreenPos();
-        float region_x = io.MousePos.x - pos.x - region_size * 0.5f;
-        if(region_x < 0.0f)
-            region_x = 0.0f;
-        else if(region_x > tex_size.x - region_size)
-            region_x = tex_size.x - region_size;
-        float region_y = io.MousePos.y - pos.y - region_size * 0.5f;
-        if(region_y < 0.0f)
-            region_y = 0.0f;
-        else if(region_y > tex_size.y - region_size)
-            region_y = tex_size.y - region_size;
+        ImVec2 region = { io.MousePos.x - pos.x - (regionSize * 0.5f), io.MousePos.y - pos.y - (regionSize * 0.5f) };
+        region.x = glm::clamp(region.x, 0.0f, texSize.x - regionSize);
+        region.y = glm::clamp(region.y, 0.0f, texSize.y - regionSize);
         float zoom = 4.0f;
-        ImGui::Text("Min: (%.2f, %.2f)", region_x, region_y);
-        ImGui::Text("Max: (%.2f, %.2f)", region_x + region_size, region_y + region_size);
-        ImVec2 uv0 = ImVec2((region_x) / tex_size.x, (region_y) / tex_size.y);
-        ImVec2 uv1 = ImVec2((region_x + region_size) / tex_size.x, (region_y + region_size) / tex_size.y);
-        ImGui::Image(tex,
-                     ImVec2(region_size * zoom, region_size * zoom),
-                     uv0,
-                     uv1,
-                     ImVec4(1.0f, 1.0f, 1.0f, 1.0f),
-                     ImVec4(1.0f, 1.0f, 1.0f, 0.5f));
+        ImGui::Text("Min: (%.2f, %.2f)", region.x, region.y);
+        ImGui::Text("Max: (%.2f, %.2f)", region.x + regionSize, region.y + regionSize);
+        ImVec2 topLeft     = ImVec2((region.x)              / texSize.x, (region.y)              / texSize.y);
+        ImVec2 bottomRight = ImVec2((region.x + regionSize) / texSize.x, (region.y + regionSize) / texSize.y);
+        if(bgfx::getCaps()->originBottomLeft)
+        {
+            std::swap(topLeft.y, bottomRight.y);
+        }
+        ImGui::Image(tex, ImVec2(regionSize * zoom, regionSize * zoom), topLeft, bottomRight, tintColor, borderColor);
         ImGui::EndTooltip();
     }
 }

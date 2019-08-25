@@ -1,5 +1,7 @@
+assets/models/
 build/
 screenshots/
 .vs/
 .vscode/
 CMakeSettings.json
+*.cap

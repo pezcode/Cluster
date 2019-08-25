@@ -10,6 +10,12 @@ struct PointLight
     // radiometric value (ie. linear physical value), not photometric (based on human eye sensitivity)
     // TODO does this make sense? shouldn't this be photometric
     glm::vec3 power;
+
+    // TODO
+    float calculateRadius()
+    {
+        return 10.0f;
+    }
 };
 
 struct DirectionalLight

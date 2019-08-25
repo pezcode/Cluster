@@ -27,14 +27,11 @@ void main()
     uint visibleLights[MAX_LIGHTS_PER_CLUSTER];
     uint visibleCount = 0;
 
-    //const uint groupSize = gl_WorkGroupSize.x + gl_WorkGroupSize.y * gl_WorkGroupSize.z;
-    //const uint clusterIndex = gl_GlobalInvocationID.z * gl_WorkGroupSize.x * gl_WorkGroupSize.y +
-    //                          gl_GlobalInvocationID.y * gl_WorkGroupSize.x +
-    //                          gl_GlobalInvocationID.x;
-
     // the way we calculate the index doesn't really matter here since we write to the same index as we read from the cluster buffer
     // it only matters that the cluster buildung and fragment shader calculate the cluster index the same way
-    const uint clusterIndex = gl_LocalInvocationIndex + gl_WorkGroupSize.x * gl_WorkGroupSize.y * gl_WorkGroupSize.z * gl_WorkGroupID.z;
+    const uint clusterIndex = gl_GlobalInvocationID.z * gl_WorkGroupSize.x * gl_WorkGroupSize.y +
+                              gl_GlobalInvocationID.y * gl_WorkGroupSize.x +
+                              gl_GlobalInvocationID.x;
 
     // we have a cache of GROUP_SIZE lights
     // have to run this loop several times if we have more than GROUP_SIZE lights
@@ -73,17 +70,10 @@ void main()
     // wait for all threads to finish checking lights
     barrier();
 
-    // debug
-    visibleLights[0] = 0;
-    visibleLights[1] = 1;
-    visibleLights[2] = 2;
-    visibleCount = 3;
-
-    // add visible lights to global list
+    // get a unique index into the light index list where we can write this cluster's lights
     uint offset = 0;
     atomicFetchAndAdd(b_globalIndex[0], visibleCount, offset);
-    // we allocate MAX_LIGHTS_PER_CLUSTER indices per cluster anyway, shrug
-    offset = clusterIndex * MAX_LIGHTS_PER_CLUSTER;
+    // copy indices of lights
     for(uint i = 0; i < visibleCount; i++)
     {
         b_clusterLightIndices[offset + i] = visibleLights[i];
@@ -102,6 +92,7 @@ bool pointLightAffectsCluster(PointLight light, Cluster cluster)
 {
     vec3 pos = mul(u_view, vec4(light.position, 1.0)).xyz;
     return distsqToCluster(pos, cluster) <= (light.radius * light.radius);
+    //return true; // DEBUG
 }
 
 // squared distance of the point to the bounding planes

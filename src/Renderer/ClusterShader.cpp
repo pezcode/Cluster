@@ -34,7 +34,7 @@ void ClusterShader::initialize()
     clustersBuffer     = bgfx::createDynamicVertexBuffer(CLUSTER_COUNT, ClusterVertex::decl,     BGFX_BUFFER_COMPUTE_READ_WRITE);
     lightIndicesBuffer = bgfx::createDynamicIndexBuffer (CLUSTER_COUNT * MAX_LIGHTS_PER_CLUSTER, BGFX_BUFFER_COMPUTE_READ_WRITE | BGFX_BUFFER_INDEX32);
     lightGridBuffer    = bgfx::createDynamicIndexBuffer (CLUSTER_COUNT * 4,                      BGFX_BUFFER_COMPUTE_READ_WRITE | BGFX_BUFFER_INDEX32);
-    atomicIndexBuffer  = bgfx::createDynamicIndexBuffer (4,                                      BGFX_BUFFER_COMPUTE_READ_WRITE | BGFX_BUFFER_INDEX32);
+    atomicIndexBuffer  = bgfx::createDynamicIndexBuffer (1,                                      BGFX_BUFFER_COMPUTE_READ_WRITE | BGFX_BUFFER_INDEX32);
 }
 
 void ClusterShader::shutdown()

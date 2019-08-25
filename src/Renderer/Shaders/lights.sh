@@ -8,9 +8,10 @@ uniform vec4 u_lightCountVec;
 
 uniform vec4 u_ambientLightIrradiance;
 
-// actually vec3, but with padding
-BUFFER_RO(b_pointLightPosition, vec4, SAMPLER_LIGHTS_POINTLIGHT_POSITION);
-BUFFER_RO(b_pointLightPower,    vec4, SAMPLER_LIGHTS_POINTLIGHT_POWER);
+// for each light:
+//   vec4 position (w is padding)
+//   vec4 power/radius (xyz is power, w is radius)
+BUFFER_RO(b_pointLights, vec4, SAMPLER_LIGHTS_POINTLIGHTS);
 
 struct PointLight
 {
@@ -48,12 +49,6 @@ float smoothAttenuation(float distance, float radius)
     return nom * nom * distanceAttenuation(distance);
 }
 
-float calculateLightRadius(vec3 position, vec3 intensity)
-{
-    const float MAX_RADIUS = 10.0;
-    return MAX_RADIUS;
-}
-
 uint pointLightCount()
 {
     return u_pointLightCount;
@@ -62,10 +57,10 @@ uint pointLightCount()
 PointLight getPointLight(uint i)
 {
     PointLight light;
-    light.position = b_pointLightPosition[i].xyz;
-    // scale by area of unit sphere
-    light.intensity = b_pointLightPower[i].xyz * INV_4PI;
-    light.radius = calculateLightRadius(light.position, light.intensity);
+    light.position = b_pointLights[2 * i + 0].xyz;
+    vec4 powerRadiusVec = b_pointLights[2 * i + 1];
+    light.intensity = powerRadiusVec.xyz * INV_4PI;
+    light.radius = powerRadiusVec.w;
     return light;
 }
 

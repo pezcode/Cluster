@@ -31,7 +31,7 @@ uniform vec4 u_zNearFarVec;
 CLUSTER_BUFFER(b_clusterLightIndices, uint, SAMPLER_CLUSTERS_LIGHTINDICES);
 // for each cluster: (start index in b_clusterLightIndices, number of point lights, empty, empty)
 CLUSTER_BUFFER(b_clusterLightGrid, uint, SAMPLER_CLUSTERS_LIGHTGRID);
-// uvec4 doesn't seem to work
+// uvec4 doesn't seem to work with DX11
 //CLUSTER_BUFFER(b_clusterLightGrid, uvec4, SAMPLER_CLUSTERS_LIGHTGRID);
 
 // these are only needed for building clusters and light culling, not in the fragment shader

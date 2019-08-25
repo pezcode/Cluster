@@ -2,50 +2,36 @@
 
 #include <glm/gtc/type_ptr.hpp>
 
-// initialized in Scene::init
-bgfx::VertexDecl LightList::Vec4Vertex::decl;
+bgfx::VertexDecl LightList::PointLightVertex::decl;
 
-PointLightList::PointLightList() :
-    positionBuffer(BGFX_INVALID_HANDLE),
-    powerBuffer(BGFX_INVALID_HANDLE)
+PointLightList::PointLightList() : buffer(BGFX_INVALID_HANDLE)
 {
 }
 
 void PointLightList::init()
 {
-
+    LightList::PointLightVertex::init();
+    buffer = bgfx::createDynamicVertexBuffer(1, PointLightVertex::decl, BGFX_BUFFER_COMPUTE_READ | BGFX_BUFFER_ALLOW_RESIZE);
 }
 
 void PointLightList::shutdown()
 {
-    if(bgfx::isValid(positionBuffer))
-        bgfx::destroy(positionBuffer);
-    if(bgfx::isValid(powerBuffer))
-        bgfx::destroy(powerBuffer);
-    positionBuffer = powerBuffer = BGFX_INVALID_HANDLE;
+    bgfx::destroy(buffer);
+    buffer = BGFX_INVALID_HANDLE;
 }
 
 void PointLightList::update()
 {
-    // is memory cleared to 0?
-    const bgfx::Memory* memPosition = bgfx::alloc(uint32_t(sizeof(Vec4Vertex) * lights.size()));
-    const bgfx::Memory* memPower    = bgfx::alloc(uint32_t(sizeof(Vec4Vertex) * lights.size()));
-
-    uint8_t* position = memPosition->data;
-    uint8_t* power    = memPower->data;
-
-    size_t stride = Vec4Vertex::decl.getStride();
-    size_t filled = 3 * sizeof(float);
+    size_t stride = PointLightVertex::decl.getStride();
+    const bgfx::Memory* mem = bgfx::alloc(uint32_t(stride * lights.size()));
 
     for(size_t i = 0; i < lights.size(); i++)
     {
-        size_t offset = i * stride;
-        memcpy(&position[offset], glm::value_ptr(lights[i].position), filled);
-        memcpy(&power[offset],    glm::value_ptr(lights[i].power),    filled);
+        PointLightVertex* light = (PointLightVertex*)(mem->data + (i * stride));
+        light->position = lights[i].position;
+        light->power = lights[i].power;
+        light->radius = lights[i].calculateRadius();
     }
 
-    // initially this used dynamic vertex buffers
-    // but apparently they normalize input regardless of decl and often fail to send data
-    positionBuffer = bgfx::createVertexBuffer(memPosition, Vec4Vertex::decl, BGFX_BUFFER_COMPUTE_READ);
-    powerBuffer    = bgfx::createVertexBuffer(memPower,    Vec4Vertex::decl, BGFX_BUFFER_COMPUTE_READ);
+    bgfx::update(buffer, 0, mem);
 }

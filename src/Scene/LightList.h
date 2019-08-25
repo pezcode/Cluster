@@ -3,22 +3,22 @@
 #include "Scene/Light.h"
 #include <bgfx/bgfx.h>
 #include <vector>
-#include <memory>
 
 struct LightList
 {
     // vertex buffers seem to be aligned to 16 bytes
-    struct Vec4Vertex
+    struct PointLightVertex
     {
-        float x;
-        float y;
-        float z;
-        float w;
+        glm::vec3 position;
+        float padding;
+        glm::vec3 power;
+        float radius;
 
         static void init()
         {
             decl.begin()
-                .add(bgfx::Attrib::Position, 4, bgfx::AttribType::Float)
+                .add(bgfx::Attrib::TexCoord0, 4, bgfx::AttribType::Float)
+                .add(bgfx::Attrib::TexCoord1, 4, bgfx::AttribType::Float)
                 .end();
         }
         static bgfx::VertexDecl decl;
@@ -38,6 +38,5 @@ public:
     // upload changes to GPU
     void update();
 
-    bgfx::VertexBufferHandle positionBuffer;
-    bgfx::VertexBufferHandle powerBuffer;
+    bgfx::DynamicVertexBufferHandle buffer;
 };

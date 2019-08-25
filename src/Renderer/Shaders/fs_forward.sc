@@ -26,7 +26,7 @@ void main()
     vec3 N = normalize(mul(TBN, mat.normal));
 
     mat.a = specularAntiAliasing(N, mat.a);
-    
+
     // shading
 
     vec3 camPos = u_camPos.xyz;
@@ -53,7 +53,7 @@ void main()
 
     vec3 ambient = getAmbientLight().irradiance * mat.albedo.rgb; // * ambientOcclusion
     vec3 color = radianceOut + ambient;
-    
+
     // output goes straight to HDR framebuffer, no clamping
     // tonemapping happens in final blit
 

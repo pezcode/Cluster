@@ -33,7 +33,6 @@ Scene::~Scene()
 void Scene::init()
 {
     Mesh::PosNormalTangentTex0Vertex::init();
-    LightList::Vec4Vertex::init();
 }
 
 void Scene::clear()
@@ -206,7 +205,7 @@ Mesh Scene::loadMesh(const aiMesh* mesh)
     const aiFace* faces = mesh->mFaces;
     for(unsigned int i = 0; i < mesh->mNumFaces; i++)
     {
-        assert(mesh->mFaces[i].mNumIndices == 3);        
+        assert(mesh->mFaces[i].mNumIndices == 3);
         indices[(3 * i) + 0] = (uint16_t)mesh->mFaces[i].mIndices[0];
         indices[(3 * i) + 1] = (uint16_t)mesh->mFaces[i].mIndices[1];
         indices[(3 * i) + 2] = (uint16_t)mesh->mFaces[i].mIndices[2];

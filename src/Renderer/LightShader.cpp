@@ -38,6 +38,5 @@ void LightShader::bindLights(const Scene* scene) const
                                         scene->ambientLight.irradiance.b };
     bgfx::setUniform(ambientLightIrradianceUniform, ambientLightIrradiance);
 
-    bgfx::setBuffer(Samplers::LIGHTS_POINTLIGHT_POSITION, scene->pointLights.positionBuffer, bgfx::Access::Read);
-    bgfx::setBuffer(Samplers::LIGHTS_POINTLIGHT_POWER,    scene->pointLights.powerBuffer,    bgfx::Access::Read);
+    bgfx::setBuffer(Samplers::LIGHTS_POINTLIGHTS, scene->pointLights.buffer, bgfx::Access::Read);
 }
