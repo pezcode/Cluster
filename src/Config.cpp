@@ -13,7 +13,7 @@ Config::Config() :
     //sceneFile("assets/models/duck/Duck.gltf"),
     sceneFile("assets/models/Sponza/glTF/Sponza.gltf"),
     lights(1),
-    maxLights(500),
+    maxLights(1000),
     movingLights(false),
     fullscreen(false),
     showUI(true),
@@ -21,7 +21,8 @@ Config::Config() :
     showLog(true),
     showStatsOverlay(true),
     overlays({true, true, true}),
-    showBuffers(true)
+    showBuffers(true),
+    debugVisualization(false)
 {
 }
 

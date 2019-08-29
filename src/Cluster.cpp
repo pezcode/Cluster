@@ -21,7 +21,7 @@ bx::DefaultAllocator Cluster::allocator;
 bx::AllocatorI* Cluster::iAlloc = &allocator;
 
 Cluster::Cluster() :
-    bigg::Application("Cluster", 1024, 768),
+    bigg::Application("Cluster", 1280, 640), // testing 16:8 ratio for clusters
     //deltaTime(0.0f),
     mouseX(-1.0f),
     mouseY(-1.0f),
@@ -106,6 +106,8 @@ void Cluster::initialize(int _argc, char* _argv[])
         return;
     }
 
+    // debug camera + lights
+
     scene->camera.move({ -7.0f, 2.0f, 0.0f });
     scene->camera.rotate({ -45.0f, -90.0f });
 
@@ -116,6 +118,7 @@ void Cluster::initialize(int _argc, char* _argv[])
         { {  5.0f, 0.3f, 0.0f }, { 100.0f, 100.0f, 100.0f } }
     };
     scene->pointLights.update();
+    config->lights = 3;
 
     //generateLights(config->lights);
 }

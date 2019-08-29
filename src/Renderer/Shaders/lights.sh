@@ -10,7 +10,7 @@ uniform vec4 u_ambientLightIrradiance;
 
 // for each light:
 //   vec4 position (w is padding)
-//   vec4 power/radius (xyz is power, w is radius)
+//   vec4 power + radius (xyz is power, w is radius)
 BUFFER_RO(b_pointLights, vec4, SAMPLER_LIGHTS_POINTLIGHTS);
 
 struct PointLight
@@ -45,7 +45,7 @@ float smoothAttenuation(float distance, float radius)
 {
     // window function with smooth transition to 0
     // radius is arbitrary
-    float nom = clamp(1.0 - pow(distance / radius, 4.0), 0.0, 1.0);
+    float nom = saturate(1.0 - pow(distance / radius, 4.0));
     return nom * nom * distanceAttenuation(distance);
 }
 

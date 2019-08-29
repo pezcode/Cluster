@@ -4,6 +4,8 @@
 #include "Renderer/PBRShader.h"
 #include "Renderer/LightShader.h"
 #include <glm/matrix.hpp>
+#include <unordered_map>
+#include <string>
 
 class Scene;
 
@@ -17,6 +19,8 @@ public:
     void reset(uint16_t width, uint16_t height);
     void render(float dt);
     void shutdown();
+
+    void setVariable(const std::string& name, const std::string& val);
 
     enum TonemappingMode : int
     {
@@ -87,6 +91,8 @@ protected:
 
     static bgfx::FrameBufferHandle createFrameBuffer(bool hdr = true, bool depth = true);
     static const char* shaderDir();
+
+    std::unordered_map<std::string, std::string> variables;
 
     TonemappingMode tonemappingMode;
 

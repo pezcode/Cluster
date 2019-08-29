@@ -45,9 +45,7 @@ private:
         static bgfx::VertexDecl decl;
     };
 
-    bgfx::UniformHandle inverseProjectionUniform;
     bgfx::UniformHandle clusterSizesUniform;
-    bgfx::UniformHandle screenDimensionsUniform;
     bgfx::UniformHandle zNearFarVecUniform;
 
     // dynamic buffers can be created empty

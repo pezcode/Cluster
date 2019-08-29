@@ -18,7 +18,7 @@ void main()
 
     // convert normal map from tangent space -> world space (= space of v_tangent, etc.)
     vec3 bitangent = cross(v_normal, v_tangent);
-    mat3 TBN = mtx3FromCols(
+    mat3 TBN = mtxFromCols(
         normalize(v_tangent),
         normalize(bitangent),
         normalize(v_normal)
@@ -46,7 +46,7 @@ void main()
             float attenuation = smoothAttenuation(dist, light.radius);
             vec3 L = normalize(light.position - fragPos);
             vec3 radianceIn = light.intensity * attenuation;
-            float NoL = clamp(dot(N, L), 0.0, 1.0);
+            float NoL = saturate(dot(N, L));
             radianceOut += BRDF(V, L, N, mat) * radianceIn * NoL;
         }
     }

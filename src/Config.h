@@ -47,4 +47,6 @@ public:
     } overlays;
 
     bool showBuffers;
+    // clustered renderer
+    bool debugVisualization;
 };

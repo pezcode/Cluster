@@ -19,6 +19,7 @@ private:
     bgfx::ProgramHandle clusterBuildingComputeProgram;
     bgfx::ProgramHandle lightCullingComputeProgram;
     bgfx::ProgramHandle lightingProgram;
+    bgfx::ProgramHandle debugVisProgram;
 
     ClusterShader clusters;
 };

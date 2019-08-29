@@ -36,6 +36,7 @@ set(SOURCES
     Scene/Mesh.cpp
     Scene/Material.h
     Scene/Light.h
+    Scene/Light.cpp
     Scene/LightList.h
     Scene/LightList.cpp
 )
@@ -48,6 +49,7 @@ set(SHADERS
     Renderer/Shaders/fs_deferred.sc
     Renderer/Shaders/vs_clustered.sc
     Renderer/Shaders/fs_clustered.sc
+    Renderer/Shaders/fs_clustered_debug_vis.sc
     Renderer/Shaders/cs_clustered_clusterbuilding.sc
     Renderer/Shaders/cs_clustered_lightculling.sc
     Renderer/Shaders/vs_tonemap.sc
@@ -57,6 +59,7 @@ set(SHADERS
     Renderer/Shaders/pbr.sh
     Renderer/Shaders/lights.sh
     Renderer/Shaders/clusters.sh
+    Renderer/Shaders/colormap.sh
     Renderer/Shaders/util.sh
 )
 

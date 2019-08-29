@@ -110,7 +110,7 @@ float specularAntiAliasing(vec3 N, float a)
     vec3 dndv = dFdy(N);
     float variance = SIGMA2 * (dot(dndu, dndu) + dot(dndv, dndv));
     float kernelRoughness2 = min(2.0 * variance, KAPPA);
-    float filteredRoughness2 = clamp(a + kernelRoughness2, 0.0, 1.0);
+    float filteredRoughness2 = saturate(a + kernelRoughness2);
     a = filteredRoughness2;
 
     // Frostbite clamps roughness to 0.045 (0.045^2 = 0.002025)
@@ -182,9 +182,9 @@ vec3 BRDF(vec3 v, vec3 l, vec3 n, PBRMaterial mat)
     vec3 h = normalize(l + v);
 
     float NoV = abs(dot(n, v)) + 1e-5;
-    float NoL = clamp(dot(n, l), 0.0, 1.0);
-    float NoH = clamp(dot(n, h), 0.0, 1.0);
-    float LoH = clamp(dot(l, h), 0.0, 1.0);
+    float NoL = saturate(dot(n, l));
+    float NoH = saturate(dot(n, h));
+    float LoH = saturate(dot(l, h));
 
     // specular BRDF
     float D = D_GGX(NoH, mat.a);

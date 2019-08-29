@@ -1,22 +1,24 @@
 #ifndef CLUSTERS_SH_HEADER_GUARD
 #define CLUSTERS_SH_HEADER_GUARD
 
+#include <bgfx_shader.sh>
+#include <bgfx_compute.sh>
 #include "samplers.sh"
+#include "util.sh"
 
 // taken from Doom
 // http://advances.realtimerendering.com/s2016/Siggraph2016_idTech6.pdf
+
 #define CLUSTERS_X 16
 #define CLUSTERS_Y 8
 #define CLUSTERS_Z 24
 
+// workgroup size of the culling compute shader
 #define CLUSTERS_Z_THREADS 8
 
 #define MAX_LIGHTS_PER_CLUSTER 100
 
-//uniform mat4 u_inverseProjection;
 uniform vec4 u_clusterSizes;
-//uniform vec4 u_screenDimensions;
-
 uniform vec4 u_zNearFarVec;
 #define u_zNear u_zNearFarVec.x
 #define u_zFar u_zNearFarVec.y
@@ -80,16 +82,28 @@ uint getGridLightIndex(uint start, uint offset)
     return b_clusterLightIndices[start + offset];
 }
 
-/*
-uint clusterZIndex(float z)
+// cluster depth index from depth in screen coordinates (gl_FragCoord.z)
+uint getClusterZIndex(float screenDepth)
 {
-    return uint(log(z) / CLUSTERS_Z);
+    float scale = float(CLUSTERS_Z) / log(u_zFar / u_zNear);
+    float bias = -(float(CLUSTERS_Z) * log(u_zNear) / log(u_zFar / u_zNear));
+
+    float eyeDepth = screen2Eye(vec4(0.0, 0.0, screenDepth, 1.0)).z;
+    uint zTile = uint(max(log(eyeDepth) * scale + bias, 0.0));
+    return zTile;
 }
 
-uint clusterIndex(uint x, uint y, uint z)
+// cluster index from fragment position in window coordinates (gl_FragCoord)
+// http://www.aortiz.me/2018/12/21/CG.html
+// http://advances.realtimerendering.com/s2016/Siggraph2016_idTech6.pdf
+uint getClusterIndex(vec4 fragCoord)
 {
-    return (z * CLUSTERS_X * CLUSTERS_Y) + (y * CLUSTERS_X) + x;
+    uint zTile = getClusterZIndex(fragCoord.z);
+    uvec3 tiles = uvec3(uvec2(fragCoord.xy / u_clusterSizes[3]), zTile);
+    uint tileIndex = (CLUSTERS_X * CLUSTERS_Y) * tiles.z +
+                     CLUSTERS_X * tiles.y +
+                     tiles.x;
+    return tileIndex;
 }
-*/
 
 #endif // CLUSTERS_SH_HEADER_GUARD

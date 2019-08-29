@@ -10,7 +10,8 @@ ClusteredRenderer::ClusteredRenderer(const Scene* scene) :
     Renderer(scene),
     clusterBuildingComputeProgram(BGFX_INVALID_HANDLE),
     lightCullingComputeProgram(BGFX_INVALID_HANDLE),
-    lightingProgram(BGFX_INVALID_HANDLE)
+    lightingProgram(BGFX_INVALID_HANDLE),
+    debugVisProgram(BGFX_INVALID_HANDLE)
 {
 }
 
@@ -31,15 +32,17 @@ void ClusteredRenderer::onInitialize()
     // OpenGL backend: uniforms must be created before loading shaders
     clusters.initialize();
 
-    char vsName[128], fsName[128], csClusterBuildingName[128], csLightCullingName[128];
+    char csClusterBuildingName[128], csLightCullingName[128], vsName[128], fsName[128], fsDebugVisName[128];
     bx::snprintf(csClusterBuildingName, BX_COUNTOF(csClusterBuildingName), "%s%s", shaderDir(), "cs_clustered_clusterbuilding.bin");
     bx::snprintf(csLightCullingName, BX_COUNTOF(csLightCullingName), "%s%s", shaderDir(), "cs_clustered_lightculling.bin");
     bx::snprintf(vsName, BX_COUNTOF(vsName), "%s%s", shaderDir(), "vs_clustered.bin");
     bx::snprintf(fsName, BX_COUNTOF(fsName), "%s%s", shaderDir(), "fs_clustered.bin");
+    bx::snprintf(fsDebugVisName, BX_COUNTOF(fsDebugVisName), "%s%s", shaderDir(), "fs_clustered_debug_vis.bin");
 
     clusterBuildingComputeProgram = bgfx::createProgram(bigg::loadShader(csClusterBuildingName), true);
     lightCullingComputeProgram = bgfx::createProgram(bigg::loadShader(csLightCullingName), true);
     lightingProgram = bigg::loadProgram(vsName, fsName);
+    debugVisProgram = bigg::loadProgram(vsName, fsDebugVisName);
 }
 
 void ClusteredRenderer::onRender(float dt)
@@ -100,6 +103,9 @@ void ClusteredRenderer::onRender(float dt)
 
     uint64_t state = BGFX_STATE_DEFAULT & ~BGFX_STATE_CULL_MASK;
 
+    bool debugVis = variables["DEBUG_VIS"] == "true";
+    bgfx::ProgramHandle program = debugVis ? debugVisProgram : lightingProgram;
+
     for(const Mesh& mesh : scene->meshes)
     {
         glm::mat4 model = glm::mat4();
@@ -112,7 +118,7 @@ void ClusteredRenderer::onRender(float dt)
         lights.bindLights(scene);
         clusters.bindBuffers();
         bgfx::setState(state | materialState);
-        bgfx::submit(vLighting, lightingProgram);
+        bgfx::submit(vLighting, program);
     }
 }
 
@@ -123,6 +129,7 @@ void ClusteredRenderer::onShutdown()
     bgfx::destroy(clusterBuildingComputeProgram);
     bgfx::destroy(lightCullingComputeProgram);
     bgfx::destroy(lightingProgram);
+    bgfx::destroy(debugVisProgram);
 
-    clusterBuildingComputeProgram = lightCullingComputeProgram = lightingProgram = BGFX_INVALID_HANDLE;
+    clusterBuildingComputeProgram = lightCullingComputeProgram = lightingProgram = debugVisProgram = BGFX_INVALID_HANDLE;
 }

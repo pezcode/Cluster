@@ -21,7 +21,7 @@ void Camera::rotate(glm::vec2 delta)
     if((dot < -0.99f && delta.x < 0.0f) || // angle nearing 180 degrees
        (dot >  0.99f && delta.x > 0.0f))   // angle nearing 0 degrees
         delta.x = 0.0f;
-    
+
     // pitch is relative to current sideways rotation
     // yaw happens independently
     // this prevents roll

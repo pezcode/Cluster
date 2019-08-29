@@ -30,7 +30,7 @@ void main()
 
     if(u_tonemappingMode == TONEMAP_NONE)
     {
-        result.rgb = clamp(result.rgb, 0.0, 1.0);
+        result.rgb = saturate(result.rgb);
     }
     else if(u_tonemappingMode == TONEMAP_EXPONENTIAL)
     {

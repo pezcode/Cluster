@@ -152,7 +152,7 @@ vec3 tonemap_aces(vec3 color)
 	color = a / b;
 
 	result = mul(ACESOutputMat, color);
-	return clamp(result, 0.0, 1.0);
+	return saturate(result);
 }
 
 // Luminance only fit of ACES
@@ -166,7 +166,7 @@ vec3 tonemap_aces_luminance(vec3 color)
     const float d = 0.59;
     const float e = 0.14;
 	vec3 x = color * 0.6;
-	return clamp((x * (a * x + b)) / (x * (c * x + d ) + e), 0.0, 1.0);
+	return saturate((x * (a * x + b)) / (x * (c * x + d ) + e));
 }
 
 #endif // TONEMAPPING_SH_HEADER_GUARD

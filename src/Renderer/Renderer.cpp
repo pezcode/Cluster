@@ -125,6 +125,11 @@ void Renderer::shutdown()
     frameBuffer = BGFX_INVALID_HANDLE;
 }
 
+void Renderer::setVariable(const std::string& name, const std::string& val)
+{
+    variables[name] = val;
+}
+
 void Renderer::setTonemappingMode(TonemappingMode mode)
 {
     tonemappingMode = mode;

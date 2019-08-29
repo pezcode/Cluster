@@ -146,6 +146,11 @@ void ClusterUI::update(float dt)
         ImGui::Checkbox("Show stats", &app.config->showStatsOverlay);
         if(buffers)
             ImGui::Checkbox("Show buffers", &app.config->showBuffers);
+        if(path == Cluster::Clustered)
+        {
+            ImGui::Checkbox("Cluster debug visualization", &app.config->debugVisualization);
+            app.renderer->setVariable("DEBUG_VIS", app.config->debugVisualization ? "true" : "false");
+        }
 
         ImGui::Separator();
 
