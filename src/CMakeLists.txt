@@ -85,6 +85,11 @@ endif()
 set(SHADER_DIR "${PROJECT_BINARY_DIR}/shaders")
 set(ASSETS_DIR "${PROJECT_BINARY_DIR}/assets")
 
+# target to force all shaders to recompile on the next build
+# sometimes handy after changing included header files (.sh)
+# since add_shader doesn't take those dependencies into account
+add_custom_target(invalidate_shaders)
+
 foreach(SHADER ${SHADERS})
     get_filename_component(SHADER_NAME "${SHADER}" NAME)
     get_filename_component(SHADER_FILE "${SHADER}" ABSOLUTE)
@@ -95,6 +100,8 @@ foreach(SHADER ${SHADERS})
     elseif(SHADER_NAME MATCHES "^cs_")
         add_shader("${SHADER_FILE}" COMPUTE  OUTPUT "${SHADER_DIR}" PLATFORMS dx11 glsl)
     endif()
+    add_custom_command(TARGET invalidate_shaders PRE_BUILD
+        COMMAND "${CMAKE_COMMAND}" -E touch "${SHADER_FILE}")
 endforeach()
 
 # add_shader does this, do it manually for includes/varying.def.sc
