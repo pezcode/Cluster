@@ -2,6 +2,7 @@
 
 #include <bigg.hpp>
 #include <bx/string.h>
+#include <spdlog/spdlog.h>
 #include <map>
 #include <memory>
 
@@ -72,6 +73,9 @@ private:
         Cluster& app;
     };
 
+    spdlog::sink_ptr logFileSink;
+
+    uint32_t frameNumber;
     //float deltaTime;
     std::map<int, bool> keys;
     double mouseX, mouseY;

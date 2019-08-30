@@ -22,6 +22,8 @@ bx::AllocatorI* Cluster::iAlloc = &allocator;
 
 Cluster::Cluster() :
     bigg::Application("Cluster", 1280, 640), // testing 16:8 ratio for clusters
+    logFileSink(nullptr),
+    frameNumber(0),
     //deltaTime(0.0f),
     mouseX(-1.0f),
     mouseY(-1.0f),
@@ -50,6 +52,19 @@ int Cluster::run(int argc, char* argv[])
 
 void Cluster::initialize(int _argc, char* _argv[])
 {
+    if(config->writeLog)
+    {
+        // _mt (thread safe) necessary because of flush_every
+        logFileSink = std::make_shared<spdlog::sinks::basic_file_sink_mt>(config->logFile, true);
+        logFileSink->set_level(spdlog::level::trace);
+        logFileSink->set_pattern("[%H:%M:%S][%l] %v");
+        Sinks->add_sink(logFileSink);
+    }
+
+    Log->flush_on(spdlog::level::info);
+    Log->set_level(spdlog::level::trace);
+    spdlog::flush_every(std::chrono::seconds(2));
+
     if(!ForwardRenderer::supported())
     {
         Log->error("Forward renderer not supported on this hardware");
@@ -68,20 +83,6 @@ void Cluster::initialize(int _argc, char* _argv[])
         close();
         return;
     }
-
-    if(config->writeLog)
-    {
-        // is _mt (thread safe) necessary?
-        spdlog::sink_ptr fileSink = std::make_shared<spdlog::sinks::basic_file_sink_mt>(config->logFile, true);
-        fileSink->set_level(spdlog::level::trace);
-        fileSink->set_pattern("[%H:%M:%S][%l] %v");
-        Sinks->add_sink(fileSink);
-    }
-
-    Log->flush_on(spdlog::level::info);
-    Log->set_level(spdlog::level::trace);
-    spdlog::flush_every(std::chrono::seconds(2));
-    // TODO remove sink during shutdown
 
     uint32_t resetFlags = BGFX_RESET_MAXANISOTROPY;
     if(config->vsync)
@@ -121,6 +122,8 @@ void Cluster::initialize(int _argc, char* _argv[])
     config->lights = 3;
 
     //generateLights(config->lights);
+
+    frameNumber = 0;
 }
 
 void Cluster::onReset()
@@ -214,7 +217,7 @@ void Cluster::update(float dt)
         scene->camera.move(-scene->camera.up() * velocity * dt);
 
     // screenshot texture data is ready, save in a new thread
-    if(mFrameNumber > 0 && mFrameNumber == saveFrame)
+    if(frameNumber > 0 && frameNumber == saveFrame)
     {
         // async destructor blocks, even if not assigned
         // thread destructor also blocks, unless detached
@@ -228,6 +231,8 @@ void Cluster::update(float dt)
 
     renderer->render(dt);
     ui->update(dt);
+
+    frameNumber++;
 }
 
 int Cluster::shutdown()
@@ -240,6 +245,8 @@ int Cluster::shutdown()
     ui->shutdown();
     renderer->shutdown();
     scene->clear();
+    Sinks->remove_sink(logFileSink);
+    logFileSink = nullptr;
     return 0;
 }
 
@@ -375,6 +382,11 @@ void Cluster::saveFrameBuffer(bgfx::FrameBufferHandle frameBuffer, const char* n
             bgfx::calcTextureSize(info, getWidth(), getHeight(), 1, false, false, 1, bgfx::TextureFormat::BGRA8);
             saveData = BX_ALLOC(&allocator, info.storageSize);
             saveFrame = bgfx::readTexture(texture, saveData);
+            // we manually count frames instead of using the frame number returned by bgfx::frame
+            // (this would require a change to bigg)
+            // use this workaround instead: (is that still valid?)
+            // https://github.com/bkaradzic/bgfx/issues/802#issuecomment-223703256
+            saveFrame = frameNumber + 2;
         }
     }
 }

@@ -13,6 +13,7 @@
 using namespace std::placeholders;
 
 ClusterUI::ClusterUI(Cluster& app) :
+    logUISink(nullptr),
     app(app),
     mTime(0.0f)
 {
@@ -26,13 +27,11 @@ void ClusterUI::initialize()
 {
     // Log
 
-    // is _mt (thread safe) necessary?
     auto func = std::bind(&ClusterUI::log, this, std::placeholders::_1, std::placeholders::_2);
-    spdlog::sink_ptr uiSink = std::make_shared<spdlog::ext::clusterui_sink_mt<decltype(func)>>(func);
-    uiSink->set_level(spdlog::level::trace);
-    uiSink->set_pattern("%v");
-    Sinks->add_sink(uiSink);
-    // TODO remove sink during shutdown
+    logUISink = std::make_shared<spdlog::ext::clusterui_sink_mt<decltype(func)>>(func);
+    logUISink->set_level(spdlog::level::trace);
+    logUISink->set_pattern("%v");
+    Sinks->add_sink(logUISink);
 
     // Imgui
 
@@ -154,6 +153,8 @@ void ClusterUI::update(float dt)
 
         ImGui::Separator();
 
+        // TODO this doesn't work and crashes the Nvidia driver
+        /*
         if(ImGui::Button(ICON_FK_CAMERA "  Screenshot", ImVec2(100, 0)))
         {
             static unsigned int count = 0;
@@ -164,6 +165,8 @@ void ClusterUI::update(float dt)
             // this takes a screenshot of the OS window framebuffer, UI included
             // bgfx::requestScreenShot(BGFX_INVALID_HANDLE, name);
         }
+        */
+
         if(ImGui::Button(app.config->fullscreen
                             ? (ICON_FK_WINDOW_RESTORE  "  Restore")
                             : (ICON_FK_WINDOW_MAXIMIZE "  Fullscreen"),
@@ -195,8 +198,8 @@ void ClusterUI::update(float dt)
         }
         // only scroll down if it's currently at the bottom
         // TODO this breaks scrolling up
-        if(ImGui::GetScrollY() >= ImGui::GetScrollMaxY())
-            ImGui::SetScrollHereY(1.0f);
+        //if(ImGui::GetScrollY() >= ImGui::GetScrollMaxY())
+        //    ImGui::SetScrollHereY(1.0f);
         ImGui::End();
     }
 
@@ -341,6 +344,8 @@ void ClusterUI::shutdown()
     bgfx::destroy(fontTexture);
     fontTexture = BGFX_INVALID_HANDLE;
     io.Fonts->SetTexID(ImTextureID(uintptr_t(fontTexture.idx)));
+    Sinks->remove_sink(logUISink);
+    logUISink = nullptr;
 }
 
 void ClusterUI::log(const char* message, spdlog::level::level_enum level)

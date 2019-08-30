@@ -10,7 +10,7 @@ namespace ext
 {
 
 template<typename Mutex, typename Func>
-class clusterui_sink : public spdlog::sinks::base_sink<Mutex>
+class clusterui_sink : public sinks::base_sink<Mutex>
 {
 public:
     clusterui_sink(Func func) : func(func) {}
@@ -18,11 +18,11 @@ public:
 protected:
     Func func;
 
-    virtual void sink_it_(const spdlog::details::log_msg& msg) override
+    virtual void sink_it_(const details::log_msg& msg) override
     {
         // msg.payload is the raw string without any formatting
-        fmt::memory_buffer formatted;
-        sink::formatter_->format(msg, formatted);
+        memory_buf_t formatted;
+        base_sink::formatter_->format(msg, formatted);
         func(fmt::to_string(formatted).c_str(), msg.level);
     }
 
@@ -30,7 +30,7 @@ protected:
 };
 
 template<typename Func> using clusterui_sink_mt = clusterui_sink<std::mutex, Func>;
-template<typename Func> using clusterui_sink_st = clusterui_sink<spdlog::details::null_mutex, Func>;
+template<typename Func> using clusterui_sink_st = clusterui_sink<details::null_mutex, Func>;
 
 } // namespace ext
 } // namespace spdlog

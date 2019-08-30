@@ -2,7 +2,7 @@
 
 #include <bgfx/bgfx.h>
 #include <imgui.h>
-#include <spdlog/common.h>
+#include <spdlog/spdlog.h>
 
 class Cluster;
 
@@ -20,6 +20,8 @@ public:
 
 private:
     void imageTooltip(ImTextureID tex, ImVec2 tex_size, float region_size, ImVec4 tintColor = ImVec4(1.0f, 1.0f, 1.0f, 1.0f), ImVec4 borderColor = ImVec4(1.0f, 1.0f, 1.0f, 0.5f));
+
+    spdlog::sink_ptr logUISink;
 
     struct LogEntry
     {
