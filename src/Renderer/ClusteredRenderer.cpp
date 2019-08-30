@@ -108,7 +108,7 @@ void ClusteredRenderer::onRender(float dt)
 
     for(const Mesh& mesh : scene->meshes)
     {
-        glm::mat4 model = glm::mat4();
+        glm::mat4 model = glm::identity<glm::mat4>();
         bgfx::setTransform(glm::value_ptr(model));
         setNormalMatrix(model);
         bgfx::setVertexBuffer(0, mesh.vertexBuffer);

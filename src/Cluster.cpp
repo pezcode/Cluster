@@ -177,7 +177,7 @@ void Cluster::onCursorPos(double xpos, double ypos)
     {
         if(glfwGetMouseButton(mWindow, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS)
         {
-            scene->camera.rotate(glm::vec3(-(ypos - mouseY), -(xpos - mouseX), 0.0f) * angularVelocity);
+            scene->camera.rotate(-glm::vec2(ypos - mouseY, xpos - mouseX) * angularVelocity);
         }
     }
     mouseX = xpos;

@@ -10,6 +10,7 @@
 #include <glm/gtc/color_space.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#include <glm/gtx/matrix_operation.hpp>
 
 bgfx::VertexDecl Renderer::PosTexCoord0Vertex::decl;
 
@@ -90,7 +91,7 @@ void Renderer::render(float dt)
 
         // tonemapping expects linear colors
         glm::vec3 linear = glm::convertSRGBToLinear(scene->skyColor);
-        glm::u8vec3 result = glm::round(glm::clamp(linear, 0.0f, 1.0f) * 255.0f);
+        glm::u8vec3 result = glm::u8vec3(glm::round(glm::clamp(linear, 0.0f, 1.0f) * 255.0f));
         clearColor = (result[0] << 24) | (result[1] << 16) | (result[2] << 8) | 255;
     }
     else
@@ -163,9 +164,13 @@ void Renderer::setNormalMatrix(const glm::mat4& modelMat)
     //glm::mat4 modelViewMat = viewMat * modelMat;
 
     // if we don't do non-uniform scaling, the normal matrix is the same as the model-view matrix
-    // it's enough to calculate the adjugate instead of the inverse, it always exists (requires GLM 0.9.9.3)
-    //glm::mat3 normalMat = glm::transpose(glm::inverse(glm::mat3(modelMat)));
-    glm::mat3 normalMat = modelMat;
+    // (only the magnitude of the normal is changed, but we normalize either way)
+    //glm::mat3 normalMat = glm::mat3(modelMat);
+
+    // use adjugate instead of inverse
+    // see https://github.com/graphitemaster/normals_revisited#the-details-of-transforming-normals
+    // cofactor is transpose of adjugate
+    glm::mat3 normalMat = glm::transpose(glm::adjugate(glm::mat3(modelMat)));
     bgfx::setUniform(normalMatrixUniform, glm::value_ptr(normalMat));
 }
 

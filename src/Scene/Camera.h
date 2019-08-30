@@ -42,7 +42,7 @@ private:
 
     glm::vec3 orthUp = Y;
 
-    glm::vec3 pos;
-    glm::quat rotation;
-    glm::quat invRotation;
+    glm::vec3 pos = { 0.0f, 0.0f, 0.0f };
+    glm::quat rotation = glm::identity<glm::quat>();
+    glm::quat invRotation = glm::identity<glm::quat>();
 };
