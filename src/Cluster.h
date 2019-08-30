@@ -76,8 +76,7 @@ private:
     spdlog::sink_ptr logFileSink;
 
     uint32_t frameNumber;
-    //float deltaTime;
-    std::map<int, bool> keys;
+
     double mouseX, mouseY;
 
     static bx::DefaultAllocator allocator;

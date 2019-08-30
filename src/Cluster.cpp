@@ -24,7 +24,6 @@ Cluster::Cluster() :
     bigg::Application("Cluster", 1280, 640), // testing 16:8 ratio for clusters
     logFileSink(nullptr),
     frameNumber(0),
-    //deltaTime(0.0f),
     mouseX(-1.0f),
     mouseY(-1.0f),
     saveFrame(0),
@@ -151,22 +150,6 @@ void Cluster::onKey(int key, int scancode, int action, int mods)
                 break;
         }
     }
-
-    // camera input handling
-    // GLFW only sends repeat event for the last key pressed
-    // need to keep track of which keys are currently down
-    // TODO put in separate class
-    switch(key)
-    {
-        case GLFW_KEY_W:
-        case GLFW_KEY_A:
-        case GLFW_KEY_S:
-        case GLFW_KEY_D:
-        case GLFW_KEY_SPACE:
-        case GLFW_KEY_LEFT_CONTROL:
-            keys[key] = action != GLFW_RELEASE;
-            break;
-    }
 }
 
 void Cluster::onCursorPos(double xpos, double ypos)
@@ -175,7 +158,7 @@ void Cluster::onCursorPos(double xpos, double ypos)
 
     if(mouseX >= 0.0f && mouseY >= 0.0f)
     {
-        if(glfwGetMouseButton(mWindow, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS)
+        if(isMouseButtonDown(GLFW_MOUSE_BUTTON_RIGHT))
         {
             scene->camera.rotate(-glm::vec2(ypos - mouseY, xpos - mouseX) * angularVelocity);
         }
@@ -200,20 +183,18 @@ void Cluster::onScroll(double xoffset, double yoffset)
 
 void Cluster::update(float dt)
 {
-    //deltaTime = dt;
-
     constexpr float velocity = 3.0f; // m/s
-    if(keys[GLFW_KEY_W])
+    if(isKeyDown(GLFW_KEY_W))
         scene->camera.move(scene->camera.forward() * velocity * dt);
-    if(keys[GLFW_KEY_A])
+    if(isKeyDown(GLFW_KEY_A))
         scene->camera.move(-scene->camera.right() * velocity * dt);
-    if(keys[GLFW_KEY_S])
+    if(isKeyDown(GLFW_KEY_S))
         scene->camera.move(-scene->camera.forward() * velocity * dt);
-    if(keys[GLFW_KEY_D])
+    if(isKeyDown(GLFW_KEY_D))
         scene->camera.move(scene->camera.right() * velocity * dt);
-    if(keys[GLFW_KEY_SPACE])
+    if(isKeyDown(GLFW_KEY_SPACE))
         scene->camera.move(scene->camera.up() * velocity * dt);
-    if(keys[GLFW_KEY_LEFT_CONTROL])
+    if(isKeyDown(GLFW_KEY_LEFT_CONTROL))
         scene->camera.move(-scene->camera.up() * velocity * dt);
 
     // screenshot texture data is ready, save in a new thread
