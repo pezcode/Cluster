@@ -32,8 +32,8 @@ private:
     struct ClusterVertex
     {
         // w is padding
-        float minPos[4];
-        float maxPos[4];
+        float minBounds[4];
+        float maxBounds[4];
 
         static void init()
         {
@@ -53,11 +53,6 @@ private:
     bgfx::DynamicIndexBufferHandle lightIndicesBuffer;
     bgfx::DynamicIndexBufferHandle lightGridBuffer;
     bgfx::DynamicIndexBufferHandle atomicIndexBuffer;
-
-    //bgfx::VertexBufferHandle clustersBuffer;
-    //bgfx::IndexBufferHandle lightIndicesBuffer;
-    //bgfx::IndexBufferHandle lightGridBuffer;
-    //bgfx::IndexBufferHandle atomicIndexBuffer;
 
     uint32_t lightCount;
 };

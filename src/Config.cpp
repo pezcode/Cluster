@@ -30,16 +30,15 @@ void Config::readArgv(int argc, char* argv[])
 {
     bx::CommandLine cmdLine(argc, argv);
 
-    // DX 9.0c (shader model 3.0) doesn't allow indexing into the light buffer
-    // so shaders for DX9 aren't even compiled anymore
+    // D3D 9.0c (shader model 3.0) doesn't allow indexing into the light buffer
+    // so shaders for D3D9 aren't even compiled anymore
 
-    // DX11 and OpenGL work
-    // DX12 just instantly quits
+    // D3D11, D3D12, OpenGL work
     // Vulkan? need to update bgfx/bigg
 
     //cmdLine.hasArg("gl");
 
-    renderer = bgfx::RendererType::OpenGL;
+    //renderer = bgfx::RendererType::OpenGL;
     //renderer = bgfx::RendererType::Direct3D12;
 
     showStatsOverlay = false;

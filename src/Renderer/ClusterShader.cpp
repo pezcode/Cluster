@@ -27,25 +27,10 @@ void ClusterShader::initialize()
     clusterSizesVecUniform = bgfx::createUniform("u_clusterSizesVec", bgfx::UniformType::Vec4);
     zNearFarVecUniform = bgfx::createUniform("u_zNearFarVec", bgfx::UniformType::Vec4);
 
-    //const bgfx::Memory* clustersMem     = bgfx::alloc(CLUSTER_COUNT * ClusterVertex::decl.getStride());
-    //const bgfx::Memory* lightIndicesMem = bgfx::alloc(CLUSTER_COUNT * MAX_LIGHTS_PER_CLUSTER * sizeof(uint32_t));
-    //const bgfx::Memory* lightGridMem    = bgfx::alloc(CLUSTER_COUNT * 4 * sizeof(uint32_t));
-    //const bgfx::Memory* atomicIndexMem  = bgfx::alloc(1 * sizeof(uint32_t));
-
-    //clustersBuffer     = bgfx::createVertexBuffer(clustersMem, ClusterVertex::decl, BGFX_BUFFER_COMPUTE_READ_WRITE);
-    //lightIndicesBuffer = bgfx::createIndexBuffer(lightIndicesMem, BGFX_BUFFER_COMPUTE_READ_WRITE | BGFX_BUFFER_INDEX32);
-    //lightGridBuffer    = bgfx::createIndexBuffer(lightGridMem,    BGFX_BUFFER_COMPUTE_READ_WRITE | BGFX_BUFFER_INDEX32);
-    //atomicIndexBuffer  = bgfx::createIndexBuffer(atomicIndexMem,  BGFX_BUFFER_COMPUTE_READ_WRITE | BGFX_BUFFER_INDEX32);
-
     clustersBuffer     = bgfx::createDynamicVertexBuffer(CLUSTER_COUNT, ClusterVertex::decl,     BGFX_BUFFER_COMPUTE_READ_WRITE);
     lightIndicesBuffer = bgfx::createDynamicIndexBuffer (CLUSTER_COUNT * MAX_LIGHTS_PER_CLUSTER, BGFX_BUFFER_COMPUTE_READ_WRITE | BGFX_BUFFER_INDEX32);
     lightGridBuffer    = bgfx::createDynamicIndexBuffer (CLUSTER_COUNT * 4,                      BGFX_BUFFER_COMPUTE_READ_WRITE | BGFX_BUFFER_INDEX32);
     atomicIndexBuffer  = bgfx::createDynamicIndexBuffer (1,                                      BGFX_BUFFER_COMPUTE_READ_WRITE | BGFX_BUFFER_INDEX32);
-
-    //bgfx::setName(clustersBuffer,     "Clusters min/max pos");
-    //bgfx::setName(lightIndicesBuffer, "Light indices");
-    //bgfx::setName(lightGridBuffer,    "Light grid");
-    //bgfx::setName(atomicIndexBuffer,  "Atomic index for culling");
 }
 
 void ClusterShader::shutdown()

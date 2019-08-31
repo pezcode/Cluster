@@ -24,7 +24,9 @@ bool ClusteredRenderer::supported()
     const bgfx::Caps* caps = bgfx::getCaps();
     return Renderer::supported() &&
         (caps->supported & BGFX_CAPS_COMPUTE) != 0 &&
-        (caps->supported & BGFX_CAPS_INDEX32) != 0;
+        // D3D12 doesn't report this but it works fine...
+        // TODO try again with updated bgfx
+        true; //(caps->supported & BGFX_CAPS_INDEX32) != 0;
 }
 
 void ClusteredRenderer::onInitialize()
@@ -53,6 +55,11 @@ void ClusteredRenderer::onRender(float dt)
         vLightCulling,
         vLighting
     };
+
+    // D3D12 crashes if these are not set, even for compute only views
+    // TODO try again with updated bgfx
+    bgfx::setViewFrameBuffer(vClusterBuilding, frameBuffer);
+    bgfx::setViewFrameBuffer(vLightCulling, frameBuffer);
 
     bgfx::touch(vClusterBuilding);
     bgfx::touch(vLightCulling);
