@@ -22,6 +22,7 @@ public:
     Cluster::RenderPath renderPath;
     Renderer::TonemappingMode tonemappingMode;
 
+    bool profile; // not exposed to UI
     bool vsync; // not exposed to UI
 
     // Scene
@@ -43,6 +44,7 @@ public:
     {
         bool fps;
         bool frameTime;
+        bool profiler;
         bool gpuMemory;
     } overlays;
 

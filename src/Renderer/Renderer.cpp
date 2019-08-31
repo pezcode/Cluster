@@ -100,8 +100,11 @@ void Renderer::render(float dt)
         clearColor = 0x303030FF;
     }
 
+    // bigg doesn't do this
+    bgfx::setViewName(MAX_VIEW + 1, "imgui");
+
     onRender(dt);
-    blitToScreen(199);
+    blitToScreen(MAX_VIEW);
 }
 
 void Renderer::shutdown()
@@ -177,7 +180,7 @@ void Renderer::setNormalMatrix(const glm::mat4& modelMat)
 
 void Renderer::blitToScreen(bgfx::ViewId view)
 {
-    bgfx::setViewName(view, "Blit to screen + tonemapping");
+    bgfx::setViewName(view, "Tonemapping");
     bgfx::setViewClear(view, BGFX_CLEAR_NONE);
     bgfx::setViewRect(view, 0, 0, width, height);
     bgfx::setViewFrameBuffer(view, BGFX_INVALID_HANDLE);

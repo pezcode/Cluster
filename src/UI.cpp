@@ -148,7 +148,22 @@ void ClusterUI::update(float dt)
             ImGui::Checkbox("Show buffers", &app.config->showBuffers);
         if(path == Cluster::Clustered)
         {
-            ImGui::Checkbox("Cluster light count visualization", &app.config->debugVisualization);
+            if(ImGui::Checkbox("Cluster light count visualization", &app.config->debugVisualization))
+            {
+                //ImGui::Gra
+                //ImGui::
+                ImDrawList* draw_list = ImGui::GetWindowDrawList();
+                const ImVec2 p = ImGui::GetCursorScreenPos();
+                float x = p.x + 4.0f, y = p.y + 4.0f;
+                //float spacing = 10.0f;
+                static float sz = 36.0f;
+                draw_list->AddRectFilledMultiColor(ImVec2(x, y),
+                                                   ImVec2(x + sz, y + sz),
+                                                   IM_COL32(0, 0, 0, 255),
+                                                   IM_COL32(255, 0, 0, 255),
+                                                   IM_COL32(255, 255, 0, 255),
+                                                   IM_COL32(0, 255, 0, 255));
+            }
             app.renderer->setVariable("DEBUG_VIS", app.config->debugVisualization ? "true" : "false");
         }
 
@@ -212,6 +227,8 @@ void ClusterUI::update(float dt)
     // performance overlay
     if(app.config->showStatsOverlay)
     {
+        const float overlayWidth = 150.0f;
+
         // top left, transparent background
         ImGui::SetNextWindowPos(padding, ImGuiCond_Always);
         ImGui::SetNextWindowBgAlpha(0.5f);
@@ -227,8 +244,11 @@ void ClusterUI::update(float dt)
         ImGui::Separator();
 
         // general data
-        ImGui::Text("Backend: %s", bgfx::getRendererName(bgfx::getRendererType()));
         const bgfx::Stats* stats = bgfx::getStats();
+        const double toCpuMs = 1000.0 / double(stats->cpuTimerFreq);
+        const double toGpuMs = 1000.0 / double(stats->gpuTimerFreq);
+
+        ImGui::Text("Backend: %s", bgfx::getRendererName(bgfx::getRendererType()));
         ImGui::Text("Buffer size: %u x %u px", stats->width, stats->height);
         ImGui::Text("Triangles: %u", stats->numPrims[bgfx::Topology::TriList]);
         ImGui::Text("Draw calls: %u", stats->numDraw);
@@ -244,32 +264,86 @@ void ClusterUI::update(float dt)
         {
             ImGui::Separator();
             ImGui::Text("FPS");
-            ImGui::PlotLines(
-                "", fpsValues, IM_ARRAYSIZE(fpsValues), offset + 1, nullptr, 0.0f, 200.0f, ImVec2(150, 50));
+            ImGui::PlotLines("", fpsValues, IM_ARRAYSIZE(fpsValues), offset + 1, nullptr, 0.0f, 200.0f, ImVec2(overlayWidth, 50));
             ImGui::Text("%.0f", fpsValues[offset]);
         }
         if(app.config->overlays.frameTime)
         {
             ImGui::Separator();
             ImGui::Text("Frame time");
-            ImGui::PlotLines(
-                "", frameTimeValues, IM_ARRAYSIZE(frameTimeValues), offset + 1, nullptr, 0.0f, 30.0f, ImVec2(150, 50));
-            ImGui::Text("CPU: %.2f ms", float(stats->cpuTimeEnd - stats->cpuTimeBegin) * 1000.0f / stats->cpuTimerFreq);
-            ImGui::Text("GPU: %.2f ms", float(stats->gpuTimeEnd - stats->gpuTimeBegin) * 1000.0f / stats->gpuTimerFreq);
+            ImGui::PlotLines("", frameTimeValues, IM_ARRAYSIZE(frameTimeValues), offset + 1, nullptr, 0.0f, 30.0f, ImVec2(overlayWidth, 50));
+            ImGui::Text("CPU: %.2f ms", float(stats->cpuTimeEnd - stats->cpuTimeBegin) * toCpuMs);
+            ImGui::Text("GPU: %.2f ms", float(stats->gpuTimeEnd - stats->gpuTimeBegin) * toGpuMs);
             ImGui::Text("Total: %.2f", frameTimeValues[offset]);
+        }
+        if(app.config->profile && app.config->overlays.profiler)
+        {
+            ImGui::Separator();
+            ImGui::Text("View stats");
+            if(stats->numViews > 0)
+            {
+                ImVec4 cpuColor(0.5f, 1.0f, 0.5f, 1.0f);
+                ImVec4 gpuColor(0.5f, 0.5f, 1.0f, 1.0f);
+
+                const float itemHeight = ImGui::GetTextLineHeightWithSpacing();
+                const float itemHeightWithSpacing = ImGui::GetFrameHeightWithSpacing();
+                const float scale = 2.0f;
+
+                if(ImGui::ListBoxHeader("", ImVec2(overlayWidth, stats->numViews * itemHeightWithSpacing)))
+                {
+                    ImGuiListClipper clipper(stats->numViews, itemHeight);
+
+                    while(clipper.Step())
+                    {
+                        for(int32_t pos = clipper.DisplayStart; pos < clipper.DisplayEnd; ++pos)
+                        {
+                            const bgfx::ViewStats& viewStats = stats->viewStats[pos];
+
+                            ImGui::Text("%d", viewStats.view);
+
+                            const float maxWidth = overlayWidth * 0.35f;
+                            const float cpuWidth = bx::clamp(float(viewStats.cpuTimeElapsed * toCpuMs) * scale, 1.0f, maxWidth);
+                            const float gpuWidth = bx::clamp(float(viewStats.gpuTimeElapsed * toGpuMs) * scale, 1.0f, maxWidth);
+
+                            ImGui::SameLine(overlayWidth * 0.3f);
+
+                            if(drawBar(cpuWidth, maxWidth, itemHeight, cpuColor))
+                            {
+                                ImGui::SetTooltip("%s -- CPU: %.2f ms", viewStats.name, viewStats.cpuTimeElapsed * toCpuMs);
+                            }
+
+                            ImGui::SameLine();
+
+                            if(drawBar(gpuWidth, maxWidth, itemHeight, gpuColor))
+                            {
+                                ImGui::SetTooltip("%s -- GPU: %.2f ms", viewStats.name, viewStats.gpuTimeElapsed * toGpuMs);
+                            }
+                        }
+                    }
+
+                    ImGui::ListBoxFooter();
+                }
+            }
+            else
+            {
+                ImGui::TextWrapped(ICON_FK_EXCLAMATION_TRIANGLE " Profiler disabled");
+            }
         }
         if(app.config->overlays.gpuMemory)
         {
-            float used = float(stats->gpuMemoryUsed) / 1000 / 1000;
-            float max = float(stats->gpuMemoryMax) / 1000 / 1000;
+            int64_t used = stats->gpuMemoryUsed;
+            int64_t max = stats->gpuMemoryMax;
 
             ImGui::Separator();
-            if(used > 0.0f && max > 0.0f)
+            if(used > 0 && max > 0)
             {
                 ImGui::Text("GPU memory");
-                ImGui::PlotLines(
-                    "", gpuMemoryValues, IM_ARRAYSIZE(gpuMemoryValues), offset + 1, nullptr, 0.0f, max, ImVec2(150, 50));
-                ImGui::Text("%.0f / %.0f MB", used, max);
+                ImGui::PlotLines("", gpuMemoryValues, IM_ARRAYSIZE(gpuMemoryValues), offset + 1, nullptr, 0.0f, float(max), ImVec2(overlayWidth, 50));
+                char strUsed[64];
+                bx::prettify(strUsed, BX_COUNTOF(strUsed), stats->gpuMemoryUsed);
+                char strMax[64];
+                bx::prettify(strMax, BX_COUNTOF(strMax), stats->gpuMemoryMax);
+                ImGui::Text("%s / %s", strUsed, strMax);
             }
             else
             {
@@ -285,7 +359,7 @@ void ClusterUI::update(float dt)
             ImGuiIO& io = ImGui::GetIO();
             fpsValues[offset] = 1 / io.DeltaTime;
             frameTimeValues[offset] = io.DeltaTime * 1000;
-            gpuMemoryValues[offset] = float(stats->gpuMemoryUsed) / 1000 / 1000;
+            gpuMemoryValues[offset] = float(stats->gpuMemoryUsed) / 1024 / 1024;
 
             oldTime = mTime;
         }
@@ -295,6 +369,8 @@ void ClusterUI::update(float dt)
         {
             ImGui::Checkbox("FPS", &app.config->overlays.fps);
             ImGui::Checkbox("Frame time", &app.config->overlays.frameTime);
+            if(app.config->profile)
+                ImGui::Checkbox("Profiler", &app.config->overlays.profiler);
             ImGui::Checkbox("GPU memory", &app.config->overlays.gpuMemory);
             ImGui::EndPopup();
         }
@@ -364,6 +440,33 @@ void ClusterUI::log(const char* message, spdlog::level::level_enum level)
     bx::memCopy(logText.begin() + vecLen, message, strLen);
 
     logEntries.push_back({ level, vecLen });
+}
+
+bool ClusterUI::drawBar(float width, float maxWidth, float height, const ImVec4& color)
+{
+    const ImGuiStyle& style = ImGui::GetStyle();
+
+    ImVec4 hoveredColor(color.x * 1.1f, color.y * 1.1f, color.z * 1.1f, color.w * 1.1f);
+
+    ImGui::PushStyleColor(ImGuiCol_Button, color);
+    ImGui::PushStyleColor(ImGuiCol_ButtonHovered, hoveredColor);
+    ImGui::PushStyleColor(ImGuiCol_ButtonActive, color);
+    ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 0.0f);
+    ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0.0f, style.ItemSpacing.y));
+
+    bool itemHovered = false;
+
+    ImGui::Button("", ImVec2(width, height));
+    itemHovered = itemHovered || ImGui::IsItemHovered();
+
+    ImGui::SameLine();
+    ImGui::InvisibleButton("", ImVec2(std::max(1.0f, maxWidth - width), height));
+    itemHovered = itemHovered || ImGui::IsItemHovered();
+
+    ImGui::PopStyleVar(2);
+    ImGui::PopStyleColor(3);
+
+    return itemHovered;
 }
 
 // TODO this is not working correctly

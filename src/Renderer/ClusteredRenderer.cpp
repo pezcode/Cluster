@@ -56,13 +56,10 @@ void ClusteredRenderer::onRender(float dt)
         vLighting
     };
 
-    // D3D12 crashes if these are not set, even for compute only views
+    // D3D12 crashes if this is not set, even for compute only views
     // TODO try again with updated bgfx
-    bgfx::setViewFrameBuffer(vClusterBuilding, frameBuffer);
-    bgfx::setViewFrameBuffer(vLightCulling, frameBuffer);
-
-    bgfx::touch(vClusterBuilding);
-    bgfx::touch(vLightCulling);
+    bgfx::setViewFrameBuffer(vClusterBuilding, BGFX_INVALID_HANDLE);
+    bgfx::setViewFrameBuffer(vLightCulling, BGFX_INVALID_HANDLE);
 
     bgfx::setViewClear(vLighting, BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH, clearColor, 1.0f, 0);
     bgfx::setViewRect(vLighting, 0, 0, width, height);
@@ -72,6 +69,8 @@ void ClusteredRenderer::onRender(float dt)
     if(!scene->loaded)
         return;
 
+    clusters.setUniforms(scene, width, height);
+
     // set u_viewRect for screen2Eye to work correctly
     bgfx::setViewRect(vClusterBuilding, 0, 0, width, height);
     bgfx::setViewRect(vLightCulling, 0, 0, width, height);
@@ -80,8 +79,6 @@ void ClusteredRenderer::onRender(float dt)
     setViewProjection(vClusterBuilding);
     // light culling needs u_view to transform lights to eye space
     setViewProjection(vLightCulling);
-
-    clusters.setUniforms(scene, width, height);
 
     {
         bgfx::setViewName(vClusterBuilding, "Cluster building pass (compute)");

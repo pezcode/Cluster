@@ -9,6 +9,7 @@ Config::Config() :
     renderer(bgfx::RendererType::Count), // default renderer, chosen by platform
     renderPath(Cluster::Forward),
     tonemappingMode(Renderer::TonemappingMode::ACES),
+    profile(false),
     vsync(false),
     //sceneFile("assets/models/duck/Duck.gltf"),
     sceneFile("assets/models/Sponza/glTF/Sponza.gltf"),
@@ -20,7 +21,7 @@ Config::Config() :
     showConfigWindow(true),
     showLog(true),
     showStatsOverlay(true),
-    overlays({true, true, true}),
+    overlays({true, true, true, true}),
     showBuffers(true),
     debugVisualization(false)
 {
@@ -39,7 +40,9 @@ void Config::readArgv(int argc, char* argv[])
     //cmdLine.hasArg("gl");
 
     //renderer = bgfx::RendererType::OpenGL;
-    //renderer = bgfx::RendererType::Direct3D12;
+    renderer = bgfx::RendererType::Direct3D12;
+
+    profile = true;
 
     showStatsOverlay = false;
     showLog = false;

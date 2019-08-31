@@ -19,6 +19,7 @@ public:
     void log(const char* message, spdlog::level::level_enum level = spdlog::level::info);
 
 private:
+    bool drawBar(float width, float maxWidth, float height, const ImVec4& color);
     void imageTooltip(ImTextureID tex, ImVec2 tex_size, float region_size, ImVec4 tintColor = ImVec4(1.0f, 1.0f, 1.0f, 1.0f), ImVec4 borderColor = ImVec4(1.0f, 1.0f, 1.0f, 0.5f));
 
     spdlog::sink_ptr logUISink;
