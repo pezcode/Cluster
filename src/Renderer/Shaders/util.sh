@@ -34,8 +34,34 @@ vec4 screen2Eye(vec4 coord)
     );
 #endif
 
+    // https://stackoverflow.com/a/16597492/862300
     vec4 eye = mul(u_invProj, vec4(ndc.xyz, 1.0));
     eye = eye / eye.w;
+
+    return eye;
+}
+
+// depth from screen coordinates (gl_FragCoord.z) to eye space
+// same as screen2Eye(vec4(0, 0, depth, 1)).z but slightly faster
+// TODO doesn't work for D3D11
+float screen2EyeDepth(float depth, float near, float far)
+{
+#if BGFX_SHADER_LANGUAGE_GLSL
+    // https://www.khronos.org/opengl/wiki/Compute_eye_space_from_window_space
+    float ndc = 2.0 * depth - 1.0;
+#else
+    float ndc = depth;
+#endif
+
+    // https://stackoverflow.com/a/45710371/862300
+
+    // if we have the near and far plane:
+    float eye = 2.0 * near * far / (far + near - ndc * (far - near));
+    // otherwise, get it from the projection matrix:
+    // this doesn't seem to work
+    //float A = u_proj[2][2];
+    //float B = u_proj[3][2];
+    //float eye = B / (A + ndc);
 
     return eye;
 }

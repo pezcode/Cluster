@@ -2,14 +2,14 @@
 
 #include "Scene/Scene.h"
 #include "Renderer/Samplers.h"
-#include <bx/math.h>
 #include <glm/common.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#include <cmath>
 
 bgfx::VertexDecl ClusterShader::ClusterVertex::decl;
 
 ClusterShader::ClusterShader() :
-    clusterSizesUniform(BGFX_INVALID_HANDLE),
+    clusterSizesVecUniform(BGFX_INVALID_HANDLE),
     zNearFarVecUniform(BGFX_INVALID_HANDLE),
     clustersBuffer(BGFX_INVALID_HANDLE),
     lightIndicesBuffer(BGFX_INVALID_HANDLE),
@@ -24,18 +24,33 @@ void ClusterShader::initialize()
 {
     ClusterVertex::init();
 
-    clusterSizesUniform = bgfx::createUniform("u_clusterSizes", bgfx::UniformType::Vec4);
+    clusterSizesVecUniform = bgfx::createUniform("u_clusterSizesVec", bgfx::UniformType::Vec4);
     zNearFarVecUniform = bgfx::createUniform("u_zNearFarVec", bgfx::UniformType::Vec4);
+
+    //const bgfx::Memory* clustersMem     = bgfx::alloc(CLUSTER_COUNT * ClusterVertex::decl.getStride());
+    //const bgfx::Memory* lightIndicesMem = bgfx::alloc(CLUSTER_COUNT * MAX_LIGHTS_PER_CLUSTER * sizeof(uint32_t));
+    //const bgfx::Memory* lightGridMem    = bgfx::alloc(CLUSTER_COUNT * 4 * sizeof(uint32_t));
+    //const bgfx::Memory* atomicIndexMem  = bgfx::alloc(1 * sizeof(uint32_t));
+
+    //clustersBuffer     = bgfx::createVertexBuffer(clustersMem, ClusterVertex::decl, BGFX_BUFFER_COMPUTE_READ_WRITE);
+    //lightIndicesBuffer = bgfx::createIndexBuffer(lightIndicesMem, BGFX_BUFFER_COMPUTE_READ_WRITE | BGFX_BUFFER_INDEX32);
+    //lightGridBuffer    = bgfx::createIndexBuffer(lightGridMem,    BGFX_BUFFER_COMPUTE_READ_WRITE | BGFX_BUFFER_INDEX32);
+    //atomicIndexBuffer  = bgfx::createIndexBuffer(atomicIndexMem,  BGFX_BUFFER_COMPUTE_READ_WRITE | BGFX_BUFFER_INDEX32);
 
     clustersBuffer     = bgfx::createDynamicVertexBuffer(CLUSTER_COUNT, ClusterVertex::decl,     BGFX_BUFFER_COMPUTE_READ_WRITE);
     lightIndicesBuffer = bgfx::createDynamicIndexBuffer (CLUSTER_COUNT * MAX_LIGHTS_PER_CLUSTER, BGFX_BUFFER_COMPUTE_READ_WRITE | BGFX_BUFFER_INDEX32);
     lightGridBuffer    = bgfx::createDynamicIndexBuffer (CLUSTER_COUNT * 4,                      BGFX_BUFFER_COMPUTE_READ_WRITE | BGFX_BUFFER_INDEX32);
     atomicIndexBuffer  = bgfx::createDynamicIndexBuffer (1,                                      BGFX_BUFFER_COMPUTE_READ_WRITE | BGFX_BUFFER_INDEX32);
+
+    //bgfx::setName(clustersBuffer,     "Clusters min/max pos");
+    //bgfx::setName(lightIndicesBuffer, "Light indices");
+    //bgfx::setName(lightGridBuffer,    "Light grid");
+    //bgfx::setName(atomicIndexBuffer,  "Atomic index for culling");
 }
 
 void ClusterShader::shutdown()
 {
-    bgfx::destroy(clusterSizesUniform);
+    bgfx::destroy(clusterSizesVecUniform);
     bgfx::destroy(zNearFarVecUniform);
 
     bgfx::destroy(clustersBuffer);
@@ -43,7 +58,7 @@ void ClusterShader::shutdown()
     bgfx::destroy(lightGridBuffer);
     bgfx::destroy(atomicIndexBuffer);
 
-    clusterSizesUniform = zNearFarVecUniform = BGFX_INVALID_HANDLE;
+    clusterSizesVecUniform = zNearFarVecUniform = BGFX_INVALID_HANDLE;
     clustersBuffer = BGFX_INVALID_HANDLE;
     lightIndicesBuffer = lightGridBuffer = atomicIndexBuffer = BGFX_INVALID_HANDLE;
 }
@@ -52,13 +67,15 @@ void ClusterShader::setUniforms(const Scene* scene, uint16_t screenWidth, uint16
 {
     assert(scene != nullptr);
 
+    float clusterSizesVec[4] =
+    {
+        std::ceil((float)screenWidth  / CLUSTERS_X),
+        std::ceil((float)screenHeight / CLUSTERS_Y)
+    };
+
+    bgfx::setUniform(clusterSizesVecUniform, clusterSizesVec);
     float zNearFarVec[4] = { scene->camera.zNear, scene->camera.zFar };
     bgfx::setUniform(zNearFarVecUniform, zNearFarVec);
-
-    // TODO why X?
-    // use max instead? or use actual extent
-    float clusterSizes[4] = { 0.0f, 0.0f, 0.0f, ceilf((float)screenWidth / CLUSTERS_X) };
-    bgfx::setUniform(clusterSizesUniform, clusterSizes);
 }
 
 void ClusterShader::bindBuffers(bool lightingPass) const

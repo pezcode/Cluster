@@ -9,5 +9,5 @@
 // any part of the code can add sinks to Sinks
 extern std::shared_ptr<spdlog::logger> Log;
 // multithreaded
-// TODO make this depend on bgfx setting
+// (required for flush_every)
 extern std::shared_ptr<spdlog::sinks::dist_sink_mt> Sinks;

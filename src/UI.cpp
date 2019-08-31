@@ -9,6 +9,7 @@
 #include <bx/string.h>
 #include <IconsForkAwesome.h>
 #include <functional>
+#include <cctype>
 
 using namespace std::placeholders;
 
@@ -147,7 +148,7 @@ void ClusterUI::update(float dt)
             ImGui::Checkbox("Show buffers", &app.config->showBuffers);
         if(path == Cluster::Clustered)
         {
-            ImGui::Checkbox("Cluster debug visualization", &app.config->debugVisualization);
+            ImGui::Checkbox("Cluster light count visualization", &app.config->debugVisualization);
             app.renderer->setVariable("DEBUG_VIS", app.config->debugVisualization ? "true" : "false");
         }
 
@@ -171,11 +172,16 @@ void ClusterUI::update(float dt)
                             ? (ICON_FK_WINDOW_RESTORE  "  Restore")
                             : (ICON_FK_WINDOW_MAXIMIZE "  Fullscreen"),
                          ImVec2(100, 0)))
+        {
             app.toggleFullscreen();
+        }
         if(ImGui::Button(ICON_FK_EYE_SLASH "  Hide UI", ImVec2(100, 0)))
             app.config->showUI = false;
         ImGui::SameLine();
-        ImGui::TextDisabled("%s to restore", glfwGetKeyName(GLFW_KEY_R, 0));
+        std::string keyName = glfwGetKeyName(GLFW_KEY_R, 0);
+        for(auto& c : keyName)
+            c = std::toupper(c);
+        ImGui::TextDisabled("%s to restore", keyName.c_str());
         ImGui::End();
     }
 

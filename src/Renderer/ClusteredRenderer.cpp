@@ -65,6 +65,10 @@ void ClusteredRenderer::onRender(float dt)
     if(!scene->loaded)
         return;
 
+    // set u_viewRect for screen2Eye to work correctly
+    bgfx::setViewRect(vClusterBuilding, 0, 0, width, height);
+    bgfx::setViewRect(vLightCulling, 0, 0, width, height);
+
     // cluster building needs u_invProj to transform screen coordinates to eye space
     setViewProjection(vClusterBuilding);
     // light culling needs u_view to transform lights to eye space

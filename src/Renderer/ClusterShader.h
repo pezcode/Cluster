@@ -45,7 +45,7 @@ private:
         static bgfx::VertexDecl decl;
     };
 
-    bgfx::UniformHandle clusterSizesUniform;
+    bgfx::UniformHandle clusterSizesVecUniform;
     bgfx::UniformHandle zNearFarVecUniform;
 
     // dynamic buffers can be created empty
@@ -53,6 +53,11 @@ private:
     bgfx::DynamicIndexBufferHandle lightIndicesBuffer;
     bgfx::DynamicIndexBufferHandle lightGridBuffer;
     bgfx::DynamicIndexBufferHandle atomicIndexBuffer;
+
+    //bgfx::VertexBufferHandle clustersBuffer;
+    //bgfx::IndexBufferHandle lightIndicesBuffer;
+    //bgfx::IndexBufferHandle lightGridBuffer;
+    //bgfx::IndexBufferHandle atomicIndexBuffer;
 
     uint32_t lightCount;
 };

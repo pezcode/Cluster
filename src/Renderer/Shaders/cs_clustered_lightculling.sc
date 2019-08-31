@@ -4,6 +4,10 @@
 #include "lights.sh"
 #include "clusters.sh"
 
+// compute shader to cull lights against cluster bounds
+// builds a light grid that holds indices of lights for each cluster
+// largely inspired by http://www.aortiz.me/2018/12/21/CG.html
+
 // point lights only for now
 
 bool pointLightAffectsCluster(PointLight light, Cluster cluster);
@@ -46,7 +50,11 @@ void main()
         if(uint(gl_LocalInvocationIndex) < batchSize)
         {
             uint lightIndex = lightOffset + gl_LocalInvocationIndex;
-            lights[gl_LocalInvocationIndex] = getPointLight(lightIndex);
+            PointLight light = getPointLight(lightIndex);
+            // transform to view space (expected by pointLightAffectsCluster)
+            // do it here once rather than for each cluster later
+            light.position = mul(u_view, vec4(light.position, 1.0)).xyz;
+            lights[gl_LocalInvocationIndex] = light;
         }
 
         // wait for all threads to finish copying
@@ -83,34 +91,30 @@ void main()
     //b_clusterLightGrid[clusterIndex] = uvec4(offset, visibleCount, 0, 0);
     b_clusterLightGrid[4 * clusterIndex + 0] = offset;
     b_clusterLightGrid[4 * clusterIndex + 1] = visibleCount;
-    //b_clusterLightGrid[4 * clusterIndex + 2] = 0;
+    //b_clusterLightGrid[4 * clusterIndex + 2] = 0; // unused, spot lights etc.
     //b_clusterLightGrid[4 * clusterIndex + 3] = 0;
 }
 
-// check point light radius against cluster bounds
+// check if light radius extends into the cluster
 bool pointLightAffectsCluster(PointLight light, Cluster cluster)
 {
-    vec3 pos = mul(u_view, vec4(light.position, 1.0)).xyz;
-    return distsqToCluster(pos, cluster) <= (light.radius * light.radius);
-    //return true; // DEBUG
+    // NOTE: expects light.position to be in view space like the cluster bounds
+    // global light list has world space coordinates, but we transform the
+    // coordinates in the shared array of lights after copying
+    return distsqToCluster(light.position, cluster) <= (light.radius * light.radius);
 }
 
-// squared distance of the point to the bounding planes
+// squared distance of the point to planes of the bounding box
 float distsqToCluster(vec3 pos, Cluster cluster)
 {
-    float distsq = 0.0;
-    for(uint i = 0; i < 3; ++i)
-    {
-        float v = pos[i];
-        if(v < cluster.minPos[i])
-        {
-            distsq += (cluster.minPos[i] - v) * (cluster.minPos[i] - v);
-        }
-        else if(v > cluster.maxPos[i])
-        {
-            distsq += (v - cluster.maxPos[i]) * (v - cluster.maxPos[i]);
-        }
-    }
+    // only add distance in either dimension if it's outside the bounding box
+    vec3 isBelow = 1.0 - step(cluster.minBounds, pos);
+    vec3 isAbove = step(cluster.maxBounds, pos);
 
+    vec3 belowDist = cluster.minBounds - pos;
+    vec3 aboveDist = pos - cluster.maxBounds;
+
+    vec3 distSqVec = (isBelow * belowDist) + (isAbove * aboveDist);
+    float distsq = dot(distSqVec, distSqVec);
     return distsq;
 }

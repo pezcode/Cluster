@@ -39,7 +39,7 @@ void Config::readArgv(int argc, char* argv[])
 
     //cmdLine.hasArg("gl");
 
-    //renderer = bgfx::RendererType::OpenGL;
+    renderer = bgfx::RendererType::OpenGL;
     //renderer = bgfx::RendererType::Direct3D12;
 
     showStatsOverlay = false;

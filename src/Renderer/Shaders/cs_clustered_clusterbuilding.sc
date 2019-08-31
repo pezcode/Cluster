@@ -4,7 +4,9 @@
 #include "clusters.sh"
 #include "util.sh"
 
-vec3 lineIntersectionToZPlane(vec3 A, vec3 B, float zDistance);
+// compute shader to calculate light cluster min/max AABB in eye space
+// largely inspired by http://www.aortiz.me/2018/12/21/CG.html
+// z-subdivision concept from http://advances.realtimerendering.com/s2016/Siggraph2016_idTech6.pdf
 
 // bgfx doesn't define this in shaders
 #define gl_WorkGroupSize uvec3(1, 1, 1)
@@ -14,36 +16,38 @@ vec3 lineIntersectionToZPlane(vec3 A, vec3 B, float zDistance);
 NUM_THREADS(1, 1, 1)
 void main()
 {
-    // Per Tile variables
-    uint tileSizePx = uint(u_clusterSizes[3]);
     const uint clusterIndex = gl_WorkGroupID.z * gl_NumWorkGroups.x * gl_NumWorkGroups.y +
                               gl_WorkGroupID.y * gl_NumWorkGroups.x +
                               gl_WorkGroupID.x;
 
-    // Calculating the min and max point in screen space
-    vec4 maxPoint_sS = vec4(vec2(gl_WorkGroupID.x + 1, gl_WorkGroupID.y + 1) * tileSizePx, 1.0, 1.0); // Top Right
-    vec4 minPoint_sS = vec4(gl_WorkGroupID.xy * tileSizePx, 1.0, 1.0); // Bottom left
+    // calculate min (bottom left) and max (top right) xy in screen coordinates
+    vec4 minScreen = vec4(gl_WorkGroupID.xy * u_clusterSizes.xy, 1.0, 1.0);
+    vec4 maxScreen = vec4(vec2(gl_WorkGroupID.x + 1, gl_WorkGroupID.y + 1) * u_clusterSizes.xy, 1.0, 1.0);
 
-    // Pass min and max to view space
-    vec3 maxPoint_vS = screen2Eye(maxPoint_sS).xyz;
-    vec3 minPoint_vS = screen2Eye(minPoint_sS).xyz;
+    // -> eye coordinates
+    // z is the camera far plane (1 in screen coordinates)
+    vec3 minEye = screen2Eye(minScreen).xyz;
+    vec3 maxEye = screen2Eye(maxScreen).xyz;
 
-    // Near and far values of the cluster in view space
-    float tileNear  = u_zNear * pow(u_zFar / u_zNear,  gl_WorkGroupID.z      / float(gl_NumWorkGroups.z));
-    float tileFar   = u_zNear * pow(u_zFar / u_zNear, (gl_WorkGroupID.z + 1) / float(gl_NumWorkGroups.z));
+    // calculate near and far depth edges of the cluster
+    float clusterNear  = u_zNear * pow(u_zFar / u_zNear,  gl_WorkGroupID.z      / float(gl_NumWorkGroups.z));
+    float clusterFar   = u_zNear * pow(u_zFar / u_zNear, (gl_WorkGroupID.z + 1) / float(gl_NumWorkGroups.z));
 
-    const vec3 eyePos = vec3_splat(0.0);
-    // Finding the 4 intersection points made from the maxPoint to the cluster near/far plane
-    vec3 minPointNear = lineIntersectionToZPlane(eyePos, minPoint_vS, tileNear);
-    vec3 minPointFar  = lineIntersectionToZPlane(eyePos, minPoint_vS, tileFar);
-    vec3 maxPointNear = lineIntersectionToZPlane(eyePos, maxPoint_vS, tileNear);
-    vec3 maxPointFar  = lineIntersectionToZPlane(eyePos, maxPoint_vS, tileFar);
+    // this calculates the intersection between:
+    // - a line from the camera (origin) to the eye point (at the camera's far plane)
+    // - the cluster's z-planes (near + far)
+    // we could divide by u_zFar as well
+    vec3 minNear = minEye * clusterNear / minEye.z;
+    vec3 minFar  = minEye * clusterFar  / minEye.z;
+    vec3 maxNear = maxEye * clusterNear / maxEye.z;
+    vec3 maxFar  = maxEye * clusterFar  / maxEye.z;
 
-    vec3 minPointAABB = min(min(minPointNear, minPointFar), min(maxPointNear, maxPointFar));
-    vec3 maxPointAABB = max(max(minPointNear, minPointFar), max(maxPointNear, maxPointFar));
+    // get max extent of the cluster in all dimensions (axis-aligned bounding box)
+    vec3 minBounds = min(min(minNear, minFar), min(maxNear, maxFar));
+    vec3 maxBounds = max(max(minNear, minFar), max(maxNear, maxFar));
 
-    b_clusters[2 * clusterIndex + 0] = vec4(minPointAABB, 0.0);
-    b_clusters[2 * clusterIndex + 1] = vec4(maxPointAABB, 0.0);
+    b_clusters[2 * clusterIndex + 0] = vec4(minBounds, 1.0);
+    b_clusters[2 * clusterIndex + 1] = vec4(maxBounds, 1.0);
 
     // reset the atomic counter for the light culling shader
     // writable compute buffers can't be updated by CPU so do it here
@@ -51,21 +55,4 @@ void main()
     {
         b_globalIndex[0] = 0;
     }
-}
-
-// Creates a line from the eye to the screenpoint, then finds its intersection
-// With a z oriented plane located at the given distance to the origin
-vec3 lineIntersectionToZPlane(vec3 A, vec3 B, float zDistance){
-    // Because this is a Z based normal this is fixed
-    vec3 normal = vec3(0.0, 0.0, 1.0);
-
-    vec3 ab =  B - A;
-
-    // Computing the intersection length for the line and the plane
-    float t = (zDistance - dot(normal, A)) / dot(normal, ab);
-
-    // Computing the actual xyz position of the point along the line
-    vec3 result = A + t * ab;
-
-    return result;
 }

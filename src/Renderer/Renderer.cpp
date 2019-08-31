@@ -73,6 +73,7 @@ void Renderer::reset(uint16_t width, uint16_t height)
     if(!bgfx::isValid(frameBuffer))
     {
         frameBuffer = createFrameBuffer(true, true);
+        bgfx::setName(frameBuffer, "Render framebuffer (pre-postprocessing)");
     }
     this->width = width;
     this->height = height;
@@ -169,7 +170,7 @@ void Renderer::setNormalMatrix(const glm::mat4& modelMat)
 
     // use adjugate instead of inverse
     // see https://github.com/graphitemaster/normals_revisited#the-details-of-transforming-normals
-    // cofactor is transpose of adjugate
+    // cofactor is the transpose of the adjugate
     glm::mat3 normalMat = glm::transpose(glm::adjugate(glm::mat3(modelMat)));
     bgfx::setUniform(normalMatrixUniform, glm::value_ptr(normalMat));
 }
@@ -256,7 +257,8 @@ const char* Renderer::shaderDir()
         case bgfx::RendererType::Vulkan:
             path = "shaders/spirv/";
             break;
-        case bgfx::RendererType::Count:
+        default:
+            assert(false);
             break;
     }
 

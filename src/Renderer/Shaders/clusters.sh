@@ -18,7 +18,10 @@
 
 #define MAX_LIGHTS_PER_CLUSTER 100
 
-uniform vec4 u_clusterSizes;
+// cluster size in screen coordinates (pixels)
+uniform vec4 u_clusterSizesVec;
+#define u_clusterSizes u_clusterSizesVec.xy
+
 uniform vec4 u_zNearFarVec;
 #define u_zNear u_zNearFarVec.x
 #define u_zFar u_zNearFarVec.y
@@ -47,8 +50,8 @@ CLUSTER_BUFFER(b_globalIndex, uint, SAMPLER_CLUSTERS_ATOMICINDEX);
 
 struct Cluster
 {
-    vec3 minPos;
-    vec3 maxPos;
+    vec3 minBounds;
+    vec3 maxBounds;
 };
 
 struct LightGrid
@@ -61,8 +64,8 @@ struct LightGrid
 Cluster getCluster(uint index)
 {
     Cluster cluster;
-    cluster.minPos = b_clusters[2 * index + 0].xyz;
-    cluster.maxPos = b_clusters[2 * index + 1].xyz;
+    cluster.minBounds = b_clusters[2 * index + 0].xyz;
+    cluster.maxBounds = b_clusters[2 * index + 1].xyz;
     return cluster;
 }
 #endif
@@ -88,22 +91,21 @@ uint getClusterZIndex(float screenDepth)
     float scale = float(CLUSTERS_Z) / log(u_zFar / u_zNear);
     float bias = -(float(CLUSTERS_Z) * log(u_zNear) / log(u_zFar / u_zNear));
 
+    //float eyeDepth = screen2EyeDepth(screenDepth, u_zNear, u_zFar);
     float eyeDepth = screen2Eye(vec4(0.0, 0.0, screenDepth, 1.0)).z;
-    uint zTile = uint(max(log(eyeDepth) * scale + bias, 0.0));
-    return zTile;
+    uint zIndex = uint(max(log(eyeDepth) * scale + bias, 0.0));
+    return zIndex;
 }
 
 // cluster index from fragment position in window coordinates (gl_FragCoord)
-// http://www.aortiz.me/2018/12/21/CG.html
-// http://advances.realtimerendering.com/s2016/Siggraph2016_idTech6.pdf
 uint getClusterIndex(vec4 fragCoord)
 {
-    uint zTile = getClusterZIndex(fragCoord.z);
-    uvec3 tiles = uvec3(uvec2(fragCoord.xy / u_clusterSizes[3]), zTile);
-    uint tileIndex = (CLUSTERS_X * CLUSTERS_Y) * tiles.z +
-                     CLUSTERS_X * tiles.y +
-                     tiles.x;
-    return tileIndex;
+    uint zIndex = getClusterZIndex(fragCoord.z);
+    uvec3 indices = uvec3(uvec2(fragCoord.xy / u_clusterSizes.xy), zIndex);
+    uint cluster = (CLUSTERS_X * CLUSTERS_Y) * indices.z +
+                   CLUSTERS_X * indices.y +
+                   indices.x;
+    return cluster;
 }
 
 #endif // CLUSTERS_SH_HEADER_GUARD
