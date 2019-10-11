@@ -51,8 +51,8 @@ void Renderer::initialize()
     constexpr float BOTTOM = -1.0f, TOP = 3.0f, LEFT = -1.0f, RIGHT = 3.0f;
     PosTexCoord0Vertex vertices[3] = {
         { LEFT,  BOTTOM, 0.0f, 0.0f, bottomUV },
-        { LEFT,  TOP,    0.0f, 0.0f, topUV },
-        { RIGHT, BOTTOM, 0.0f, 2.0f, bottomUV }
+        { RIGHT, BOTTOM, 0.0f, 2.0f, bottomUV },
+        { LEFT,  TOP,    0.0f, 0.0f, topUV }
     };
 
     blitTriangleBuffer = bgfx::createVertexBuffer(bgfx::copy(&vertices, sizeof(vertices)), PosTexCoord0Vertex::decl);
@@ -184,7 +184,7 @@ void Renderer::blitToScreen(bgfx::ViewId view)
     bgfx::setViewClear(view, BGFX_CLEAR_NONE);
     bgfx::setViewRect(view, 0, 0, width, height);
     bgfx::setViewFrameBuffer(view, BGFX_INVALID_HANDLE);
-    bgfx::setState(BGFX_STATE_WRITE_RGB);
+    bgfx::setState(BGFX_STATE_WRITE_RGB | BGFX_STATE_CULL_CW);
     bgfx::TextureHandle frameBufferTexture = bgfx::getTexture(frameBuffer);
     bgfx::setTexture(0, blitSampler, frameBufferTexture);
     float exposureVec[4] = { scene->loaded ? scene->camera.exposure : 1.0f };

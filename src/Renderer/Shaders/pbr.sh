@@ -172,12 +172,10 @@ float Fd_Lambert()
 
 vec3 BRDF(vec3 v, vec3 l, vec3 n, PBRMaterial mat)
 {
-    /*
-    V is the normalized vector from the shading location to the eye
-    L is the normalized vector from the shading location to the light
-    N is the surface normal in the same space as the above values
-    H is the half vector, where H = normalize(L+V)
-    */
+    // V is the normalized vector from the shading location to the eye
+    // L is the normalized vector from the shading location to the light
+    // N is the surface normal in the same space as the above values
+    // H is the half vector, where H = normalize(L+V)
 
     vec3 h = normalize(l + v);
 

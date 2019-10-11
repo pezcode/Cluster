@@ -30,8 +30,8 @@ void main()
     vec3 maxEye = screen2Eye(maxScreen).xyz;
 
     // calculate near and far depth edges of the cluster
-    float clusterNear  = u_zNear * pow(u_zFar / u_zNear,  gl_WorkGroupID.z      / float(gl_NumWorkGroups.z));
-    float clusterFar   = u_zNear * pow(u_zFar / u_zNear, (gl_WorkGroupID.z + 1) / float(gl_NumWorkGroups.z));
+    float clusterNear = u_zNear * pow(u_zFar / u_zNear,  gl_WorkGroupID.z      / float(gl_NumWorkGroups.z));
+    float clusterFar  = u_zNear * pow(u_zFar / u_zNear, (gl_WorkGroupID.z + 1) / float(gl_NumWorkGroups.z));
 
     // this calculates the intersection between:
     // - a line from the camera (origin) to the eye point (at the camera's far plane)

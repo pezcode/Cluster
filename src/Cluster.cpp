@@ -21,7 +21,7 @@ bx::DefaultAllocator Cluster::allocator;
 bx::AllocatorI* Cluster::iAlloc = &allocator;
 
 Cluster::Cluster() :
-    bigg::Application("Cluster", 1280, 640), // testing 16:8 ratio for clusters
+    bigg::Application("Cluster", 1280, 720),
     logFileSink(nullptr),
     frameNumber(0),
     mouseX(-1.0f),

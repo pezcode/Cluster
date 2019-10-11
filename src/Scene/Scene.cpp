@@ -71,18 +71,23 @@ bool Scene::load(const char* file)
     pointLights.init();
 
     Assimp::Importer importer;
+
+    // Settings for aiProcess_SortByPType
     // only take triangles or higher (polygons are triangulated during import)
     importer.SetPropertyInteger(AI_CONFIG_PP_SBP_REMOVE, aiPrimitiveType_LINE | aiPrimitiveType_POINT);
+    // Settings for aiProcess_SplitLargeMeshes
+    // Limit vertices to 65k (we use 16-bit indices)
+    importer.SetPropertyInteger(AI_CONFIG_PP_SLM_VERTEX_LIMIT, static_cast<int>(std::numeric_limits<uint16_t>::max()) + 1);
 
     // TODO? importer.SetProgressHandler
 
     unsigned int flags = aiProcessPreset_TargetRealtime_Quality | // some optimizations and safety checks
         aiProcess_OptimizeMeshes       | // minimize number of meshes
+        aiProcess_OptimizeGraph        | // collapse scene nodes where possible
         aiProcess_PreTransformVertices | // apply node matrices
         aiProcess_FixInfacingNormals   |
         aiProcess_TransformUVCoords    | // apply UV transformations
-                                         // something here is wrong, Renderer::blit culls CW, but quad triangles are in CW
-        //aiProcess_FlipWindingOrder   | // flag in bgfx::setState(), default is to cull(!) CW
+        //aiProcess_FlipWindingOrder   | // we cull clock-wise, keep the default CCW winding order
         aiProcess_MakeLeftHanded       | // we set GLM_FORCE_LEFT_HANDED and use left-handed bx matrix functions
         aiProcess_FlipUVs;               // bimg loads textures with flipped Y (top left is 0,0)
 
@@ -154,6 +159,11 @@ Mesh Scene::loadMesh(const aiMesh* mesh)
 {
     if(mesh->mPrimitiveTypes != aiPrimitiveType_TRIANGLE)
         throw std::runtime_error("Mesh has incompatible primitive type");
+
+    // TODO? use 32-bit indices by default
+    // have to adjust AI_CONFIG_PP_SLM_VERTEX_LIMIT as well
+    if(mesh->mNumVertices > std::numeric_limits<uint16_t>::max())
+        throw std::runtime_error("Mesh has too many vertices (> uint16_t::max())");
 
     constexpr size_t coords = 0;
     bool hasTexture = mesh->mNumUVComponents[coords] == 2 && mesh->mTextureCoords[coords] != nullptr;

@@ -106,12 +106,19 @@ add_custom_target(invalidate_shaders)
 foreach(SHADER ${SHADERS})
     get_filename_component(SHADER_NAME "${SHADER}" NAME)
     get_filename_component(SHADER_FILE "${SHADER}" ABSOLUTE)
+    # add_shader defaults to GLSL 120, 430 for compute
+    # 130 is needed for switch statements (but won't compile at runtime?)
+    # default DX11 model is 5_0
+    set(GLSL_VERSION 130)
+    set(GLSL_COMPUTE_VERSION 430)
+    set(DX_MODEL 5_0)
+
     if(SHADER_NAME MATCHES "^vs_")
-        add_shader("${SHADER_FILE}" VERTEX   OUTPUT "${SHADER_DIR}" PLATFORMS dx11 glsl)
+        add_shader("${SHADER_FILE}" VERTEX   OUTPUT "${SHADER_DIR}" GLSL_VERSION ${GLSL_VERSION} DX11_MODEL ${DX_MODEL} PLATFORMS dx11 glsl)
     elseif(SHADER_NAME MATCHES "^fs_")
-        add_shader("${SHADER_FILE}" FRAGMENT OUTPUT "${SHADER_DIR}" PLATFORMS dx11 glsl)
+        add_shader("${SHADER_FILE}" FRAGMENT OUTPUT "${SHADER_DIR}" GLSL_VERSION ${GLSL_VERSION} DX11_MODEL ${DX_MODEL} PLATFORMS dx11 glsl)
     elseif(SHADER_NAME MATCHES "^cs_")
-        add_shader("${SHADER_FILE}" COMPUTE  OUTPUT "${SHADER_DIR}" PLATFORMS dx11 glsl)
+        add_shader("${SHADER_FILE}" COMPUTE  OUTPUT "${SHADER_DIR}" GLSL_VERSION ${GLSL_COMPUTE_VERSION} DX11_MODEL ${DX_MODEL} PLATFORMS dx11 glsl)
     endif()
     add_custom_command(TARGET invalidate_shaders PRE_BUILD
         COMMAND "${CMAKE_COMMAND}" -E touch "${SHADER_FILE}")

@@ -26,7 +26,38 @@ void main()
     vec4 result = texture2D(s_texColor, v_texcoord0);
     result.rgb *= u_exposure;
 
-    // this might not be the most performant way on some hardware
+// switch statement requires GLSL 130
+// but even if we compile with that version, compilation fails at runtime
+// why?
+
+//    switch(u_tonemappingMode)
+//    {
+//        default:
+//        case TONEMAP_NONE:
+//            result.rgb = saturate(result.rgb);
+//            break;
+//        case TONEMAP_EXPONENTIAL:
+//            result.rgb = tonemap_exponential(result.rgb);
+//            break;
+//        case TONEMAP_REINHARD:
+//            result.rgb = tonemap_reinhard(result.rgb);
+//            break;
+//        case TONEMAP_REINHARD_LUM:
+//            result.rgb = tonemap_reinhard_luminance(result.rgb);
+//            break;
+//        case TONEMAP_HABLE:
+//            result.rgb = tonemap_hable(result.rgb);
+//            break;
+//        case TONEMAP_DUIKER:
+//            result.rgb = tonemap_duiker(result.rgb);
+//            break;
+//        case TONEMAP_ACES:
+//            result.rgb = tonemap_aces(result.rgb);
+//            break;
+//        case TONEMAP_ACES_LUM:
+//            result.rgb = tonemap_aces_luminance(result.rgb);
+//            break;
+//    }
 
     if(u_tonemappingMode == TONEMAP_NONE)
     {

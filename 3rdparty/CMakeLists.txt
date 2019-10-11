@@ -1,5 +1,6 @@
 #add_compile_definitions(BGFX_CONFIG_RENDERER_OPENGL=43)
-set(BIGG_EXAMPLES OFF CACHE INTERNAL "")
+#set(BIGG_EXAMPLES OFF CACHE INTERNAL "")
+set(BGFX_BUILD_EXAMPLES ON CACHE INTERNAL "")
 add_subdirectory(bigg)
 
 add_library(IconFontCppHeaders INTERFACE)

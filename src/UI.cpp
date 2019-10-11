@@ -148,22 +148,7 @@ void ClusterUI::update(float dt)
             ImGui::Checkbox("Show buffers", &app.config->showBuffers);
         if(path == Cluster::Clustered)
         {
-            if(ImGui::Checkbox("Cluster light count visualization", &app.config->debugVisualization))
-            {
-                //ImGui::Gra
-                //ImGui::
-                ImDrawList* draw_list = ImGui::GetWindowDrawList();
-                const ImVec2 p = ImGui::GetCursorScreenPos();
-                float x = p.x + 4.0f, y = p.y + 4.0f;
-                //float spacing = 10.0f;
-                static float sz = 36.0f;
-                draw_list->AddRectFilledMultiColor(ImVec2(x, y),
-                                                   ImVec2(x + sz, y + sz),
-                                                   IM_COL32(0, 0, 0, 255),
-                                                   IM_COL32(255, 0, 0, 255),
-                                                   IM_COL32(255, 255, 0, 255),
-                                                   IM_COL32(0, 255, 0, 255));
-            }
+            ImGui::Checkbox("Cluster light count visualization", &app.config->debugVisualization);
             app.renderer->setVariable("DEBUG_VIS", app.config->debugVisualization ? "true" : "false");
         }
 
@@ -370,7 +355,7 @@ void ClusterUI::update(float dt)
             ImGui::Checkbox("FPS", &app.config->overlays.fps);
             ImGui::Checkbox("Frame time", &app.config->overlays.frameTime);
             if(app.config->profile)
-                ImGui::Checkbox("Profiler", &app.config->overlays.profiler);
+                ImGui::Checkbox("View stats", &app.config->overlays.profiler);
             ImGui::Checkbox("GPU memory", &app.config->overlays.gpuMemory);
             ImGui::EndPopup();
         }
