@@ -18,6 +18,8 @@ bx::DefaultAllocator Scene::allocator;
 
 Scene::Scene() :
     loaded(false),
+    minBounds(0.0f),
+    maxBounds(0.0f),
     //skyColor({ 0.53f, 0.81f, 0.98f }), // https://en.wikipedia.org/wiki/Sky_blue#Light_sky_blue
     //skyColor({ 0.1f, 0.1f, 0.44f }),   // https://en.wikipedia.org/wiki/Midnight_blue#X11
     skyColor({ 0.0f, 0.0f, 0.0f }),
@@ -83,7 +85,6 @@ bool Scene::load(const char* file)
 
     unsigned int flags = aiProcessPreset_TargetRealtime_Quality | // some optimizations and safety checks
         aiProcess_OptimizeMeshes       | // minimize number of meshes
-        aiProcess_OptimizeGraph        | // collapse scene nodes where possible
         aiProcess_PreTransformVertices | // apply node matrices
         aiProcess_FixInfacingNormals   |
         aiProcess_TransformUVCoords    | // apply UV transformations
@@ -91,7 +92,16 @@ bool Scene::load(const char* file)
         aiProcess_MakeLeftHanded       | // we set GLM_FORCE_LEFT_HANDED and use left-handed bx matrix functions
         aiProcess_FlipUVs;               // bimg loads textures with flipped Y (top left is 0,0)
 
-    const aiScene* scene = importer.ReadFile(file, flags);
+    const aiScene* scene = nullptr;
+    try
+    {
+        scene = importer.ReadFile(file, flags);
+    }
+    catch(const std::exception& e)
+    {
+        Log->error("{}", e.what());
+    }
+
     if(scene)
     {
         if(!(scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE))
@@ -161,9 +171,8 @@ Mesh Scene::loadMesh(const aiMesh* mesh)
         throw std::runtime_error("Mesh has incompatible primitive type");
 
     // TODO? use 32-bit indices by default
-    // have to adjust AI_CONFIG_PP_SLM_VERTEX_LIMIT as well
-    if(mesh->mNumVertices > std::numeric_limits<uint16_t>::max())
-        throw std::runtime_error("Mesh has too many vertices (> uint16_t::max())");
+    if(mesh->mNumVertices > (std::numeric_limits<uint16_t>::max() + 1u))
+        throw std::runtime_error("Mesh has too many vertices (> uint16_t::max + 1)");
 
     constexpr size_t coords = 0;
     bool hasTexture = mesh->mNumUVComponents[coords] == 2 && mesh->mTextureCoords[coords] != nullptr;
@@ -176,7 +185,7 @@ Mesh Scene::loadMesh(const aiMesh* mesh)
 
     for(unsigned int i = 0; i < mesh->mNumVertices; i++)
     {
-        size_t offset = i * stride;
+        unsigned int offset = i * stride;
         Mesh::PosNormalTangentTex0Vertex& vertex = *(Mesh::PosNormalTangentTex0Vertex*)(vertexMem->data + offset);
 
         aiVector3D pos = mesh->mVertices[i];
