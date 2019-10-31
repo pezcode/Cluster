@@ -21,6 +21,8 @@ Renderer::Renderer(const Scene* scene) :
     height(0),
     clearColor(0),
     time(0.0f),
+    viewMat(1.0f),
+    projMat(1.0f),
     frameBuffer(BGFX_INVALID_HANDLE),
     blitTriangleBuffer(BGFX_INVALID_HANDLE),
     blitProgram(BGFX_INVALID_HANDLE),

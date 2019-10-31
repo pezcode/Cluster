@@ -7,7 +7,7 @@ Config::Config() :
     writeLog(true),
     logFile("Cluster.log"),
     renderer(bgfx::RendererType::Count), // default renderer, chosen by platform
-    renderPath(Cluster::Forward),
+    renderPath(Cluster::RenderPath::Forward),
     tonemappingMode(Renderer::TonemappingMode::ACES),
     profile(false),
     vsync(false),

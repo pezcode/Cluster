@@ -22,7 +22,7 @@ public:
 
     void setVariable(const std::string& name, const std::string& val);
 
-    enum TonemappingMode : int
+    enum class TonemappingMode : int
     {
         NONE = 0,
         EXPONENTIAL,

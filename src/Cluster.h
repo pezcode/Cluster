@@ -37,7 +37,7 @@ public:
     void close();
     void toggleFullscreen();
 
-    enum RenderPath : int
+    enum class RenderPath : int
     {
         Forward,
         Deferred,

@@ -330,13 +330,13 @@ void Cluster::setRenderPath(RenderPath path)
 
     switch(path)
     {
-        case Forward:
+        case RenderPath::Forward:
             renderer = std::make_unique<ForwardRenderer>(scene.get());
             break;
-        case Deferred:
+        case RenderPath::Deferred:
             renderer = std::make_unique<DeferredRenderer>(scene.get());
             break;
-        case Clustered:
+        case RenderPath::Clustered:
             renderer = std::make_unique<ClusteredRenderer>(scene.get());
             break;
         default:

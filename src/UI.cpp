@@ -16,7 +16,8 @@ using namespace std::placeholders;
 ClusterUI::ClusterUI(Cluster& app) :
     logUISink(nullptr),
     app(app),
-    mTime(0.0f)
+    mTime(0.0f),
+    fontTexture(BGFX_INVALID_HANDLE)
 {
 }
 
@@ -123,7 +124,7 @@ void ClusterUI::update(float dt)
             "ACES",
             "ACES - Luminance"
         };
-        int tonemappingMode = app.config->tonemappingMode;
+        int tonemappingMode = (int)app.config->tonemappingMode;
         ImGui::Combo("Tonemapping", &tonemappingMode, operators, IM_ARRAYSIZE(operators));
         app.config->tonemappingMode = (Renderer::TonemappingMode)tonemappingMode;
         app.renderer->setTonemappingMode(app.config->tonemappingMode);
@@ -132,11 +133,11 @@ void ClusterUI::update(float dt)
 
         // Render path radio buttons
         ImGui::Text("Render path:");
-        static int renderPathSelected = app.config->renderPath;
-        ImGui::RadioButton("Forward", &renderPathSelected, Cluster::Forward);
-        ImGui::RadioButton("Deferred", &renderPathSelected, Cluster::Deferred);
-        ImGui::RadioButton("Clustered", &renderPathSelected, Cluster::Clustered);
-        Cluster::RenderPath path = Cluster::RenderPath(renderPathSelected);
+        static int renderPathSelected = (int)app.config->renderPath;
+        ImGui::RadioButton("Forward", &renderPathSelected, (int)Cluster::RenderPath::Forward);
+        ImGui::RadioButton("Deferred", &renderPathSelected, (int)Cluster::RenderPath::Deferred);
+        ImGui::RadioButton("Clustered", &renderPathSelected, (int)Cluster::RenderPath::Clustered);
+        Cluster::RenderPath path = (Cluster::RenderPath)renderPathSelected;
         if(path != app.config->renderPath)
             app.setRenderPath(path);
 
@@ -146,7 +147,7 @@ void ClusterUI::update(float dt)
         ImGui::Checkbox("Show stats", &app.config->showStatsOverlay);
         if(buffers)
             ImGui::Checkbox("Show buffers", &app.config->showBuffers);
-        if(path == Cluster::Clustered)
+        if(path == Cluster::RenderPath::Clustered)
         {
             ImGui::Checkbox("Cluster light count visualization", &app.config->debugVisualization);
             app.renderer->setVariable("DEBUG_VIS", app.config->debugVisualization ? "true" : "false");
@@ -243,23 +244,23 @@ void ClusterUI::update(float dt)
         static float fpsValues[GRAPH_HISTORY] = { 0 };
         static float frameTimeValues[GRAPH_HISTORY] = { 0 };
         static float gpuMemoryValues[GRAPH_HISTORY] = { 0 };
-        static int offset = 0;
+        static size_t offset = 0;
 
         if(app.config->overlays.fps)
         {
             ImGui::Separator();
             ImGui::Text("FPS");
-            ImGui::PlotLines("", fpsValues, IM_ARRAYSIZE(fpsValues), offset + 1, nullptr, 0.0f, 200.0f, ImVec2(overlayWidth, 50));
+            ImGui::PlotLines("", fpsValues, IM_ARRAYSIZE(fpsValues), (int)offset + 1, nullptr, 0.0f, 200.0f, ImVec2(overlayWidth, 50));
             ImGui::Text("%.0f", fpsValues[offset]);
         }
         if(app.config->overlays.frameTime)
         {
             ImGui::Separator();
             ImGui::Text("Frame time");
-            ImGui::PlotLines("", frameTimeValues, IM_ARRAYSIZE(frameTimeValues), offset + 1, nullptr, 0.0f, 30.0f, ImVec2(overlayWidth, 50));
+            ImGui::PlotLines("", frameTimeValues, IM_ARRAYSIZE(frameTimeValues), (int)offset + 1, nullptr, 0.0f, 30.0f, ImVec2(overlayWidth, 50));
             ImGui::Text("CPU: %.2f ms", float(stats->cpuTimeEnd - stats->cpuTimeBegin) * toCpuMs);
             ImGui::Text("GPU: %.2f ms", float(stats->gpuTimeEnd - stats->gpuTimeBegin) * toGpuMs);
-            ImGui::Text("Total: %.2f", frameTimeValues[offset]);
+            ImGui::Text("Total: %.2f ms", frameTimeValues[offset]);
         }
         if(app.config->profile && app.config->overlays.profiler)
         {
@@ -323,7 +324,7 @@ void ClusterUI::update(float dt)
             if(used > 0 && max > 0)
             {
                 ImGui::Text("GPU memory");
-                ImGui::PlotLines("", gpuMemoryValues, IM_ARRAYSIZE(gpuMemoryValues), offset + 1, nullptr, 0.0f, float(max), ImVec2(overlayWidth, 50));
+                ImGui::PlotLines("", gpuMemoryValues, IM_ARRAYSIZE(gpuMemoryValues), (int)offset + 1, nullptr, 0.0f, float(max), ImVec2(overlayWidth, 50));
                 char strUsed[64];
                 bx::prettify(strUsed, BX_COUNTOF(strUsed), stats->gpuMemoryUsed);
                 char strMax[64];
