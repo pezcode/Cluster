@@ -152,6 +152,9 @@ float D_GGX(float NoH, float a)
 
 // GGX version (see above)
 // based on Smith approach
+// height-correlated joint masking-shadowing function:
+// Heitz 2014. Understanding the Masking-Shadowing Functionin Microfacet-Based BRDFs.
+// http://jcgt.org/published/0003/02/03/paper.pdf
 float V_SmithGGXCorrelated(float NoV, float NoL, float a)
 {
     float a2 = a * a;

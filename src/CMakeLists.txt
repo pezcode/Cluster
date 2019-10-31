@@ -107,7 +107,10 @@ foreach(SHADER ${SHADERS})
     get_filename_component(SHADER_NAME "${SHADER}" NAME)
     get_filename_component(SHADER_FILE "${SHADER}" ABSOLUTE)
     # add_shader defaults to GLSL 120, 430 for compute
-    # 130 is needed for switch statements (but won't compile at runtime?)
+    # 130 is needed for switch statements but requires OpenGL 3.0 or higher
+    # need a newer bgfx version that uses BGFX_CONFIG_RENDERER_OPENGL_MIN_VERSION to set
+    # OpenGL version without forcing the OpenGL renderer
+    # (https://github.com/bkaradzic/bgfx/commit/3f6d8a516d5e61db795c0c1881e9b333fedc5d43)
     # default DX11 model is 5_0
     set(GLSL_VERSION 130)
     set(GLSL_COMPUTE_VERSION 430)
