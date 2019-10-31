@@ -23,10 +23,14 @@ bool ClusteredRenderer::supported()
 {
     const bgfx::Caps* caps = bgfx::getCaps();
     return Renderer::supported() &&
-        (caps->supported & BGFX_CAPS_COMPUTE) != 0 &&
-        // D3D12 doesn't report this but it works fine...
-        // TODO try again with updated bgfx
-        true; //(caps->supported & BGFX_CAPS_INDEX32) != 0;
+           // compute shader
+           (caps->supported & BGFX_CAPS_COMPUTE) != 0 &&
+           // 32-bit index buffers, used for light grid structure
+           // D3D12 doesn't report this but it works fine...
+           // TODO try again with updated bgfx
+           ((caps->supported & BGFX_CAPS_INDEX32) != 0 || caps->rendererType == bgfx::RendererType::Direct3D12) &&
+           // fragment depth available in fragment shader
+           (caps->supported & BGFX_CAPS_FRAGMENT_DEPTH) != 0;
 }
 
 void ClusteredRenderer::onInitialize()
