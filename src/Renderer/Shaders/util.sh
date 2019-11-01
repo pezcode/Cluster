@@ -53,7 +53,7 @@ float screen2EyeDepth(float depth, float near, float far)
     float eye = 2.0 * far * near / (far + near + ndc * (near - far));
 #else
     float ndc = depth;
-    // ndc = (eye * far / (far - near) - (far * near) / (far - near)) / e
+    // ndc = (eye * far / (far - near) - (far * near) / (far - near)) / eye
     float eye = far * near / (far + ndc * (near - far));
 #endif
 

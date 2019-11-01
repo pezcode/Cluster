@@ -99,14 +99,15 @@ void Renderer::render(float dt)
     }
     else
     {
+        // gray
         clearColor = 0x303030FF;
     }
 
-    // bigg doesn't do this
-    bgfx::setViewName(MAX_VIEW + 1, "imgui");
-
     onRender(dt);
     blitToScreen(MAX_VIEW);
+
+    // bigg doesn't do this
+    bgfx::setViewName(MAX_VIEW + 1, "imgui");
 }
 
 void Renderer::shutdown()
@@ -145,7 +146,8 @@ void Renderer::setTonemappingMode(TonemappingMode mode)
 bool Renderer::supported()
 {
     const bgfx::Caps* caps = bgfx::getCaps();
-    return (caps->formats[bgfx::TextureFormat::RGBA16F] & BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER_MSAA) != 0;
+    return (caps->formats[bgfx::TextureFormat::BGRA8]   & BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER) != 0 &&
+           (caps->formats[bgfx::TextureFormat::RGBA16F] & BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER) != 0;
 }
 
 void Renderer::setViewProjection(bgfx::ViewId view)
@@ -197,6 +199,35 @@ void Renderer::blitToScreen(bgfx::ViewId view)
     bgfx::submit(view, blitProgram);
 }
 
+bgfx::TextureFormat::Enum Renderer::findDepthFormat(uint64_t textureFlags, bool stencil)
+{
+    const bgfx::TextureFormat::Enum depthFormats[] =
+    {
+        bgfx::TextureFormat::D16,
+        bgfx::TextureFormat::D32
+    };
+
+    const bgfx::TextureFormat::Enum depthStencilFormats[] =
+    {
+        bgfx::TextureFormat::D24S8 // not supported by some AMD hardware
+    };
+
+    const bgfx::TextureFormat::Enum* formats = stencil ? depthStencilFormats : depthFormats;
+    size_t count = stencil ? BX_COUNTOF(depthStencilFormats) : BX_COUNTOF(depthFormats);
+
+    bgfx::TextureFormat::Enum depthFormat = bgfx::TextureFormat::Count;
+    for(size_t i = 0; i < count; i++)
+    {
+        if(bgfx::isTextureValid(0, false, 1, formats[i], textureFlags))
+        {
+            depthFormat = formats[i];
+            break;
+        }
+    }
+
+    return depthFormat;
+}
+
 bgfx::FrameBufferHandle Renderer::createFrameBuffer(bool hdr, bool depth)
 {
     bgfx::TextureHandle textures[2];
@@ -205,25 +236,18 @@ bgfx::FrameBufferHandle Renderer::createFrameBuffer(bool hdr, bool depth)
     // BGFX_TEXTURE_READ_BACK is not supported for render targets?
     // TODO try blitting for screenshots (new texture with BGFX_TEXTURE_BLIT_DST and BGFX_TEXTURE_READ_BACK)
 
-    uint64_t flags = BGFX_TEXTURE_RT | BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP;
-    bgfx::TextureFormat::Enum format = hdr
-                                       ? bgfx::TextureFormat::RGBA16F
-                                       : bgfx::TextureFormat::BGRA8;
-    if(bgfx::isTextureValid(0, false, 1, format, flags))
-    {
-        textures[attachments++] = bgfx::createTexture2D(bgfx::BackbufferRatio::Equal, false, 1, format, flags);
-    }
-    // TODO error out
+    const uint64_t samplerFlags = BGFX_SAMPLER_MIN_POINT | BGFX_SAMPLER_MAG_POINT | BGFX_SAMPLER_MIP_POINT |
+                                BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP;
+
+    bgfx::TextureFormat::Enum format = hdr ? bgfx::TextureFormat::RGBA16F : bgfx::TextureFormat::BGRA8; // BGRA is often faster (internal GPU format)
+    assert(bgfx::isTextureValid(0, false, 1, format, BGFX_TEXTURE_RT | samplerFlags));
+    textures[attachments++] = bgfx::createTexture2D(bgfx::BackbufferRatio::Equal, false, 1, format, BGFX_TEXTURE_RT | samplerFlags);
 
     if(depth)
     {
-        flags = BGFX_TEXTURE_RT_WRITE_ONLY;
-        bgfx::TextureFormat::Enum depthFormat = bgfx::isTextureValid(0, false, 1, bgfx::TextureFormat::D16, flags)
-                                                ? bgfx::TextureFormat::D16
-                                                : bgfx::isTextureValid(0, false, 1, bgfx::TextureFormat::D24S8, flags)
-                                                  ? bgfx::TextureFormat::D24S8
-                                                  : bgfx::TextureFormat::D32;
-        textures[attachments++] = bgfx::createTexture2D(bgfx::BackbufferRatio::Equal, false, 1, depthFormat, flags);
+        bgfx::TextureFormat::Enum depthFormat = findDepthFormat(BGFX_TEXTURE_RT_WRITE_ONLY | samplerFlags);
+        assert(depthFormat != bgfx::TextureFormat::Enum::Count);
+        textures[attachments++] = bgfx::createTexture2D(bgfx::BackbufferRatio::Equal, false, 1, depthFormat, BGFX_TEXTURE_RT_WRITE_ONLY | samplerFlags);
     }
 
     bgfx::FrameBufferHandle fb = bgfx::createFrameBuffer(attachments, textures, true);

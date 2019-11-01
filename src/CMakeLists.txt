@@ -43,15 +43,17 @@ set(SOURCES
 
 set(SHADERS
     Renderer/Shaders/varying.def.sc
-    Renderer/Shaders/vs_forward.sc
-    Renderer/Shaders/fs_forward.sc
-    Renderer/Shaders/vs_deferred.sc
-    Renderer/Shaders/fs_deferred.sc
     Renderer/Shaders/vs_clustered.sc
     Renderer/Shaders/fs_clustered.sc
     Renderer/Shaders/fs_clustered_debug_vis.sc
     Renderer/Shaders/cs_clustered_clusterbuilding.sc
     Renderer/Shaders/cs_clustered_lightculling.sc
+    Renderer/Shaders/vs_deferred_geometry.sc
+    Renderer/Shaders/fs_deferred_geometry.sc
+    Renderer/Shaders/vs_deferred_light.sc
+    Renderer/Shaders/fs_deferred_light.sc
+    Renderer/Shaders/vs_forward.sc
+    Renderer/Shaders/fs_forward.sc
     Renderer/Shaders/vs_tonemap.sc
     Renderer/Shaders/fs_tonemap.sc
     Renderer/Shaders/samplers.sh

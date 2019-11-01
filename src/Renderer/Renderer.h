@@ -89,6 +89,7 @@ protected:
 
     void blitToScreen(bgfx::ViewId view = MAX_VIEW);
 
+    static bgfx::TextureFormat::Enum findDepthFormat(uint64_t textureFlags, bool stencil = false);
     static bgfx::FrameBufferHandle createFrameBuffer(bool hdr = true, bool depth = true);
     static const char* shaderDir();
 

@@ -38,17 +38,20 @@ void ClusteredRenderer::onInitialize()
     // OpenGL backend: uniforms must be created before loading shaders
     clusters.initialize();
 
-    char csClusterBuildingName[128], csLightCullingName[128], vsName[128], fsName[128], fsDebugVisName[128];
-    bx::snprintf(csClusterBuildingName, BX_COUNTOF(csClusterBuildingName), "%s%s", shaderDir(), "cs_clustered_clusterbuilding.bin");
-    bx::snprintf(csLightCullingName, BX_COUNTOF(csLightCullingName), "%s%s", shaderDir(), "cs_clustered_lightculling.bin");
+    char csName[128], vsName[128], fsName[128];
+
+    bx::snprintf(csName, BX_COUNTOF(csName), "%s%s", shaderDir(), "cs_clustered_clusterbuilding.bin");
+    clusterBuildingComputeProgram = bgfx::createProgram(bigg::loadShader(csName), true);
+
+    bx::snprintf(csName, BX_COUNTOF(csName), "%s%s", shaderDir(), "cs_clustered_lightculling.bin");
+    lightCullingComputeProgram = bgfx::createProgram(bigg::loadShader(csName), true);
+
     bx::snprintf(vsName, BX_COUNTOF(vsName), "%s%s", shaderDir(), "vs_clustered.bin");
     bx::snprintf(fsName, BX_COUNTOF(fsName), "%s%s", shaderDir(), "fs_clustered.bin");
-    bx::snprintf(fsDebugVisName, BX_COUNTOF(fsDebugVisName), "%s%s", shaderDir(), "fs_clustered_debug_vis.bin");
-
-    clusterBuildingComputeProgram = bgfx::createProgram(bigg::loadShader(csClusterBuildingName), true);
-    lightCullingComputeProgram = bgfx::createProgram(bigg::loadShader(csLightCullingName), true);
     lightingProgram = bigg::loadProgram(vsName, fsName);
-    debugVisProgram = bigg::loadProgram(vsName, fsDebugVisName);
+
+    bx::snprintf(fsName, BX_COUNTOF(fsName), "%s%s", shaderDir(), "fs_clustered_debug_vis.bin");
+    debugVisProgram = bigg::loadProgram(vsName, fsName);
 }
 
 void ClusteredRenderer::onRender(float dt)
@@ -60,11 +63,6 @@ void ClusteredRenderer::onRender(float dt)
         vLighting
     };
 
-    // D3D12 crashes if this is not set, even for compute only views
-    // TODO try again with updated bgfx
-    bgfx::setViewFrameBuffer(vClusterBuilding, BGFX_INVALID_HANDLE);
-    bgfx::setViewFrameBuffer(vLightCulling, BGFX_INVALID_HANDLE);
-
     bgfx::setViewClear(vLighting, BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH, clearColor, 1.0f, 0);
     bgfx::setViewRect(vLighting, 0, 0, width, height);
     bgfx::setViewFrameBuffer(vLighting, frameBuffer);
@@ -72,6 +70,11 @@ void ClusteredRenderer::onRender(float dt)
 
     if(!scene->loaded)
         return;
+
+    // D3D12 crashes if this is not set, even for compute only views
+    // TODO try again with updated bgfx
+    bgfx::setViewFrameBuffer(vClusterBuilding, BGFX_INVALID_HANDLE);
+    bgfx::setViewFrameBuffer(vLightCulling, BGFX_INVALID_HANDLE);
 
     clusters.setUniforms(scene, width, height);
 
