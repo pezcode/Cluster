@@ -4,7 +4,7 @@
 #include <glm/gtc/constants.hpp>
 #include <glm/gtx/component_wise.hpp>
 
-float PointLight::calculateRadius()
+float PointLight::calculateRadius() const
 {
     // radius = where attenuation would lead to an intensity of 1W/m^2
     const float INTENSITY_CUTOFF = 1.0f;

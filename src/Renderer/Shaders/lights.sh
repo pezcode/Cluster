@@ -1,6 +1,7 @@
 #ifndef LIGHTS_SH_HEADER_GUARD
 #define LIGHTS_SH_HEADER_GUARD
 
+#include <bgfx_compute.sh>
 #include "samplers.sh"
 
 uniform vec4 u_lightCountVec;

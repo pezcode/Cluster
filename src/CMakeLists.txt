@@ -51,7 +51,7 @@ set(SHADERS
     Renderer/Shaders/vs_deferred_geometry.sc
     Renderer/Shaders/fs_deferred_geometry.sc
     Renderer/Shaders/vs_deferred_light.sc
-    Renderer/Shaders/fs_deferred_light.sc
+    Renderer/Shaders/fs_deferred_pointlight.sc
     Renderer/Shaders/vs_forward.sc
     Renderer/Shaders/fs_forward.sc
     Renderer/Shaders/vs_tonemap.sc

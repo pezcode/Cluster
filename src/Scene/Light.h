@@ -11,7 +11,7 @@ struct PointLight
     // TODO does this make sense? shouldn't this be photometric
     glm::vec3 power;
 
-    float calculateRadius();
+    float calculateRadius() const;
 };
 
 struct DirectionalLight

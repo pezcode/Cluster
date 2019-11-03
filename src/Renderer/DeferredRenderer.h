@@ -17,9 +17,28 @@ public:
 
 private:
 
+    struct PosVertex
+    {
+        float x;
+        float y;
+        float z;
+
+        static void init()
+        {
+            decl.begin()
+                .add(bgfx::Attrib::Position, 3, bgfx::AttribType::Float)
+                .end();
+        }
+
+        static bgfx::VertexDecl decl;
+    };
+
+    bgfx::VertexBufferHandle quadVertexBuffer;
+    bgfx::IndexBufferHandle quadIndexBuffer;
+
     enum GBufferAttachment : size_t
     {
-        // no position
+        // no world position
         // gl_Fragcoord is enough to unproject
 
         // RGB = diffuse
@@ -31,21 +50,26 @@ private:
         // Method #4: Spheremap Transform looks ideal
         Normal,
 
-        // PBR material
         // RGB = F0 (Fresnel at normal incidence)
         // A = metallic
-        Metallic_F0,
+        // TODO? don't use F0, calculate from diffuse and metallic in shader
+        F0_Metallic,
 
         Depth,
 
         Count
     };
 
-    TextureBuffer gBufferTextures[GBufferAttachment::Count + 1];
+    TextureBuffer gBufferTextures[GBufferAttachment::Count + 1]; // includes depth, + null-terminated
+    uint8_t gBufferTextureUnits[GBufferAttachment::Count];
+    const char* gBufferSamplerNames[GBufferAttachment::Count];
+    bgfx::UniformHandle gBufferSamplers[GBufferAttachment::Count];
     bgfx::FrameBufferHandle gBuffer;
 
+    bgfx::UniformHandle lightIndexVecUniform;
+
     bgfx::ProgramHandle geometryProgram;
-    bgfx::ProgramHandle lightProgram;
+    bgfx::ProgramHandle pointLightProgram;
 
     static bgfx::FrameBufferHandle createGBuffer();
 };

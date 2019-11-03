@@ -48,6 +48,8 @@ void Renderer::initialize()
     exposureVecUniform = bgfx::createUniform("u_exposureVec", bgfx::UniformType::Vec4);
     tonemappingModeVecUniform = bgfx::createUniform("u_tonemappingModeVec", bgfx::UniformType::Vec4);
 
+    // triangle used for blitting
+
     float bottomUV = bgfx::getCaps()->originBottomLeft ? 0.0f :  1.0f;
     float topUV    = bgfx::getCaps()->originBottomLeft ? 2.0f : -1.0f;
     constexpr float BOTTOM = -1.0f, TOP = 3.0f, LEFT = -1.0f, RIGHT = 3.0f;
@@ -209,7 +211,7 @@ bgfx::TextureFormat::Enum Renderer::findDepthFormat(uint64_t textureFlags, bool 
 
     const bgfx::TextureFormat::Enum depthStencilFormats[] =
     {
-        bgfx::TextureFormat::D24S8 // not supported by some AMD hardware
+        bgfx::TextureFormat::D24S8
     };
 
     const bgfx::TextureFormat::Enum* formats = stencil ? depthStencilFormats : depthFormats;

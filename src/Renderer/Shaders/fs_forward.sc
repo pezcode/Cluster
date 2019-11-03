@@ -2,6 +2,9 @@ $input v_worldpos, v_normal, v_tangent, v_texcoord0
 
 // all unit-vectors need to be normalized in the fragment shader, the interpolation of vertex shader output doesn't preserve length
 
+// define samplers and uniforms for retrieving material parameters
+#define READ_MATERIAL
+
 #include <bgfx_shader.sh>
 #include <bgfx_compute.sh>
 #include "util.sh"
@@ -13,25 +16,14 @@ uniform vec4 u_camPos;
 void main()
 {
     PBRMaterial mat = pbrMaterial(v_texcoord0);
-
-    // normal map
-
     // convert normal map from tangent space -> world space (= space of v_tangent, etc.)
-    vec3 bitangent = cross(v_normal, v_tangent);
-    mat3 TBN = mtxFromCols(
-        normalize(v_tangent),
-        normalize(bitangent),
-        normalize(v_normal)
-    );
-    vec3 N = normalize(mul(TBN, mat.normal));
-
+    vec3 N = convertTangentNormal(v_normal, v_tangent, mat.normal);
     mat.a = specularAntiAliasing(N, mat.a);
 
     // shading
 
     vec3 camPos = u_camPos.xyz;
     vec3 fragPos = v_worldpos;
-
     vec3 V = normalize(camPos - fragPos);
 
     vec3 radianceOut = vec3_splat(0.0);

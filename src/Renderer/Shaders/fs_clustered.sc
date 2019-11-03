@@ -1,5 +1,7 @@
 $input v_worldpos, v_normal, v_tangent, v_texcoord0
 
+#define READ_MATERIAL
+
 #include <bgfx_shader.sh>
 #include <bgfx_compute.sh>
 #include "util.sh"
@@ -18,20 +20,11 @@ void main()
     // light indices are read and looped over starting from the grid offset
 
     PBRMaterial mat = pbrMaterial(v_texcoord0);
-
-    vec3 bitangent = cross(v_normal, v_tangent);
-    mat3 TBN = mtxFromCols(
-        normalize(v_tangent),
-        normalize(bitangent),
-        normalize(v_normal)
-    );
-    vec3 N = normalize(mul(TBN, mat.normal));
-
+    vec3 N = convertTangentNormal(v_normal, v_tangent, mat.normal);
     mat.a = specularAntiAliasing(N, mat.a);
 
     vec3 camPos = u_camPos.xyz;
     vec3 fragPos = v_worldpos;
-
     vec3 V = normalize(camPos - fragPos);
 
     vec3 radianceOut = vec3_splat(0.0);

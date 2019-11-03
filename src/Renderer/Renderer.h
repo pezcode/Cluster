@@ -108,10 +108,11 @@ protected:
     uint32_t clearColor;
     float time;
 
-private:
+    // set by setViewProjection()
     glm::mat4 viewMat;
     glm::mat4 projMat;
 
+private:
     bgfx::VertexBufferHandle blitTriangleBuffer;
     bgfx::ProgramHandle blitProgram;
     bgfx::UniformHandle blitSampler;

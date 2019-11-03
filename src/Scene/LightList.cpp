@@ -1,5 +1,6 @@
 #include "LightList.h"
 
+#include <algorithm>
 #include <glm/gtc/type_ptr.hpp>
 
 bgfx::VertexDecl LightList::PointLightVertex::decl;
@@ -23,7 +24,7 @@ void PointLightList::shutdown()
 void PointLightList::update()
 {
     size_t stride = PointLightVertex::decl.getStride();
-    const bgfx::Memory* mem = bgfx::alloc(uint32_t(stride * lights.size()));
+    const bgfx::Memory* mem = bgfx::alloc(uint32_t(stride * std::max(lights.size(), (size_t)1)));
 
     for(size_t i = 0; i < lights.size(); i++)
     {

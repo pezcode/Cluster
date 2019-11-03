@@ -4,6 +4,10 @@
 #include "samplers.sh"
 #include "tonemapping.sh"
 
+// only define this if you need to retrieve the material parameters
+// without it you can still use the struct definition or BRDF functions
+#ifdef READ_MATERIAL
+
 SAMPLER2D(s_texBaseColor,         SAMPLER_PBR_BASECOLOR);
 SAMPLER2D(s_texMetallicRoughness, SAMPLER_PBR_METALROUGHNESS);
 SAMPLER2D(s_texNormal,            SAMPLER_PBR_NORMAL);
@@ -15,6 +19,8 @@ uniform vec4 u_hasTextures;
 #define u_hasBaseColorTexture         (u_hasTextures.x != 0.0f)
 #define u_hasMetallicRoughnessTexture (u_hasTextures.y != 0.0f)
 #define u_hasNormalTexture            (u_hasTextures.z != 0.0f)
+
+#endif
 
 struct PBRMaterial
 {
@@ -29,6 +35,8 @@ struct PBRMaterial
     vec3 F0; // Fresnel reflectance at normal incidence
     float a; // remapped roughness (^2)
 };
+
+#ifdef READ_MATERIAL
 
 vec4 pbrBaseColor(vec2 texcoord)
 {
@@ -88,12 +96,14 @@ PBRMaterial pbrMaterial(vec2 texcoord)
     const vec3 dielectricSpecular = vec3(0.04, 0.04, 0.04);
     const vec3 black = vec3(0.0, 0.0, 0.0);
 
-    mat.diffuseColor = mix(mat.albedo.rgb * (1.0 - dielectricSpecular.r), black, mat.metallic);
+    mat.diffuseColor = mix(mat.albedo.rgb * (vec3_splat(1.0) - dielectricSpecular), black, mat.metallic);
     mat.F0 = mix(dielectricSpecular, mat.albedo.rgb, mat.metallic);
     mat.a = mat.roughness * mat.roughness;
 
     return mat;
 }
+
+#endif
 
 // gives a new value a (roughness^2)
 float specularAntiAliasing(vec3 N, float a)

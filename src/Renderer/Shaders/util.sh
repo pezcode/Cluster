@@ -60,4 +60,16 @@ float screen2EyeDepth(float depth, float near, float far)
     return eye;
 }
 
+// convert normal from tangent space to space of normal_ref and tangent_ref
+vec3 convertTangentNormal(vec3 normal_ref, vec3 tangent_ref, vec3 normal)
+{
+    vec3 bitangent = cross(normal_ref, tangent_ref);
+    mat3 TBN = mtxFromCols(
+        normalize(tangent_ref),
+        normalize(bitangent),
+        normalize(normal_ref)
+    );
+    return normalize(mul(TBN, normal));
+}
+
 #endif // UTIL_SH_HEADER_GUARD
