@@ -17,5 +17,5 @@ void main()
     // encode normal for unsigned normalized texture
     // w of 1.0 so it gets rendered in the debug visualization
     gl_FragData[1] = vec4(N * 0.5 + 0.5, 1.0);
-    gl_FragData[2] = vec4(mat.metallic, mat.F0);
+    gl_FragData[2] = vec4(mat.F0, mat.metallic);
 }
