@@ -92,7 +92,6 @@ uint getClusterZIndex(float screenDepth)
     float bias = -(float(CLUSTERS_Z) * log(u_zNear) / log(u_zFar / u_zNear));
 
     float eyeDepth = screen2EyeDepth(screenDepth, u_zNear, u_zFar);
-    //float eyeDepth = screen2Eye(vec4(0.0, 0.0, screenDepth, 1.0)).z;
     uint zIndex = uint(max(log(eyeDepth) * scale + bias, 0.0));
     return zIndex;
 }
