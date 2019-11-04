@@ -1,12 +1,16 @@
-name: Windows build CI
+name: Build CI
 on: [push]
 
 jobs:
   build:
-    runs-on: windows-latest
-
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [windows-latest] # ubuntu-latest
     steps:
     - uses: actions/checkout@v1
+      with:
+        submodules: recursive
     - name: Generate
       run: |
         mkdir build
