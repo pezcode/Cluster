@@ -128,7 +128,9 @@ void DeferredRenderer::onReset()
         // at the same time is undefined behaviour in most APIs
         // https://www.khronos.org/opengl/wiki/Memory_Model#Framebuffer_objects
         // we use a different depth texture and just blit it between the geometry and light pass
-        const uint64_t flags = BGFX_TEXTURE_RT_WRITE_ONLY | BGFX_TEXTURE_BLIT_DST | BGFX_SAMPLER_MIN_POINT |
+        // OpenGL does not like BGFX_TEXTURE_RT_WRITE_ONLY here
+        // why? we're not attaching or reading it back, just blitting to it
+        const uint64_t flags = BGFX_TEXTURE_RT | BGFX_TEXTURE_BLIT_DST | BGFX_SAMPLER_MIN_POINT |
                                BGFX_SAMPLER_MAG_POINT | BGFX_SAMPLER_MIP_POINT | BGFX_SAMPLER_U_CLAMP |
                                BGFX_SAMPLER_V_CLAMP;
         bgfx::TextureFormat::Enum depthFormat = findDepthFormat(flags);
