@@ -1,0 +1,18 @@
+name: Windows build CI
+on: [push]
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+    - uses: actions/checkout@v1
+    - name: Generate
+      run: |
+        mkdir build
+        cd build
+        cmake -G "Visual Studio 16 2019" -A x64 ..
+        cd ..
+    - name: Build
+      run: |
+        cmake --build build/ --parallel --config Release
