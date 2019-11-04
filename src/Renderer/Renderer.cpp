@@ -191,7 +191,7 @@ void Renderer::blitToScreen(bgfx::ViewId view)
     bgfx::setViewRect(view, 0, 0, width, height);
     bgfx::setViewFrameBuffer(view, BGFX_INVALID_HANDLE);
     bgfx::setState(BGFX_STATE_WRITE_RGB | BGFX_STATE_CULL_CW);
-    bgfx::TextureHandle frameBufferTexture = bgfx::getTexture(frameBuffer);
+    bgfx::TextureHandle frameBufferTexture = bgfx::getTexture(frameBuffer, 0);
     bgfx::setTexture(0, blitSampler, frameBufferTexture);
     float exposureVec[4] = { scene->loaded ? scene->camera.exposure : 1.0f };
     bgfx::setUniform(exposureVecUniform, exposureVec);

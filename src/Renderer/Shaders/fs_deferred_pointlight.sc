@@ -17,7 +17,7 @@ uniform vec4 u_lightIndexVec;
 
 void main()
 {
-    vec2 texcoords = gl_FragCoord / u_viewRect.zw;
+    vec2 texcoords = gl_FragCoord.xy / u_viewRect.zw;
     
     vec4 diffuseA = texture2D(s_texDiffuseA, texcoords);
     vec3 N = texture2D(s_texNormal, texcoords).xyz * 2.0 - 1.0;
@@ -46,7 +46,7 @@ void main()
 
     vec3 radianceOut = vec3_splat(0.0);
     float dist = distance(light.position, fragPos);
-    //if(dist < light.radius)
+    if(dist < light.radius)
     {
         float attenuation = smoothAttenuation(dist, light.radius);
         vec3 L = normalize(light.position - fragPos);
@@ -54,9 +54,8 @@ void main()
         float NoL = saturate(dot(N, L));
         radianceOut = BRDF(V, L, N, mat) * radianceIn * NoL;
     }
-    // TODO ambient color
-    
-    //radianceOut = mat.diffuseColor * vec3(0.1, 0.1, 0.1);
+
+    //radianceOut = vec3(0.2, 0.0, 0.0);
 
     gl_FragColor = vec4(radianceOut, 1.0);
 }

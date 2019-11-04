@@ -33,8 +33,8 @@ private:
         static bgfx::VertexDecl decl;
     };
 
-    bgfx::VertexBufferHandle quadVertexBuffer;
-    bgfx::IndexBufferHandle quadIndexBuffer;
+    bgfx::VertexBufferHandle pointLightVertexBuffer;
+    bgfx::IndexBufferHandle pointLightIndexBuffer;
 
     enum GBufferAttachment : size_t
     {
@@ -65,6 +65,8 @@ private:
     const char* gBufferSamplerNames[GBufferAttachment::Count];
     bgfx::UniformHandle gBufferSamplers[GBufferAttachment::Count];
     bgfx::FrameBufferHandle gBuffer;
+
+    bgfx::FrameBufferHandle lightFrameBuffer;
 
     bgfx::UniformHandle lightIndexVecUniform;
 

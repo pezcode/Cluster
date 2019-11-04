@@ -11,8 +11,8 @@ bgfx::VertexDecl DeferredRenderer::PosVertex::decl;
 
 DeferredRenderer::DeferredRenderer(const Scene* scene) :
     Renderer(scene),
-    quadVertexBuffer(BGFX_INVALID_HANDLE),
-    quadIndexBuffer(BGFX_INVALID_HANDLE),
+    pointLightVertexBuffer(BGFX_INVALID_HANDLE),
+    pointLightIndexBuffer(BGFX_INVALID_HANDLE),
     gBufferTextures {
         { BGFX_INVALID_HANDLE, "Diffuse + roughness" },
         { BGFX_INVALID_HANDLE, "Normal"              },
@@ -33,6 +33,7 @@ DeferredRenderer::DeferredRenderer(const Scene* scene) :
         "s_texDepth"
     },
     gBuffer(BGFX_INVALID_HANDLE),
+    lightFrameBuffer(BGFX_INVALID_HANDLE),
     lightIndexVecUniform(BGFX_INVALID_HANDLE),
     geometryProgram(BGFX_INVALID_HANDLE),
     pointLightProgram(BGFX_INVALID_HANDLE)
@@ -59,7 +60,7 @@ bool DeferredRenderer::supported()
            // render target for normals
            (caps->formats[bgfx::TextureFormat::RGB10A2] & BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER) != 0 &&
            // multiple render targets
-           caps->limits.maxFBAttachments >= GBufferAttachment::Count; // TODO? does depth count as an attachment?
+           caps->limits.maxFBAttachments >= GBufferAttachment::Count; // does depth count as an attachment?
 }
 
 void DeferredRenderer::onInitialize()
@@ -72,21 +73,23 @@ void DeferredRenderer::onInitialize()
     }
     lightIndexVecUniform = bgfx::createUniform("u_lightIndexVec", bgfx::UniformType::Vec4);
 
-    // quad used for light culling
-
-    float bottomUV = bgfx::getCaps()->originBottomLeft ? 0.0f : 1.0f;
-    float topUV = 1.0f - bottomUV;
-    float BOTTOM = -1.0f, TOP = 1.0f, LEFT = -1.0f, RIGHT = 1.0f;
-    PosVertex vertices[4] = {
-        { LEFT,  BOTTOM, 0.0f },
-        { RIGHT, BOTTOM, 0.0f },
-        { LEFT,  TOP,    0.0f },
-        { RIGHT, TOP,    0.0f }
+    // axis-aligned bounding box used as light geometry for light culling
+    constexpr float LEFT = -1.0f, RIGHT = 1.0f, BOTTOM = -1.0f, TOP = 1.0f, FRONT = -1.0f, BACK = 1.0f;
+    const PosVertex vertices[8] = {
+        { LEFT, BOTTOM, FRONT }, { RIGHT, BOTTOM, FRONT }, { LEFT, TOP, FRONT }, { RIGHT, TOP, FRONT },
+        { LEFT, BOTTOM, BACK  }, { RIGHT, BOTTOM, BACK  }, { LEFT, TOP, BACK  }, { RIGHT, TOP, BACK  },
     };
-    uint16_t indices[6] = { 0, 1, 3, 3, 2, 0 }; // CCW
+    const uint16_t indices[6 * 6] = { // CCW
+        0, 1, 3, 3, 2, 0, // front
+        5, 4, 6, 6, 7, 5, // back
+        4, 0, 2, 2, 6, 4, // left
+        1, 5, 7, 7, 3, 1, // right
+        2, 3, 7, 7, 6, 2, // top
+        4, 5, 1, 1, 0, 4  // bottom
+    };
 
-    quadVertexBuffer = bgfx::createVertexBuffer(bgfx::copy(&vertices, sizeof(vertices)), PosVertex::decl);
-    quadIndexBuffer = bgfx::createIndexBuffer(bgfx::copy(&indices, sizeof(indices)));
+    pointLightVertexBuffer = bgfx::createVertexBuffer(bgfx::copy(&vertices, sizeof(vertices)), PosVertex::decl);
+    pointLightIndexBuffer = bgfx::createIndexBuffer(bgfx::copy(&indices, sizeof(indices)));
 
     char vsName[128], fsName[128];
 
@@ -105,11 +108,27 @@ void DeferredRenderer::onReset()
     {
         gBuffer = createGBuffer();
 
-        for(size_t i = 0; i < BX_COUNTOF(gBufferTextures); i++)
+        for(size_t i = 0; i < GBufferAttachment::Count; i++)
         {
             gBufferTextures[i].handle = bgfx::getTexture(gBuffer, (uint8_t)i);
         }
     }
+
+    //if(bgfx::isValid(lightFrameBuffer))
+    //    bgfx::destroy(lightFrameBuffer);
+
+    if(!bgfx::isValid(lightFrameBuffer))
+    {
+        // uses final framebuffer color attachment
+        // and geometry pass depth buffer
+        const bgfx::TextureHandle textures[] = {
+            bgfx::getTexture(frameBuffer, 0),
+            bgfx::getTexture(gBuffer, GBufferAttachment::Depth)
+        };
+        lightFrameBuffer = bgfx::createFrameBuffer(BX_COUNTOF(textures), textures); // don't destroy textures
+    }
+
+    //lightFrameBuffer = frameBuffer;
 }
 
 void DeferredRenderer::onRender(float dt)
@@ -117,20 +136,26 @@ void DeferredRenderer::onRender(float dt)
     enum : bgfx::ViewId
     {
         vGeometry = 0,
-        vLight
+        vLight,
+        vTransparent
     };
 
     const uint32_t BLACK = 0x000000FF;
 
-    bgfx::setViewClear(vGeometry, BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH, BLACK, 1.0f, 0);
+    bgfx::setViewClear(vGeometry, BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH, BLACK, 1.0f);
     bgfx::setViewRect(vGeometry, 0, 0, width, height);
     bgfx::setViewFrameBuffer(vGeometry, gBuffer);
     bgfx::touch(vGeometry);
 
-    bgfx::setViewClear(vLight, BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH, clearColor, 1.0f, 0); // is this correct?
+    bgfx::setViewClear(vLight, BGFX_CLEAR_COLOR, clearColor);
     bgfx::setViewRect(vLight, 0, 0, width, height);
-    bgfx::setViewFrameBuffer(vLight, frameBuffer);
+    bgfx::setViewFrameBuffer(vLight, lightFrameBuffer); //frameBuffer);
     bgfx::touch(vLight);
+
+    bgfx::setViewClear(vTransparent, BGFX_CLEAR_NONE);
+    bgfx::setViewRect(vTransparent, 0, 0, width, height);
+    bgfx::setViewFrameBuffer(vTransparent, lightFrameBuffer); // lightFrameBuffer might be inaptly named
+    bgfx::touch(vTransparent);
 
     if(!scene->loaded)
         return;
@@ -163,23 +188,34 @@ void DeferredRenderer::onRender(float dt)
     bgfx::setViewName(vLight, "Deferred light pass");
 
     // render lights to framebuffer
-    // cull with axis-aligned bounding box (quad)
-    // single-direction depth test
+    // cull with light geometry
+    //   - axis-aligned bounding box (TODO? sphere for point lights)
+    //   - read depth from geometry pass
+    //   - reverse depth test
+    //   - render backfaces
+    //   - this shades all pixels between camera and backfaces
+    // accumulate light contributions (blend mode add)
+    // tiled-deferred is probably faster for small lights
     // https://software.intel.com/sites/default/files/m/d/4/1/d/8/lauritzen_deferred_shading_siggraph_2010.pdf
 
     setViewProjection(vLight);
 
+    // TODO ambient light
+    // full screen quad
+
+    // point lights
+
     for(size_t i = 0; i < scene->pointLights.lights.size(); i++)
     {
+        // position light geometry (bounding box)
         const PointLight& light = scene->pointLights.lights[i];
         float radius = light.calculateRadius();
-        glm::mat4 model = glm::identity<glm::mat4>();
-        //glm::mat4 scale = glm::scale(model, glm::vec3(radius));
-        //glm::mat4 translate = glm::translate(model, light.position);
-        //model = projMat * viewMat * model * translate* scale;
+        glm::mat4 scale = glm::scale(glm::identity<glm::mat4>(), glm::vec3(radius));
+        glm::mat4 translate = glm::translate(glm::identity<glm::mat4>(), light.position);
+        glm::mat4 model = translate * scale;
         bgfx::setTransform(glm::value_ptr(model));
-        bgfx::setVertexBuffer(0, quadVertexBuffer);
-        bgfx::setIndexBuffer(quadIndexBuffer);
+        bgfx::setVertexBuffer(0, pointLightVertexBuffer);
+        bgfx::setIndexBuffer(pointLightIndexBuffer);
         float lightIndexVec[4] = { (float)i };
         bgfx::setUniform(lightIndexVecUniform, lightIndexVec);
         for(size_t i = 0; i < GBufferAttachment::Count; i++)
@@ -187,8 +223,29 @@ void DeferredRenderer::onRender(float dt)
             bgfx::setTexture(gBufferTextureUnits[i], gBufferSamplers[i], bgfx::getTexture(gBuffer, (uint8_t)i));
         }
         lights.bindLights(scene);
-        bgfx::setState(BGFX_STATE_WRITE_RGB | BGFX_STATE_WRITE_A | BGFX_STATE_CULL_CW | BGFX_STATE_BLEND_ADD);
+        bgfx::setState(BGFX_STATE_WRITE_RGB | BGFX_STATE_WRITE_A | BGFX_STATE_DEPTH_TEST_GEQUAL | BGFX_STATE_CULL_CCW | BGFX_STATE_BLEND_ADD);
         bgfx::submit(vLight, pointLightProgram);
+    }
+
+    bgfx::setViewName(vTransparent, "Transparent forward pass");
+
+    // TODO
+
+    for(const Mesh& mesh : scene->meshes)
+    {
+        const Material& mat = scene->materials[mesh.material];
+        if(mat.blend)
+        {
+            glm::mat4 model = glm::identity<glm::mat4>();
+            bgfx::setTransform(glm::value_ptr(model));
+            setNormalMatrix(model);
+            bgfx::setVertexBuffer(0, mesh.vertexBuffer);
+            bgfx::setIndexBuffer(mesh.indexBuffer);
+            uint64_t materialState = pbr.bindMaterial(mat);
+            bgfx::setState(state | materialState);
+            // TODO load forward shader
+            //bgfx::submit(vTransparent, transparencyForwardProgram);
+        }
     }
 }
 
@@ -201,16 +258,19 @@ void DeferredRenderer::onShutdown()
         bgfx::destroy(handle);
         handle = BGFX_INVALID_HANDLE;
     }
-    bgfx::destroy(quadVertexBuffer);
-    bgfx::destroy(quadIndexBuffer);
+    bgfx::destroy(pointLightVertexBuffer);
+    bgfx::destroy(pointLightIndexBuffer);
     if(bgfx::isValid(gBuffer))
         bgfx::destroy(gBuffer);
+    if(bgfx::isValid(lightFrameBuffer))
+        bgfx::destroy(lightFrameBuffer);
 
     geometryProgram = pointLightProgram = BGFX_INVALID_HANDLE;
     lightIndexVecUniform = BGFX_INVALID_HANDLE;
-    quadVertexBuffer = BGFX_INVALID_HANDLE;
-    quadIndexBuffer = BGFX_INVALID_HANDLE;
+    pointLightVertexBuffer = BGFX_INVALID_HANDLE;
+    pointLightIndexBuffer = BGFX_INVALID_HANDLE;
     gBuffer = BGFX_INVALID_HANDLE;
+    lightFrameBuffer = BGFX_INVALID_HANDLE;
 }
 
 bgfx::FrameBufferHandle DeferredRenderer::createGBuffer()
