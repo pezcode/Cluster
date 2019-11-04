@@ -23,8 +23,7 @@ void main()
     vec3 N = texture2D(s_texNormal, texcoords).xyz * 2.0 - 1.0;
     vec4 F0Metallic = texture2D(s_texF0Metallic, texcoords);
 
-    // unpack G-buffer
-    // these are all the material parameters used by the PBR BRDF function
+    // unpack material parameters used by the PBR BRDF function
     PBRMaterial mat;
     mat.diffuseColor = diffuseA.xyz;
     mat.a = diffuseA.w;

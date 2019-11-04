@@ -66,12 +66,14 @@ private:
     bgfx::UniformHandle gBufferSamplers[GBufferAttachment::Count];
     bgfx::FrameBufferHandle gBuffer;
 
-    bgfx::FrameBufferHandle lightFrameBuffer;
+    bgfx::TextureHandle lightDepthTexture;
+    bgfx::FrameBufferHandle accumFrameBuffer;
 
     bgfx::UniformHandle lightIndexVecUniform;
 
     bgfx::ProgramHandle geometryProgram;
     bgfx::ProgramHandle pointLightProgram;
+    bgfx::ProgramHandle transparencyProgram;
 
     static bgfx::FrameBufferHandle createGBuffer();
 };

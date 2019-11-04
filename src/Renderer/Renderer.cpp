@@ -148,8 +148,12 @@ void Renderer::setTonemappingMode(TonemappingMode mode)
 bool Renderer::supported()
 {
     const bgfx::Caps* caps = bgfx::getCaps();
-    return (caps->formats[bgfx::TextureFormat::BGRA8]   & BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER) != 0 &&
+    return
+           // SDR color attachment
+           (caps->formats[bgfx::TextureFormat::BGRA8]   & BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER) != 0 &&
+           // HDR color attachment
            (caps->formats[bgfx::TextureFormat::RGBA16F] & BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER) != 0;
+           // TODO depth formats
 }
 
 void Renderer::setViewProjection(bgfx::ViewId view)
@@ -226,6 +230,8 @@ bgfx::TextureFormat::Enum Renderer::findDepthFormat(uint64_t textureFlags, bool 
             break;
         }
     }
+
+    assert(depthFormat != bgfx::TextureFormat::Enum::Count);
 
     return depthFormat;
 }

@@ -33,7 +33,8 @@ DeferredRenderer::DeferredRenderer(const Scene* scene) :
         "s_texDepth"
     },
     gBuffer(BGFX_INVALID_HANDLE),
-    lightFrameBuffer(BGFX_INVALID_HANDLE),
+    lightDepthTexture(BGFX_INVALID_HANDLE),
+    accumFrameBuffer(BGFX_INVALID_HANDLE),
     lightIndexVecUniform(BGFX_INVALID_HANDLE),
     geometryProgram(BGFX_INVALID_HANDLE),
     pointLightProgram(BGFX_INVALID_HANDLE)
@@ -53,11 +54,13 @@ bool DeferredRenderer::supported()
 {
     const bgfx::Caps* caps = bgfx::getCaps();
     return Renderer::supported() &&
+           // blitting depth texture after geometry pass
+           (caps->supported & BGFX_CAPS_TEXTURE_BLIT) != 0 &&
            // fragment depth available in fragment shader
            (caps->supported & BGFX_CAPS_FRAGMENT_DEPTH) != 0 &&
-           // render target for diffuse and material
+           // render target for G-Buffer diffuse and material
            (caps->formats[bgfx::TextureFormat::BGRA8]   & BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER) != 0 &&
-           // render target for normals
+           // render target for G-Buffer normals
            (caps->formats[bgfx::TextureFormat::RGB10A2] & BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER) != 0 &&
            // multiple render targets
            caps->limits.maxFBAttachments >= GBufferAttachment::Count; // does depth count as an attachment?
@@ -100,6 +103,10 @@ void DeferredRenderer::onInitialize()
     bx::snprintf(vsName, BX_COUNTOF(vsName), "%s%s", shaderDir(), "vs_deferred_light.bin");
     bx::snprintf(fsName, BX_COUNTOF(fsName), "%s%s", shaderDir(), "fs_deferred_pointlight.bin");
     pointLightProgram = bigg::loadProgram(vsName, fsName);
+
+    bx::snprintf(vsName, BX_COUNTOF(vsName), "%s%s", shaderDir(), "vs_forward.bin");
+    bx::snprintf(fsName, BX_COUNTOF(fsName), "%s%s", shaderDir(), "fs_forward.bin");
+    transparencyProgram = bigg::loadProgram(vsName, fsName);
 }
 
 void DeferredRenderer::onReset()
@@ -114,21 +121,25 @@ void DeferredRenderer::onReset()
         }
     }
 
-    //if(bgfx::isValid(lightFrameBuffer))
-    //    bgfx::destroy(lightFrameBuffer);
-
-    if(!bgfx::isValid(lightFrameBuffer))
+    if(!bgfx::isValid(accumFrameBuffer))
     {
-        // uses final framebuffer color attachment
-        // and geometry pass depth buffer
+        // we can't use the G-Buffer's depth texture in the light pass framebuffer
+        // binding a texture for reading in the shader and attaching it to a framebuffer
+        // at the same time is undefined behaviour in most APIs
+        // https://www.khronos.org/opengl/wiki/Memory_Model#Framebuffer_objects
+        // we use a different depth texture and just blit it between the geometry and light pass
+        const uint64_t flags = BGFX_TEXTURE_RT_WRITE_ONLY | BGFX_TEXTURE_BLIT_DST | BGFX_SAMPLER_MIN_POINT |
+                               BGFX_SAMPLER_MAG_POINT | BGFX_SAMPLER_MIP_POINT | BGFX_SAMPLER_U_CLAMP |
+                               BGFX_SAMPLER_V_CLAMP;
+        bgfx::TextureFormat::Enum depthFormat = findDepthFormat(flags);
+        lightDepthTexture = bgfx::createTexture2D(bgfx::BackbufferRatio::Equal, false, 1, depthFormat, flags);
+
         const bgfx::TextureHandle textures[] = {
             bgfx::getTexture(frameBuffer, 0),
-            bgfx::getTexture(gBuffer, GBufferAttachment::Depth)
+            lightDepthTexture
         };
-        lightFrameBuffer = bgfx::createFrameBuffer(BX_COUNTOF(textures), textures); // don't destroy textures
+        accumFrameBuffer = bgfx::createFrameBuffer(BX_COUNTOF(textures), textures); // don't destroy textures
     }
-
-    //lightFrameBuffer = frameBuffer;
 }
 
 void DeferredRenderer::onRender(float dt)
@@ -149,29 +160,31 @@ void DeferredRenderer::onRender(float dt)
 
     bgfx::setViewClear(vLight, BGFX_CLEAR_COLOR, clearColor);
     bgfx::setViewRect(vLight, 0, 0, width, height);
-    bgfx::setViewFrameBuffer(vLight, lightFrameBuffer); //frameBuffer);
+    bgfx::setViewFrameBuffer(vLight, accumFrameBuffer);
     bgfx::touch(vLight);
 
     bgfx::setViewClear(vTransparent, BGFX_CLEAR_NONE);
     bgfx::setViewRect(vTransparent, 0, 0, width, height);
-    bgfx::setViewFrameBuffer(vTransparent, lightFrameBuffer); // lightFrameBuffer might be inaptly named
+    bgfx::setViewFrameBuffer(vTransparent, accumFrameBuffer);
     bgfx::touch(vTransparent);
 
     if(!scene->loaded)
         return;
 
+    setViewProjection(vGeometry);
+    setViewProjection(vLight);
+    setViewProjection(vTransparent);
+
     bgfx::setViewName(vGeometry, "Deferred geometry pass");
 
     // render geometry, write to G-Buffer
 
-    setViewProjection(vGeometry);
-
-    uint64_t state = BGFX_STATE_DEFAULT & ~BGFX_STATE_CULL_MASK;
+    const uint64_t state = BGFX_STATE_DEFAULT & ~BGFX_STATE_CULL_MASK;
 
     for(const Mesh& mesh : scene->meshes)
     {
         const Material& mat = scene->materials[mesh.material];
-        // transparent materials are rendered in a seperate forward pass
+        // transparent materials are rendered in a seperate forward pass (view vTransparent)
         if(!mat.blend)
         {
             glm::mat4 model = glm::identity<glm::mat4>();
@@ -195,10 +208,13 @@ void DeferredRenderer::onRender(float dt)
     //   - render backfaces
     //   - this shades all pixels between camera and backfaces
     // accumulate light contributions (blend mode add)
-    // tiled-deferred is probably faster for small lights
+    // TODO? tiled-deferred is probably faster for small lights
     // https://software.intel.com/sites/default/files/m/d/4/1/d/8/lauritzen_deferred_shading_siggraph_2010.pdf
 
-    setViewProjection(vLight);
+    // copy G-Buffer depth texture to depth attachment for light pass
+    // we can't attach it to the frame buffer and read it in the shader (unprojecting world position) at the same time
+    // blit happens before any compute or draw calls
+    bgfx::blit(vLight, lightDepthTexture, 0, 0, bgfx::getTexture(gBuffer, GBufferAttachment::Depth));
 
     // TODO ambient light
     // full screen quad
@@ -229,8 +245,6 @@ void DeferredRenderer::onRender(float dt)
 
     bgfx::setViewName(vTransparent, "Transparent forward pass");
 
-    // TODO
-
     for(const Mesh& mesh : scene->meshes)
     {
         const Material& mat = scene->materials[mesh.material];
@@ -242,9 +256,9 @@ void DeferredRenderer::onRender(float dt)
             bgfx::setVertexBuffer(0, mesh.vertexBuffer);
             bgfx::setIndexBuffer(mesh.indexBuffer);
             uint64_t materialState = pbr.bindMaterial(mat);
+            lights.bindLights(scene);
             bgfx::setState(state | materialState);
-            // TODO load forward shader
-            //bgfx::submit(vTransparent, transparencyForwardProgram);
+            bgfx::submit(vTransparent, transparencyProgram);
         }
     }
 }
@@ -253,6 +267,7 @@ void DeferredRenderer::onShutdown()
 {
     bgfx::destroy(geometryProgram);
     bgfx::destroy(pointLightProgram);
+    bgfx::destroy(transparencyProgram);
     for(bgfx::UniformHandle& handle : gBufferSamplers)
     {
         bgfx::destroy(handle);
@@ -260,17 +275,20 @@ void DeferredRenderer::onShutdown()
     }
     bgfx::destroy(pointLightVertexBuffer);
     bgfx::destroy(pointLightIndexBuffer);
+    if(bgfx::isValid(lightDepthTexture))
+        bgfx::destroy(lightDepthTexture);
     if(bgfx::isValid(gBuffer))
         bgfx::destroy(gBuffer);
-    if(bgfx::isValid(lightFrameBuffer))
-        bgfx::destroy(lightFrameBuffer);
+    if(bgfx::isValid(accumFrameBuffer))
+        bgfx::destroy(accumFrameBuffer);
 
-    geometryProgram = pointLightProgram = BGFX_INVALID_HANDLE;
+    geometryProgram = pointLightProgram = transparencyProgram = BGFX_INVALID_HANDLE;
     lightIndexVecUniform = BGFX_INVALID_HANDLE;
     pointLightVertexBuffer = BGFX_INVALID_HANDLE;
     pointLightIndexBuffer = BGFX_INVALID_HANDLE;
+    lightDepthTexture = BGFX_INVALID_HANDLE;
     gBuffer = BGFX_INVALID_HANDLE;
-    lightFrameBuffer = BGFX_INVALID_HANDLE;
+    accumFrameBuffer = BGFX_INVALID_HANDLE;
 }
 
 bgfx::FrameBufferHandle DeferredRenderer::createGBuffer()
