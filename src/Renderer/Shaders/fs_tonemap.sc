@@ -1,7 +1,4 @@
-$input v_texcoord0
-
 #include <bgfx_shader.sh>
-
 #include "tonemapping.sh"
 
 uniform vec4 u_exposureVec;
@@ -23,43 +20,43 @@ SAMPLER2D(s_texColor, 0);
 
 void main()
 {
-    vec4 result = texture2D(s_texColor, v_texcoord0);
+    vec2 texcoord = gl_FragCoord.xy / u_viewRect.zw;
+    vec4 result = texture2D(s_texColor, texcoord);
     result.rgb *= u_exposure;
 
-// switch statement requires GLSL 130 (and by extension, OpenGL 3.0)
-// but even if we compile with that version, compilation fails at runtime
-// setting bgfx OpenGL version to >= 3.0
-
-/*
-   switch(u_tonemappingMode)
-   {
-       //default:
-       case TONEMAP_NONE:
-           result.rgb = saturate(result.rgb);
-           break;
-       case TONEMAP_EXPONENTIAL:
-           result.rgb = tonemap_exponential(result.rgb);
-           break;
-       case TONEMAP_REINHARD:
-           result.rgb = tonemap_reinhard(result.rgb);
-           break;
-       case TONEMAP_REINHARD_LUM:
-           result.rgb = tonemap_reinhard_luminance(result.rgb);
-           break;
-       case TONEMAP_HABLE:
-           result.rgb = tonemap_hable(result.rgb);
-           break;
-       case TONEMAP_DUIKER:
-           result.rgb = tonemap_duiker(result.rgb);
-           break;
-       case TONEMAP_ACES:
-           result.rgb = tonemap_aces(result.rgb);
-           break;
-       case TONEMAP_ACES_LUM:
-           result.rgb = tonemap_aces_luminance(result.rgb);
-           break;
-   }
-*/
+    // switch statement requires GLSL 130 (and by extension, OpenGL 3.0)
+    // even if we compile with that version, compilation fails at runtime
+    // because bgfx uses OpenGL 2.1
+    /*
+    switch(u_tonemappingMode)
+    {
+        //default:
+        case TONEMAP_NONE:
+            result.rgb = saturate(result.rgb);
+            break;
+        case TONEMAP_EXPONENTIAL:
+            result.rgb = tonemap_exponential(result.rgb);
+            break;
+        case TONEMAP_REINHARD:
+            result.rgb = tonemap_reinhard(result.rgb);
+            break;
+        case TONEMAP_REINHARD_LUM:
+            result.rgb = tonemap_reinhard_luminance(result.rgb);
+            break;
+        case TONEMAP_HABLE:
+            result.rgb = tonemap_hable(result.rgb);
+            break;
+        case TONEMAP_DUIKER:
+            result.rgb = tonemap_duiker(result.rgb);
+            break;
+        case TONEMAP_ACES:
+            result.rgb = tonemap_aces(result.rgb);
+            break;
+        case TONEMAP_ACES_LUM:
+            result.rgb = tonemap_aces_luminance(result.rgb);
+            break;
+    }
+    */
 
     if(u_tonemappingMode == TONEMAP_NONE)
     {

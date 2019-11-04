@@ -16,23 +16,6 @@ public:
     virtual void onShutdown() override;
 
 private:
-
-    struct PosVertex
-    {
-        float x;
-        float y;
-        float z;
-
-        static void init()
-        {
-            decl.begin()
-                .add(bgfx::Attrib::Position, 3, bgfx::AttribType::Float)
-                .end();
-        }
-
-        static bgfx::VertexDecl decl;
-    };
-
     bgfx::VertexBufferHandle pointLightVertexBuffer;
     bgfx::IndexBufferHandle pointLightIndexBuffer;
 
@@ -72,6 +55,7 @@ private:
     bgfx::UniformHandle lightIndexVecUniform;
 
     bgfx::ProgramHandle geometryProgram;
+    bgfx::ProgramHandle ambientLightProgram;
     bgfx::ProgramHandle pointLightProgram;
     bgfx::ProgramHandle transparencyProgram;
 

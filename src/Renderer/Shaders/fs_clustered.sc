@@ -46,7 +46,7 @@ void main()
         }
     }
 
-    vec3 ambient = getAmbientLight().irradiance * mat.albedo.rgb;
+    vec3 ambient = getAmbientLight().irradiance * mat.diffuseColor;
     vec3 color = radianceOut + ambient;
 
     gl_FragColor.rgb = color;

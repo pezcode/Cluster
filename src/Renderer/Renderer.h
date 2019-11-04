@@ -62,20 +62,16 @@ public:
     bgfx::FrameBufferHandle frameBuffer;
 
 protected:
-    struct PosTexCoord0Vertex
+    struct PosVertex
     {
         float x;
         float y;
         float z;
 
-        float u;
-        float v;
-
         static void init()
         {
             decl.begin()
                 .add(bgfx::Attrib::Position, 3, bgfx::AttribType::Float)
-                .add(bgfx::Attrib::TexCoord0, 2, bgfx::AttribType::Float)
                 .end();
         }
 
@@ -112,8 +108,9 @@ protected:
     glm::mat4 viewMat;
     glm::mat4 projMat;
 
-private:
     bgfx::VertexBufferHandle blitTriangleBuffer;
+
+private:
     bgfx::ProgramHandle blitProgram;
     bgfx::UniformHandle blitSampler;
     bgfx::UniformHandle camPosUniform;

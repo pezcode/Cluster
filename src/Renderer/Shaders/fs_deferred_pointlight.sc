@@ -17,11 +17,11 @@ uniform vec4 u_lightIndexVec;
 
 void main()
 {
-    vec2 texcoords = gl_FragCoord.xy / u_viewRect.zw;
+    vec2 texcoord = gl_FragCoord.xy / u_viewRect.zw;
     
-    vec4 diffuseA = texture2D(s_texDiffuseA, texcoords);
-    vec3 N = texture2D(s_texNormal, texcoords).xyz * 2.0 - 1.0;
-    vec4 F0Metallic = texture2D(s_texF0Metallic, texcoords);
+    vec4 diffuseA = texture2D(s_texDiffuseA, texcoord);
+    vec3 N = texture2D(s_texNormal, texcoord).xyz * 2.0 - 1.0;
+    vec4 F0Metallic = texture2D(s_texF0Metallic, texcoord);
 
     // unpack material parameters used by the PBR BRDF function
     PBRMaterial mat;
@@ -32,7 +32,7 @@ void main()
 
     // get fragment world position
     vec4 screen = gl_FragCoord;
-    screen.z = texture2D(s_texDepth, texcoords).x;
+    screen.z = texture2D(s_texDepth, texcoord).x;
     vec4 eyePos = screen2Eye(screen);
     vec3 fragPos = mul(u_invView, eyePos).xyz;
 
@@ -53,8 +53,6 @@ void main()
         float NoL = saturate(dot(N, L));
         radianceOut = BRDF(V, L, N, mat) * radianceIn * NoL;
     }
-
-    //radianceOut = vec3(0.2, 0.0, 0.0);
 
     gl_FragColor = vec4(radianceOut, 1.0);
 }

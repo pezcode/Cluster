@@ -43,7 +43,7 @@ void main()
         }
     }
 
-    vec3 ambient = getAmbientLight().irradiance * mat.albedo.rgb; // * ambientOcclusion
+    vec3 ambient = getAmbientLight().irradiance * mat.diffuseColor; // * ambientOcclusion
     vec3 color = radianceOut + ambient;
 
     // output goes straight to HDR framebuffer, no clamping

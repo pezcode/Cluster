@@ -12,7 +12,7 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtx/matrix_operation.hpp>
 
-bgfx::VertexDecl Renderer::PosTexCoord0Vertex::decl;
+bgfx::VertexDecl Renderer::PosVertex::decl;
 
 Renderer::Renderer(const Scene* scene) :
     tonemappingMode(TonemappingMode::NONE),
@@ -40,7 +40,7 @@ Renderer::~Renderer()
 
 void Renderer::initialize()
 {
-    PosTexCoord0Vertex::init();
+    PosVertex::init();
 
     blitSampler = bgfx::createUniform("s_texColor", bgfx::UniformType::Sampler);
     camPosUniform = bgfx::createUniform("u_camPos", bgfx::UniformType::Vec4);
@@ -49,17 +49,13 @@ void Renderer::initialize()
     tonemappingModeVecUniform = bgfx::createUniform("u_tonemappingModeVec", bgfx::UniformType::Vec4);
 
     // triangle used for blitting
-
-    float bottomUV = bgfx::getCaps()->originBottomLeft ? 0.0f :  1.0f;
-    float topUV    = bgfx::getCaps()->originBottomLeft ? 2.0f : -1.0f;
     constexpr float BOTTOM = -1.0f, TOP = 3.0f, LEFT = -1.0f, RIGHT = 3.0f;
-    PosTexCoord0Vertex vertices[3] = {
-        { LEFT,  BOTTOM, 0.0f, 0.0f, bottomUV },
-        { RIGHT, BOTTOM, 0.0f, 2.0f, bottomUV },
-        { LEFT,  TOP,    0.0f, 0.0f, topUV }
+    PosVertex vertices[3] = {
+        { LEFT,  BOTTOM, 0.0f },
+        { RIGHT, BOTTOM, 0.0f },
+        { LEFT,  TOP,    0.0f }
     };
-
-    blitTriangleBuffer = bgfx::createVertexBuffer(bgfx::copy(&vertices, sizeof(vertices)), PosTexCoord0Vertex::decl);
+    blitTriangleBuffer = bgfx::createVertexBuffer(bgfx::copy(&vertices, sizeof(vertices)), PosVertex::decl);
 
     char vsName[128], fsName[128];
     bx::snprintf(vsName, BX_COUNTOF(vsName), "%s%s", shaderDir(), "vs_tonemap.bin");

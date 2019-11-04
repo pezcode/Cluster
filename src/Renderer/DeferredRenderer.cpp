@@ -7,8 +7,6 @@
 #include <glm/matrix.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-bgfx::VertexDecl DeferredRenderer::PosVertex::decl;
-
 DeferredRenderer::DeferredRenderer(const Scene* scene) :
     Renderer(scene),
     pointLightVertexBuffer(BGFX_INVALID_HANDLE),
@@ -37,6 +35,7 @@ DeferredRenderer::DeferredRenderer(const Scene* scene) :
     accumFrameBuffer(BGFX_INVALID_HANDLE),
     lightIndexVecUniform(BGFX_INVALID_HANDLE),
     geometryProgram(BGFX_INVALID_HANDLE),
+    ambientLightProgram(BGFX_INVALID_HANDLE),
     pointLightProgram(BGFX_INVALID_HANDLE)
 {
     for(bgfx::UniformHandle& handle : gBufferSamplers)
@@ -68,8 +67,6 @@ bool DeferredRenderer::supported()
 
 void DeferredRenderer::onInitialize()
 {
-    PosVertex::init();
-
     for(size_t i = 0; i < BX_COUNTOF(gBufferSamplers); i++)
     {
         gBufferSamplers[i] = bgfx::createUniform(gBufferSamplerNames[i], bgfx::UniformType::Sampler);
@@ -99,6 +96,10 @@ void DeferredRenderer::onInitialize()
     bx::snprintf(vsName, BX_COUNTOF(vsName), "%s%s", shaderDir(), "vs_deferred_geometry.bin");
     bx::snprintf(fsName, BX_COUNTOF(fsName), "%s%s", shaderDir(), "fs_deferred_geometry.bin");
     geometryProgram = bigg::loadProgram(vsName, fsName);
+
+    bx::snprintf(vsName, BX_COUNTOF(vsName), "%s%s", shaderDir(), "vs_deferred_light.bin");
+    bx::snprintf(fsName, BX_COUNTOF(fsName), "%s%s", shaderDir(), "fs_deferred_ambientlight.bin");
+    ambientLightProgram = bigg::loadProgram(vsName, fsName);
 
     bx::snprintf(vsName, BX_COUNTOF(vsName), "%s%s", shaderDir(), "vs_deferred_light.bin");
     bx::snprintf(fsName, BX_COUNTOF(fsName), "%s%s", shaderDir(), "fs_deferred_pointlight.bin");
@@ -148,9 +149,10 @@ void DeferredRenderer::onRender(float dt)
 {
     enum : bgfx::ViewId
     {
-        vGeometry = 0,
-        vLight,
-        vTransparent
+        vGeometry = 0,    // write G-Buffer
+        vFullscreenLight, // blit ambient lights to output buffer
+        vLight,           // render point lights to output buffer
+        vTransparent      // forward pass for transparency
     };
 
     const uint32_t BLACK = 0x000000FF;
@@ -160,7 +162,12 @@ void DeferredRenderer::onRender(float dt)
     bgfx::setViewFrameBuffer(vGeometry, gBuffer);
     bgfx::touch(vGeometry);
 
-    bgfx::setViewClear(vLight, BGFX_CLEAR_COLOR, clearColor);
+    bgfx::setViewClear(vFullscreenLight, BGFX_CLEAR_COLOR, clearColor);
+    bgfx::setViewRect(vFullscreenLight, 0, 0, width, height);
+    bgfx::setViewFrameBuffer(vFullscreenLight, accumFrameBuffer);
+    bgfx::touch(vFullscreenLight);
+
+    bgfx::setViewClear(vLight, BGFX_CLEAR_NONE);
     bgfx::setViewRect(vLight, 0, 0, width, height);
     bgfx::setViewFrameBuffer(vLight, accumFrameBuffer);
     bgfx::touch(vLight);
@@ -174,6 +181,11 @@ void DeferredRenderer::onRender(float dt)
         return;
 
     setViewProjection(vGeometry);
+    // fullscreen light pass uses a fullscreen triangle for blitting
+    // don't set view or projection matrices (triangle is in clip space coordinates)
+    // have to set identity here, view transforms are kept between renderer switches
+    glm::mat4 identity = glm::identity<glm::mat4>();
+    bgfx::setViewTransform(vFullscreenLight, glm::value_ptr(identity), glm::value_ptr(identity));
     setViewProjection(vLight);
     setViewProjection(vTransparent);
 
@@ -200,7 +212,7 @@ void DeferredRenderer::onRender(float dt)
         }
     }
 
-    bgfx::setViewName(vLight, "Deferred light pass");
+    bgfx::setViewName(vFullscreenLight, "Deferred light pass (ambient)");
 
     // render lights to framebuffer
     // cull with light geometry
@@ -216,10 +228,27 @@ void DeferredRenderer::onRender(float dt)
     // copy G-Buffer depth texture to depth attachment for light pass
     // we can't attach it to the frame buffer and read it in the shader (unprojecting world position) at the same time
     // blit happens before any compute or draw calls
-    bgfx::blit(vLight, lightDepthTexture, 0, 0, bgfx::getTexture(gBuffer, GBufferAttachment::Depth));
+    bgfx::blit(vFullscreenLight, lightDepthTexture, 0, 0, bgfx::getTexture(gBuffer, GBufferAttachment::Depth));
 
-    // TODO ambient light
-    // full screen quad
+    // ambient light
+
+    // full screen triangle
+    // could also attach the accumulation buffer as a render target and write out ambient during the geometry pass
+    // this is a bit cleaner
+
+    // move triangle to far plane
+    // only render if the geometry is in front
+    glm::mat4 model = glm::identity<glm::mat4>();
+    model = glm::translate(model, glm::vec3(0.0f, 0.0f, 1.0f));
+    bgfx::setTransform(glm::value_ptr(model));
+    bgfx::setVertexBuffer(0, blitTriangleBuffer);
+    uint8_t t = GBufferAttachment::Diffuse_A;
+    bgfx::setTexture(gBufferTextureUnits[t], gBufferSamplers[t], bgfx::getTexture(gBuffer, t));
+    lights.bindLights(scene);
+    bgfx::setState(BGFX_STATE_WRITE_RGB | BGFX_STATE_DEPTH_TEST_GREATER | BGFX_STATE_CULL_CW);
+    bgfx::submit(vFullscreenLight, ambientLightProgram);
+
+    bgfx::setViewName(vLight, "Deferred light pass (point lights)");
 
     // point lights
 
@@ -241,7 +270,7 @@ void DeferredRenderer::onRender(float dt)
             bgfx::setTexture(gBufferTextureUnits[i], gBufferSamplers[i], bgfx::getTexture(gBuffer, (uint8_t)i));
         }
         lights.bindLights(scene);
-        bgfx::setState(BGFX_STATE_WRITE_RGB | BGFX_STATE_WRITE_A | BGFX_STATE_DEPTH_TEST_GEQUAL | BGFX_STATE_CULL_CCW | BGFX_STATE_BLEND_ADD);
+        bgfx::setState(BGFX_STATE_WRITE_RGB | BGFX_STATE_DEPTH_TEST_GEQUAL | BGFX_STATE_CULL_CCW | BGFX_STATE_BLEND_ADD);
         bgfx::submit(vLight, pointLightProgram);
     }
 
@@ -269,6 +298,7 @@ void DeferredRenderer::onShutdown()
 {
     bgfx::destroy(geometryProgram);
     bgfx::destroy(pointLightProgram);
+    bgfx::destroy(ambientLightProgram);
     bgfx::destroy(transparencyProgram);
     for(bgfx::UniformHandle& handle : gBufferSamplers)
     {
@@ -284,7 +314,7 @@ void DeferredRenderer::onShutdown()
     if(bgfx::isValid(accumFrameBuffer))
         bgfx::destroy(accumFrameBuffer);
 
-    geometryProgram = pointLightProgram = transparencyProgram = BGFX_INVALID_HANDLE;
+    geometryProgram = ambientLightProgram = pointLightProgram = transparencyProgram = BGFX_INVALID_HANDLE;
     lightIndexVecUniform = BGFX_INVALID_HANDLE;
     pointLightVertexBuffer = BGFX_INVALID_HANDLE;
     pointLightIndexBuffer = BGFX_INVALID_HANDLE;
