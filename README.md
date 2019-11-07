@@ -25,8 +25,11 @@ The code is programmed to support bgfx's OpenGL and DirectX 11/12 backends. I've
 
 ### Deferred Shading
 
-- compact G-Buffer with 3 render targets
-    - stores diffuse RGB, normal, F0 RGB, metallic, roughness
+- G-Buffer with 4 render targets
+    - diffuse RGB, roughness
+    - normal
+    - F0 RGB, metallic
+    - emissive RGB, occlusion
 - light culling with light geometry
     - axis-aligned bounding box
     - backface rendering with reversed depth test

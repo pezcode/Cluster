@@ -11,14 +11,25 @@
 SAMPLER2D(s_texBaseColor,         SAMPLER_PBR_BASECOLOR);
 SAMPLER2D(s_texMetallicRoughness, SAMPLER_PBR_METALROUGHNESS);
 SAMPLER2D(s_texNormal,            SAMPLER_PBR_NORMAL);
+SAMPLER2D(s_texOcclusion,         SAMPLER_PBR_OCCLUSION);
+SAMPLER2D(s_texEmissive,          SAMPLER_PBR_EMISSIVE);
 
 uniform vec4 u_baseColorFactor;
-uniform vec4 u_metallicRoughnessFactor;
-uniform vec4 u_hasTextures;
+uniform vec4 u_metallicRoughnessNormalOcclusionFactor;
+uniform vec4 u_emissiveFactorVec;
+uniform vec4 u_hasTextures1;
+uniform vec4 u_hasTextures2;
 
-#define u_hasBaseColorTexture         (u_hasTextures.x != 0.0f)
-#define u_hasMetallicRoughnessTexture (u_hasTextures.y != 0.0f)
-#define u_hasNormalTexture            (u_hasTextures.z != 0.0f)
+#define u_hasBaseColorTexture         (u_hasTextures1.x != 0.0f)
+#define u_hasMetallicRoughnessTexture (u_hasTextures1.y != 0.0f)
+#define u_hasNormalTexture            (u_hasTextures1.z != 0.0f)
+#define u_hasOcclusionTexture         (u_hasTextures1.w != 0.0f)
+#define u_hasEmissiveTexture          (u_hasTextures2.x != 0.0f)
+
+#define u_metallicRoughnessFactor (u_metallicRoughnessNormalOcclusionFactor.xy)
+#define u_normalScale             (u_metallicRoughnessNormalOcclusionFactor.z)
+#define u_occlusionStrength       (u_metallicRoughnessNormalOcclusionFactor.w)
+#define u_emissiveFactor          (u_emissiveFactorVec.xyz)
 
 #endif
 
@@ -28,8 +39,10 @@ struct PBRMaterial
     float metallic;
     float roughness;
     vec3 normal;
+    float occlusion;
+    vec3 emissive;
 
-    // GLTF 2.0 inputs
+    // calculated from the above
 
     vec3 diffuseColor; // this becomes black for higher metalness
     vec3 F0; // Fresnel reflectance at normal incidence
@@ -56,11 +69,11 @@ vec2 pbrMetallicRoughness(vec2 texcoord)
 {
     if(u_hasMetallicRoughnessTexture)
     {
-        return texture2D(s_texMetallicRoughness, texcoord).bg * u_metallicRoughnessFactor.xy;
+        return texture2D(s_texMetallicRoughness, texcoord).bg * u_metallicRoughnessFactor;
     }
     else
     {
-        return u_metallicRoughnessFactor.xy;
+        return u_metallicRoughnessFactor;
     }
 }
 
@@ -68,13 +81,39 @@ vec3 pbrNormal(vec2 texcoord)
 {
     if(u_hasNormalTexture)
     {
-        return normalize((texture2D(s_texNormal, texcoord).rgb * 2.0) - 1.0);
+        return normalize((texture2D(s_texNormal, texcoord).rgb * 2.0) - 1.0) * u_normalScale;
     }
     else
     {
         // the up vector (w) in tangent space is the default normal
         // that's why normal maps are mostly blue
         return vec3(0.0, 0.0, 1.0);
+    }
+}
+
+float pbrOcclusion(vec2 texcoord)
+{
+    if(u_hasOcclusionTexture)
+    {
+        // occludedColor = lerp(color, color * <sampled occlusion texture value>, <occlusion strength>)
+        float occlusion = texture2D(s_texOcclusion, texcoord).r;
+        return occlusion + (1.0 - occlusion) * (1.0 - u_occlusionStrength);
+    }
+    else
+    {
+        return 1.0;
+    }
+}
+
+vec3 pbrEmissive(vec2 texcoord)
+{
+    if(u_hasEmissiveTexture)
+    {
+        return sRGBToLinear(texture2D(s_texEmissive, texcoord).rgb) * u_emissiveFactor;
+    }
+    else
+    {
+        return u_emissiveFactor;
     }
 }
 
@@ -89,6 +128,8 @@ PBRMaterial pbrMaterial(vec2 texcoord)
     mat.metallic  = metallicRoughness.r;
     mat.roughness = metallicRoughness.g;
     mat.normal = pbrNormal(texcoord);
+    mat.occlusion = pbrOcclusion(texcoord);
+    mat.emissive = pbrEmissive(texcoord);
 
     // Taken directly from GLTF 2.0 specs
     // this can be precalculated instead of evaluating it in the BRDF for every light

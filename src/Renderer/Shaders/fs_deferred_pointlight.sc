@@ -5,10 +5,11 @@
 #include "util.sh"
 
 // G-Buffer
-SAMPLER2D(s_texDiffuseA,   SAMPLER_DEFERRED_DIFFUSE_A);
-SAMPLER2D(s_texNormal,     SAMPLER_DEFERRED_NORMAL);
-SAMPLER2D(s_texF0Metallic, SAMPLER_DEFERRED_F0_METALLIC);
-SAMPLER2D(s_texDepth,      SAMPLER_DEFERRED_DEPTH);
+SAMPLER2D(s_texDiffuseA,          SAMPLER_DEFERRED_DIFFUSE_A);
+SAMPLER2D(s_texNormal,            SAMPLER_DEFERRED_NORMAL);
+SAMPLER2D(s_texF0Metallic,        SAMPLER_DEFERRED_F0_METALLIC);
+SAMPLER2D(s_texEmissiveOcclusion, SAMPLER_DEFERRED_EMISSIVE_OCCLUSION);
+SAMPLER2D(s_texDepth,             SAMPLER_DEFERRED_DEPTH);
 
 uniform vec4 u_camPos;
 
@@ -45,9 +46,9 @@ void main()
 
     vec3 radianceOut = vec3_splat(0.0);
     float dist = distance(light.position, fragPos);
-    if(dist < light.radius)
+    float attenuation = smoothAttenuation(dist, light.radius);
+    if(attenuation > 0.0)
     {
-        float attenuation = smoothAttenuation(dist, light.radius);
         vec3 L = normalize(light.position - fragPos);
         vec3 radianceIn = light.intensity * attenuation;
         float NoL = saturate(dot(N, L));
@@ -55,4 +56,6 @@ void main()
     }
 
     gl_FragColor = vec4(radianceOut, 1.0);
+
+    //gl_FragColor = vec4(0.3, 0.0, 0.0, 1.0);
 }

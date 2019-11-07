@@ -94,6 +94,9 @@ void Cluster::initialize(int _argc, char* _argv[])
     if(config->fullscreen)
         toggleFullscreen();
 
+    if(glfwRawMouseMotionSupported())
+        glfwSetInputMode(mWindow, GLFW_RAW_MOUSE_MOTION, GLFW_TRUE);
+
     renderer->initialize();
     renderer->setTonemappingMode(config->tonemappingMode);
     ui->initialize();
@@ -109,10 +112,13 @@ void Cluster::initialize(int _argc, char* _argv[])
         return;
     }
 
+    // Sponza
     // debug camera + lights
 
-    scene->camera.move({ -7.0f, 2.0f, 0.0f });
-    scene->camera.rotate({ -45.0f, -90.0f });
+    //scene->camera.move({ -7.0f, 2.0f, 0.0f });
+    //scene->camera.rotate({ -45.0f, -90.0f });
+
+    //scene->camera.lookAt({ -7.0f, 2.0f, 0.0f }, scene->center, glm::vec3(0.0f, 1.0f, 0.0f));
 
     scene->pointLights.lights = {
         // pos, power
@@ -163,7 +169,12 @@ void Cluster::onCursorPos(double xpos, double ypos)
     {
         if(isMouseButtonDown(GLFW_MOUSE_BUTTON_RIGHT))
         {
+            glfwSetInputMode(mWindow, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
             scene->camera.rotate(-glm::vec2(ypos - mouseY, xpos - mouseX) * angularVelocity);
+        }
+        else
+        {
+            glfwSetInputMode(mWindow, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
         }
     }
     mouseX = xpos;
@@ -186,7 +197,9 @@ void Cluster::onScroll(double xoffset, double yoffset)
 
 void Cluster::update(float dt)
 {
-    constexpr float velocity = 3.0f; // m/s
+    float velocity = scene->diagonal / 5.0f; // m/s
+    // TODO faster with Shift
+    // need to cache mods & GLFW_MOD_SHIFT in onKey
     if(isKeyDown(GLFW_KEY_W))
         scene->camera.move(scene->camera.forward() * velocity * dt);
     if(isKeyDown(GLFW_KEY_A))

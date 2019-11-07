@@ -12,22 +12,25 @@ DeferredRenderer::DeferredRenderer(const Scene* scene) :
     pointLightVertexBuffer(BGFX_INVALID_HANDLE),
     pointLightIndexBuffer(BGFX_INVALID_HANDLE),
     gBufferTextures {
-        { BGFX_INVALID_HANDLE, "Diffuse + roughness" },
-        { BGFX_INVALID_HANDLE, "Normal"              },
-        { BGFX_INVALID_HANDLE, "F0 + metallic"       },
-        { BGFX_INVALID_HANDLE, "Depth"               },
-        { BGFX_INVALID_HANDLE, nullptr               }
+        { BGFX_INVALID_HANDLE, "Diffuse + roughness"  },
+        { BGFX_INVALID_HANDLE, "Normal"               },
+        { BGFX_INVALID_HANDLE, "F0 + metallic"        },
+        { BGFX_INVALID_HANDLE, "Emissive + occlusion" },
+        { BGFX_INVALID_HANDLE, "Depth"                },
+        { BGFX_INVALID_HANDLE, nullptr                }
     },
     gBufferTextureUnits {
         Samplers::DEFERRED_DIFFUSE_A,
         Samplers::DEFERRED_NORMAL,
         Samplers::DEFERRED_F0_METALLIC,
+        Samplers::DEFERRED_EMISSIVE_OCCLUSION,
         Samplers::DEFERRED_DEPTH
     },
     gBufferSamplerNames {
         "s_texDiffuseA",  
         "s_texNormal",
         "s_texF0Metallic",
+        "s_texEmissiveOcclusion",
         "s_texDepth"
     },
     gBuffer(BGFX_INVALID_HANDLE),
@@ -187,6 +190,7 @@ void DeferredRenderer::onRender(float dt)
     glm::mat4 identity = glm::identity<glm::mat4>();
     bgfx::setViewTransform(vFullscreenLight, glm::value_ptr(identity), glm::value_ptr(identity));
     setViewProjection(vLight);
+    //bgfx::setViewTransform(vLight, glm::value_ptr(identity), glm::value_ptr(identity));
     setViewProjection(vTransparent);
 
     bgfx::setViewName(vGeometry, "Deferred geometry pass");
@@ -242,11 +246,16 @@ void DeferredRenderer::onRender(float dt)
     model = glm::translate(model, glm::vec3(0.0f, 0.0f, 1.0f));
     bgfx::setTransform(glm::value_ptr(model));
     bgfx::setVertexBuffer(0, blitTriangleBuffer);
-    uint8_t t = GBufferAttachment::Diffuse_A;
-    bgfx::setTexture(gBufferTextureUnits[t], gBufferSamplers[t], bgfx::getTexture(gBuffer, t));
+    bindGBuffer();
     lights.bindLights(scene);
     bgfx::setState(BGFX_STATE_WRITE_RGB | BGFX_STATE_DEPTH_TEST_GREATER | BGFX_STATE_CULL_CW);
     bgfx::submit(vFullscreenLight, ambientLightProgram);
+
+    // getting a debug crash here with D3D12 when resizing the window
+    // "Using ResourceBarrier on Command List (0x000001E06B71DC10:'Unnamed ID3D12GraphicsCommandList Object'):
+    // Before state (0x400: D3D12_RESOURCE_STATE_COPY_DEST) of resource (0x000001E07E10D6E0:'Unnamed ID3D12Resource Object') (subresource: 0)
+    // specified by transition barrier does not match with the state (0x10: D3D12_RESOURCE_STATE_DEPTH_WRITE) specified in the previous call
+    // to ResourceBarrier [ RESOURCE_MANIPULATION ERROR #527: RESOURCE_BARRIER_BEFORE_AFTER_MISMATCH]"
 
     bgfx::setViewName(vLight, "Deferred light pass (point lights)");
 
@@ -265,10 +274,7 @@ void DeferredRenderer::onRender(float dt)
         bgfx::setIndexBuffer(pointLightIndexBuffer);
         float lightIndexVec[4] = { (float)i };
         bgfx::setUniform(lightIndexVecUniform, lightIndexVec);
-        for(size_t i = 0; i < GBufferAttachment::Count; i++)
-        {
-            bgfx::setTexture(gBufferTextureUnits[i], gBufferSamplers[i], bgfx::getTexture(gBuffer, (uint8_t)i));
-        }
+        bindGBuffer();
         lights.bindLights(scene);
         bgfx::setState(BGFX_STATE_WRITE_RGB | BGFX_STATE_DEPTH_TEST_GEQUAL | BGFX_STATE_CULL_CCW | BGFX_STATE_BLEND_ADD);
         bgfx::submit(vLight, pointLightProgram);
@@ -330,17 +336,10 @@ bgfx::FrameBufferHandle DeferredRenderer::createGBuffer()
     const uint64_t samplerFlags = BGFX_SAMPLER_MIN_POINT | BGFX_SAMPLER_MAG_POINT | BGFX_SAMPLER_MIP_POINT |
                                   BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP;
 
-    bgfx::TextureFormat::Enum attachmentFormats[] =
-    {
-        bgfx::TextureFormat::BGRA8,
-        bgfx::TextureFormat::RGB10A2,
-        bgfx::TextureFormat::BGRA8
-    };
-
     for(size_t i = 0; i < GBufferAttachment::Depth; i++)
     {
-        assert(bgfx::isTextureValid(0, false, 1, attachmentFormats[i], BGFX_TEXTURE_RT | samplerFlags));
-        textures[i] = bgfx::createTexture2D(bgfx::BackbufferRatio::Equal, false, 1, attachmentFormats[i], BGFX_TEXTURE_RT | samplerFlags);
+        assert(bgfx::isTextureValid(0, false, 1, gBufferAttachmentFormats[i], BGFX_TEXTURE_RT | samplerFlags));
+        textures[i] = bgfx::createTexture2D(bgfx::BackbufferRatio::Equal, false, 1, gBufferAttachmentFormats[i], BGFX_TEXTURE_RT | samplerFlags);
     }
 
     // not write only
@@ -356,4 +355,12 @@ bgfx::FrameBufferHandle DeferredRenderer::createGBuffer()
         bgfx::setName(gb, "G-Buffer");
 
     return gb;
+}
+
+void DeferredRenderer::bindGBuffer()
+{
+    for(size_t i = 0; i < GBufferAttachment::Count; i++)
+    {
+        bgfx::setTexture(gBufferTextureUnits[i], gBufferSamplers[i], bgfx::getTexture(gBuffer, (uint8_t)i));
+    }
 }

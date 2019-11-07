@@ -11,8 +11,10 @@ Config::Config() :
     tonemappingMode(Renderer::TonemappingMode::ACES),
     profile(false),
     vsync(false),
-    //sceneFile("assets/models/duck/Duck.gltf"),
-    sceneFile("assets/models/Sponza/glTF/Sponza.gltf"),
+    sceneFile("assets/models/BoomBox/glTF/BoomBox.gltf"),
+    //sceneFile("assets/models/Duck/glTF/Duck.gltf"),
+    //sceneFile("assets/models/MetalRoughSpheres/glTF/MetalRoughSpheres.gltf"),
+    //sceneFile("assets/models/Sponza/glTF/Sponza.gltf"),
     lights(1),
     maxLights(1000),
     movingLights(false),
@@ -40,7 +42,7 @@ void Config::readArgv(int argc, char* argv[])
     //cmdLine.hasArg("gl");
 
     //renderer = bgfx::RendererType::OpenGL;
-    //renderer = bgfx::RendererType::Direct3D12;
+    renderer = bgfx::RendererType::Direct3D12;
 
     profile = true;
 

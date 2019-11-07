@@ -20,9 +20,11 @@ Scene::Scene() :
     loaded(false),
     minBounds(0.0f),
     maxBounds(0.0f),
-    //skyColor({ 0.53f, 0.81f, 0.98f }), // https://en.wikipedia.org/wiki/Sky_blue#Light_sky_blue
+    center(0.0f),
+    diagonal(0.0f),
+    skyColor({ 0.53f, 0.81f, 0.98f }), // https://en.wikipedia.org/wiki/Sky_blue#Light_sky_blue
     //skyColor({ 0.1f, 0.1f, 0.44f }),   // https://en.wikipedia.org/wiki/Midnight_blue#X11
-    skyColor({ 0.0f, 0.0f, 0.0f }),
+    //skyColor({ 0.0f, 0.0f, 0.0f }),
     ambientLight({ { 0.03f, 0.03f, 0.03f } })
 {
     Assimp::DefaultLogger::set(&logSource);
@@ -61,6 +63,8 @@ void Scene::clear()
         pointLights.lights.clear();
     }
     minBounds = maxBounds = { 0.0f, 0.0f, 0.0f };
+    center = { 0.0f, 0.0f, 0.0f };
+    diagonal = 0.0f;
     camera = Camera();
     loaded = false;
 }
@@ -148,9 +152,7 @@ bool Scene::load(const char* file)
             {
                 Log->info("No camera, using default");
 
-                // choose appropriate camera planes
-                glm::vec3 extent = glm::abs(maxBounds - minBounds);
-                float diagonal = glm::sqrt(glm::dot(extent, extent));
+                camera.lookAt(center - glm::vec3(0.0f, 0.0f, diagonal / 2.0f), center, glm::vec3(0.0f, 1.0f, 0.0f));
                 camera.zFar = diagonal;
                 camera.zNear = camera.zFar / 50.0f;
             }
@@ -194,6 +196,9 @@ Mesh Scene::loadMesh(const aiMesh* mesh)
 
         minBounds = glm::min(minBounds, { pos.x, pos.y, pos.z });
         maxBounds = glm::max(maxBounds, { pos.x, pos.y, pos.z });
+        center = minBounds + (maxBounds - minBounds) / 2.0f;
+        glm::vec3 extent = glm::abs(maxBounds - minBounds);
+        diagonal = glm::sqrt(glm::dot(extent, extent));
 
         aiVector3D nrm = mesh->mNormals[i];
         vertex.nx = nrm.x;
@@ -248,10 +253,16 @@ Material Scene::loadMaterial(const aiMaterial* material, const char* dir)
 
     material->Get(AI_MATKEY_TWOSIDED, out.doubleSided);
 
-    aiString fileBaseColor, fileMetallicRoughness, fileNormals;
+    // texture files
+
+    aiString fileBaseColor, fileMetallicRoughness, fileNormals, fileOcclusion, fileEmissive;
     material->GetTexture(AI_MATKEY_GLTF_PBRMETALLICROUGHNESS_BASE_COLOR_TEXTURE, &fileBaseColor);
     material->GetTexture(AI_MATKEY_GLTF_PBRMETALLICROUGHNESS_METALLICROUGHNESS_TEXTURE, &fileMetallicRoughness);
     material->GetTexture(aiTextureType_NORMALS, 0, &fileNormals);
+    material->GetTexture(aiTextureType_LIGHTMAP, 0, &fileOcclusion);
+    material->GetTexture(aiTextureType_EMISSIVE, 0, &fileEmissive);
+
+    // diffuse
 
     if(fileBaseColor.length > 0)
     {
@@ -265,6 +276,8 @@ Material Scene::loadMaterial(const aiMaterial* material, const char* dir)
     if(AI_SUCCESS == material->Get(AI_MATKEY_GLTF_PBRMETALLICROUGHNESS_BASE_COLOR_FACTOR, baseColorFactor))
         out.baseColorFactor = { baseColorFactor.r, baseColorFactor.g, baseColorFactor.b, baseColorFactor.a };
     out.baseColorFactor = glm::clamp(out.baseColorFactor, 0.0f, 1.0f);
+
+    // metallic/roughness
 
     if(fileMetallicRoughness.length > 0)
     {
@@ -281,6 +294,8 @@ Material Scene::loadMaterial(const aiMaterial* material, const char* dir)
     if(AI_SUCCESS == material->Get(AI_MATKEY_GLTF_PBRMETALLICROUGHNESS_ROUGHNESS_FACTOR, roughnessFactor))
         out.roughnessFactor = glm::clamp(roughnessFactor, 0.0f, 1.0f);
 
+    // normal map
+
     if(fileNormals.length > 0)
     {
         aiString pathNormals;
@@ -289,13 +304,49 @@ Material Scene::loadMaterial(const aiMaterial* material, const char* dir)
         out.normalTexture = loadTexture(pathNormals.C_Str());
     }
 
-    // TODO normal scale
+    ai_real normalScale;
+    if(AI_SUCCESS == material->Get(AI_MATKEY_GLTF_TEXTURE_SCALE(aiTextureType_NORMALS, 0), normalScale))
+        out.normalScale = normalScale;
 
-    // TODO emissive texture
-    //      emissive factor
+    // occlusion texture
 
-    // TODO occlusion texture
-    //      occlusion strength
+    if(fileOcclusion == fileMetallicRoughness)
+    {
+        // some GLTF files combine metallic/roughness and occlusion values into one texture
+        // don't load it twice
+        out.occlusionTexture = out.metallicRoughnessTexture;
+    }
+    else if(fileOcclusion.length > 0)
+    {
+        aiString pathOcclusion;
+        pathOcclusion.Set(dir);
+        pathOcclusion.Append(fileOcclusion.C_Str());
+        out.occlusionTexture = loadTexture(pathOcclusion.C_Str());
+    }
+
+    ai_real occlusionStrength;
+    if(AI_SUCCESS == material->Get(AI_MATKEY_GLTF_TEXTURE_STRENGTH(aiTextureType_AMBIENT, 0), occlusionStrength))
+        out.occlusionStrength = glm::clamp(occlusionStrength, 0.0f, 1.0f);
+
+    // emissive texture
+
+    if(fileEmissive.length > 0)
+    {
+        aiString pathEmissive;
+        pathEmissive.Set(dir);
+        pathEmissive.Append(fileEmissive.C_Str());
+        out.emissiveTexture = loadTexture(pathEmissive.C_Str());
+    }
+
+    // assimp doesn't define this
+    #ifndef AI_MATKEY_GLTF_EMISSIVE_FACTOR
+        #define AI_MATKEY_GLTF_EMISSIVE_FACTOR AI_MATKEY_COLOR_EMISSIVE
+    #endif
+
+    aiColor3D emissiveFactor;
+    if(AI_SUCCESS == material->Get(AI_MATKEY_GLTF_EMISSIVE_FACTOR, emissiveFactor))
+        out.emissiveFactor = { emissiveFactor.r, emissiveFactor.g, emissiveFactor.b };
+    out.emissiveFactor = glm::clamp(out.emissiveFactor, 0.0f, 1.0f);
 
     return out;
 }

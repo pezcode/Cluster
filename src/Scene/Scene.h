@@ -29,6 +29,8 @@ public:
     bool loaded;
     glm::vec3 minBounds;
     glm::vec3 maxBounds;
+    glm::vec3 center;
+    float diagonal;
     Camera camera;
     std::vector<Mesh> meshes;
     std::vector<Material> materials;

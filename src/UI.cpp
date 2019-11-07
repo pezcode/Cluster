@@ -88,15 +88,10 @@ void ClusterUI::update(float dt)
     if(!app.config->showUI)
         return;
 
-    const Renderer::TextureBuffer* buffers = app.renderer->buffers;
-
-    // test
-    //Renderer::TextureBuffer temp[2] = { { bgfx::getTexture(app.renderer->frameBuffer), "Output" }, { 0, nullptr } };
-    //buffers = temp;
-
     //ImGui::ShowDemoWindow();
 
-    ImVec2 padding = { 5.0f, 5.0f };
+    const Renderer::TextureBuffer* buffers = app.renderer->buffers;
+    const ImVec2 padding = { 5.0f, 5.0f };
 
     if(app.config->showConfigWindow)
     {

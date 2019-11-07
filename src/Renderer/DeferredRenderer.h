@@ -38,9 +38,21 @@ private:
         // TODO? don't use F0, calculate from diffuse and metallic in shader
         F0_Metallic,
 
+        // RGB = emissive radiance
+        // A = occlusion multiplier
+        EmissiveOcclusion,
+
         Depth,
 
         Count
+    };
+
+    static constexpr bgfx::TextureFormat::Enum gBufferAttachmentFormats[] =
+    {
+        bgfx::TextureFormat::BGRA8,
+        bgfx::TextureFormat::RGB10A2,
+        bgfx::TextureFormat::BGRA8,
+        bgfx::TextureFormat::BGRA8
     };
 
     TextureBuffer gBufferTextures[GBufferAttachment::Count + 1]; // includes depth, + null-terminated
@@ -60,4 +72,5 @@ private:
     bgfx::ProgramHandle transparencyProgram;
 
     static bgfx::FrameBufferHandle createGBuffer();
+    void bindGBuffer();
 };

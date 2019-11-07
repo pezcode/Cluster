@@ -18,4 +18,5 @@ void main()
     // w of 1.0 so it gets rendered in the debug visualization
     gl_FragData[1] = vec4(N * 0.5 + 0.5, 1.0);
     gl_FragData[2] = vec4(mat.F0, mat.metallic);
+    gl_FragData[3] = vec4(mat.emissive, mat.occlusion);
 }

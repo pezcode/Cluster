@@ -33,9 +33,9 @@ void main()
     {
         PointLight light = getPointLight(i);
         float dist = distance(light.position, fragPos);
-        if(dist < light.radius)
+        float attenuation = smoothAttenuation(dist, light.radius);
+        if(attenuation > 0.0)
         {
-            float attenuation = smoothAttenuation(dist, light.radius);
             vec3 L = normalize(light.position - fragPos);
             vec3 radianceIn = light.intensity * attenuation;
             float NoL = saturate(dot(N, L));
@@ -43,12 +43,12 @@ void main()
         }
     }
 
-    vec3 ambient = getAmbientLight().irradiance * mat.diffuseColor; // * ambientOcclusion
-    vec3 color = radianceOut + ambient;
+    radianceOut += getAmbientLight().irradiance * mat.diffuseColor * mat.occlusion;
+    radianceOut += mat.emissive;
 
     // output goes straight to HDR framebuffer, no clamping
     // tonemapping happens in final blit
 
-    gl_FragColor.rgb = color;
+    gl_FragColor.rgb = radianceOut;
     gl_FragColor.a = mat.albedo.a;
 }
