@@ -45,7 +45,6 @@ void Scene::clear()
         {
             bgfx::destroy(mesh.vertexBuffer);
             bgfx::destroy(mesh.indexBuffer);
-            //bgfx::destroy(mesh.occlusionQuery);
         }
         meshes.clear();
         for(const Material& mat : materials)
@@ -232,9 +231,7 @@ Mesh Scene::loadMesh(const aiMesh* mesh)
 
     bgfx::IndexBufferHandle ibh = bgfx::createIndexBuffer(iMem);
 
-    //bgfx::OcclusionQueryHandle oq = bgfx::createOcclusionQuery();
-
-    return { vbh, ibh, mesh->mMaterialIndex/*, oq*/ };
+    return { vbh, ibh, mesh->mMaterialIndex };
 }
 
 Material Scene::loadMaterial(const aiMaterial* material, const char* dir)
@@ -263,16 +260,11 @@ Material Scene::loadMaterial(const aiMaterial* material, const char* dir)
         pathBaseColor.Append(fileBaseColor.C_Str());
         out.baseColorTexture = loadTexture(pathBaseColor.C_Str());
     }
-    else
-    {
-        Log->warn("Material has no PBR base color texture");
-        aiColor4D baseColorFactor;
-        if(AI_SUCCESS == material->Get(AI_MATKEY_GLTF_PBRMETALLICROUGHNESS_BASE_COLOR_FACTOR, baseColorFactor))
-            out.baseColorFactor = { baseColorFactor.r, baseColorFactor.g, baseColorFactor.b, baseColorFactor.a };
-        else
-            throw std::runtime_error("Material has no PBR base color");
-        out.baseColorFactor = glm::clamp(out.baseColorFactor, 0.0f, 1.0f);
-    }
+
+    aiColor4D baseColorFactor;
+    if(AI_SUCCESS == material->Get(AI_MATKEY_GLTF_PBRMETALLICROUGHNESS_BASE_COLOR_FACTOR, baseColorFactor))
+        out.baseColorFactor = { baseColorFactor.r, baseColorFactor.g, baseColorFactor.b, baseColorFactor.a };
+    out.baseColorFactor = glm::clamp(out.baseColorFactor, 0.0f, 1.0f);
 
     if(fileMetallicRoughness.length > 0)
     {
@@ -281,22 +273,13 @@ Material Scene::loadMaterial(const aiMaterial* material, const char* dir)
         pathMetallicRoughness.Append(fileMetallicRoughness.C_Str());
         out.metallicRoughnessTexture = loadTexture(pathMetallicRoughness.C_Str());
     }
-    else
-    {
-        Log->warn("Material has no PBR metallic/roughness texture");
 
-        ai_real metallicFactor;
-        if(AI_SUCCESS == material->Get(AI_MATKEY_GLTF_PBRMETALLICROUGHNESS_METALLIC_FACTOR, metallicFactor))
-            out.metallicFactor = glm::clamp(metallicFactor, 0.0f, 1.0f);
-        else
-            Log->warn("Material has no PBR metallic factor, using default of ", out.metallicFactor);
-
-        ai_real roughnessFactor;
-        if(AI_SUCCESS == material->Get(AI_MATKEY_GLTF_PBRMETALLICROUGHNESS_ROUGHNESS_FACTOR, roughnessFactor))
-            out.roughnessFactor = glm::clamp(roughnessFactor, 0.0f, 1.0f);
-        else
-            Log->warn("Material has no PBR roughness factor, using default of ", out.roughnessFactor);
-    }
+    ai_real metallicFactor;
+    if(AI_SUCCESS == material->Get(AI_MATKEY_GLTF_PBRMETALLICROUGHNESS_METALLIC_FACTOR, metallicFactor))
+        out.metallicFactor = glm::clamp(metallicFactor, 0.0f, 1.0f);
+    ai_real roughnessFactor;
+    if(AI_SUCCESS == material->Get(AI_MATKEY_GLTF_PBRMETALLICROUGHNESS_ROUGHNESS_FACTOR, roughnessFactor))
+        out.roughnessFactor = glm::clamp(roughnessFactor, 0.0f, 1.0f);
 
     if(fileNormals.length > 0)
     {
@@ -305,6 +288,14 @@ Material Scene::loadMaterial(const aiMaterial* material, const char* dir)
         pathNormals.Append(fileNormals.C_Str());
         out.normalTexture = loadTexture(pathNormals.C_Str());
     }
+
+    // TODO normal scale
+
+    // TODO emissive texture
+    //      emissive factor
+
+    // TODO occlusion texture
+    //      occlusion strength
 
     return out;
 }
