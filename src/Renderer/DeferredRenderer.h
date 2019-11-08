@@ -67,7 +67,7 @@ private:
     bgfx::UniformHandle lightIndexVecUniform;
 
     bgfx::ProgramHandle geometryProgram;
-    bgfx::ProgramHandle ambientLightProgram;
+    bgfx::ProgramHandle fullscreenProgram;
     bgfx::ProgramHandle pointLightProgram;
     bgfx::ProgramHandle transparencyProgram;
 

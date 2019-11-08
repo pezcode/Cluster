@@ -2,6 +2,7 @@
 
 #include "Scene/Scene.h"
 #include "Renderer/Samplers.h"
+#include <glm/gtc/type_ptr.hpp>
 #include <cassert>
 
 LightShader::LightShader() :
@@ -33,10 +34,8 @@ void LightShader::bindLights(const Scene* scene) const
     float lightCountVec[4] = { (float)scene->pointLights.lights.size() };
     bgfx::setUniform(lightCountVecUniform, lightCountVec);
 
-    float ambientLightIrradiance[4] = { scene->ambientLight.irradiance.r,
-                                        scene->ambientLight.irradiance.g,
-                                        scene->ambientLight.irradiance.b };
-    bgfx::setUniform(ambientLightIrradianceUniform, ambientLightIrradiance);
+    glm::vec4 ambientLightIrradiance(scene->ambientLight.irradiance, 1.0f);
+    bgfx::setUniform(ambientLightIrradianceUniform, glm::value_ptr(ambientLightIrradiance));
 
     bgfx::setBuffer(Samplers::LIGHTS_POINTLIGHTS, scene->pointLights.buffer, bgfx::Access::Read);
 }

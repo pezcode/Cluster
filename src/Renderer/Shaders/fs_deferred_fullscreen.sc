@@ -17,7 +17,11 @@ void main()
     vec3 emissive = emissiveOcclusion.xyz;
     float occlusion = emissiveOcclusion.w;
 
-    vec3 radianceOut = getAmbientLight().irradiance * diffuseColor * occlusion;
+    // TODO
+    // directional lights
+
+    vec3 radianceOut = vec3_splat(0.0);
+    radianceOut += getAmbientLight().irradiance * diffuseColor * occlusion;
     radianceOut += emissive;
 
     gl_FragColor = vec4(radianceOut, 1.0);

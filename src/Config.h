@@ -24,6 +24,7 @@ public:
 
     bool profile; // not exposed to UI
     bool vsync; // not exposed to UI
+    bool msaa; // not exposed to UI
 
     // Scene
 
