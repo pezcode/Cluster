@@ -27,13 +27,13 @@ The code is programmed to support bgfx's OpenGL and DirectX 11/12 backends. I've
 
 - G-Buffer with 4 render targets
     - diffuse RGB, roughness
-    - normal
+    - [encoded view-space normal](https://aras-p.info/texts/CompactNormalStorage.html#method04spheremap) (RG16F)
     - F0 RGB, metallic
     - emissive RGB, occlusion
 - light culling with light geometry
     - axis-aligned bounding box
     - backface rendering with reversed depth test
-    - fragment world position reconstructed from geometry pass depth
+    - fragment position reconstructed from depth buffer
 - final forward pass for transparent meshes
 
 ### Forward Shading

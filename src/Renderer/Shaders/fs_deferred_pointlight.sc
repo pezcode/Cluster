@@ -11,8 +11,6 @@ SAMPLER2D(s_texF0Metallic,        SAMPLER_DEFERRED_F0_METALLIC);
 SAMPLER2D(s_texEmissiveOcclusion, SAMPLER_DEFERRED_EMISSIVE_OCCLUSION);
 SAMPLER2D(s_texDepth,             SAMPLER_DEFERRED_DEPTH);
 
-uniform vec4 u_camPos;
-
 uniform vec4 u_lightIndexVec;
 #define u_lightIndex uint(u_lightIndexVec.x)
 
@@ -21,7 +19,7 @@ void main()
     vec2 texcoord = gl_FragCoord.xy / u_viewRect.zw;
     
     vec4 diffuseA = texture2D(s_texDiffuseA, texcoord);
-    vec3 N = texture2D(s_texNormal, texcoord).xyz * 2.0 - 1.0;
+    vec3 N = unpackNormal(texture2D(s_texNormal, texcoord).xy);
     vec4 F0Metallic = texture2D(s_texF0Metallic, texcoord);
 
     // unpack material parameters used by the PBR BRDF function
@@ -31,18 +29,18 @@ void main()
     mat.F0 = F0Metallic.xyz;
     mat.metallic = F0Metallic.w;
 
-    // get fragment world position
+    // get fragment position
+    // rendering happens in view space
     vec4 screen = gl_FragCoord;
     screen.z = texture2D(s_texDepth, texcoord).x;
-    vec4 eyePos = screen2Eye(screen);
-    vec3 fragPos = mul(u_invView, eyePos).xyz;
+    vec3 fragPos = screen2Eye(screen).xyz;
 
-    vec3 camPos = u_camPos.xyz;
-    vec3 V = normalize(camPos - fragPos);
+    vec3 V = normalize(-fragPos);
 
     // lighting
 
     PointLight light = getPointLight(u_lightIndex);
+    light.position = mul(u_view, vec4(light.position, 1.0)).xyz;
 
     vec3 radianceOut = vec3_splat(0.0);
     float dist = distance(light.position, fragPos);

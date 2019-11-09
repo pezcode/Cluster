@@ -72,4 +72,27 @@ vec3 convertTangentNormal(vec3 normal_ref, vec3 tangent_ref, vec3 normal)
     return normalize(mul(TBN, normal));
 }
 
+// compress viewspace normal into two components
+// spheremap transform used by Cry Engine 3
+// https://aras-p.info/texts/CompactNormalStorage.html#method04spheremap
+// must be viewspace so we can hide z-pole
+// both (0,0,1) and (0,0,-1) have the same encoding
+// the original implementation always decoded to (0,0,1)
+// changed it to return normals pointing towards the camera for
+// a left-handed coordinate system
+
+vec2 packNormal(vec3 normal)
+{
+    float f = sqrt(8.0 * -normal.z + 8.0);
+    return normal.xy / f + 0.5;
+}
+
+vec3 unpackNormal(vec2 encoded)
+{
+    vec2 fenc = encoded * 4.0 - 2.0;
+    float f = dot(fenc, fenc);
+    float g = sqrt(1.0 - f * 0.25);
+    return vec3(fenc * g, -(1.0 - f * 0.5));
+}
+
 #endif // UTIL_SH_HEADER_GUARD

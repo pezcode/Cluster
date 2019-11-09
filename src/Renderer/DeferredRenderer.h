@@ -28,9 +28,7 @@ private:
         // A = a (remapped roughness)
         Diffuse_A,
 
-        // TODO encode as two 16-bit components (RG16F)
-        // https://aras-p.info/texts/CompactNormalStorage.html
-        // Method #4: Spheremap Transform looks ideal
+        // RG = encoded normal
         Normal,
 
         // RGB = F0 (Fresnel at normal incidence)
@@ -47,12 +45,13 @@ private:
         Count
     };
 
-    static constexpr bgfx::TextureFormat::Enum gBufferAttachmentFormats[] =
+    static constexpr bgfx::TextureFormat::Enum gBufferAttachmentFormats[GBufferAttachment::Count - 1] =
     {
         bgfx::TextureFormat::BGRA8,
-        bgfx::TextureFormat::RGB10A2,
+        bgfx::TextureFormat::RG16F,
         bgfx::TextureFormat::BGRA8,
         bgfx::TextureFormat::BGRA8
+        // depth format is determined dynamically
     };
 
     TextureBuffer gBufferTextures[GBufferAttachment::Count + 1]; // includes depth, + null-terminated

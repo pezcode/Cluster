@@ -55,17 +55,23 @@ DeferredRenderer::~DeferredRenderer()
 bool DeferredRenderer::supported()
 {
     const bgfx::Caps* caps = bgfx::getCaps();
-    return Renderer::supported() &&
-           // blitting depth texture after geometry pass
-           (caps->supported & BGFX_CAPS_TEXTURE_BLIT) != 0 &&
-           // fragment depth available in fragment shader
-           (caps->supported & BGFX_CAPS_FRAGMENT_DEPTH) != 0 &&
-           // render target for G-Buffer material parameters
-           (caps->formats[bgfx::TextureFormat::BGRA8]   & BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER) != 0 &&
-           // render target for G-Buffer normals
-           (caps->formats[bgfx::TextureFormat::RGB10A2] & BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER) != 0 &&
-           // multiple render targets
-           caps->limits.maxFBAttachments >= GBufferAttachment::Count; // does depth count as an attachment?
+    bool supported = Renderer::supported() &&
+                     // blitting depth texture after geometry pass
+                     (caps->supported & BGFX_CAPS_TEXTURE_BLIT) != 0 &&
+                     // fragment depth available in fragment shader
+                     (caps->supported & BGFX_CAPS_FRAGMENT_DEPTH) != 0 &&
+                     // multiple render targets
+                     caps->limits.maxFBAttachments >= GBufferAttachment::Count; // does depth count as an attachment?
+    if(!supported)
+        return false;
+
+    for(bgfx::TextureFormat::Enum format : gBufferAttachmentFormats)
+    {
+        if((caps->formats[format] & BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER) == 0)
+            return false;
+    }
+
+    return true;
 }
 
 void DeferredRenderer::onInitialize()
