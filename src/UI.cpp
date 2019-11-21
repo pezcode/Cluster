@@ -59,27 +59,33 @@ void ClusterUI::initialize()
     // Load text font
     io.Fonts->Clear();
     const char* fontFile = "assets/fonts/Roboto/Roboto-Medium.ttf";
-    ImFont* font = io.Fonts->AddFontFromFileTTF(fontFile, 14.0f);
+    ImFontConfig fontConfig;
+    fontConfig.GlyphRanges = io.Fonts->GetGlyphRangesDefault(); // basic + extended Latin only
+    ImFont* font = io.Fonts->AddFontFromFileTTF(fontFile, 14.0f, &fontConfig);
     if(!font)
         io.Fonts->AddFontDefault();
 
     // Load and merge icon font
     const char* iconFontFile = "assets/fonts/ForkAwesome/forkawesome-webfont.ttf";
-    const ImWchar iconsRanges[] = { ICON_MIN_FK, ICON_MAX_FK, 0 };
+    static const ImWchar iconsRanges[] = { ICON_MIN_FK, ICON_MAX_FK, 0 }; // must persist for font lifetime
     ImFontConfig iconsConfig;
     iconsConfig.MergeMode = true;
+    iconsConfig.GlyphRanges = iconsRanges;
+    iconsConfig.GlyphMinAdvanceX = 13.0f; // align icons
     iconsConfig.PixelSnapH = true;
-    ImFont* iconFont = io.Fonts->AddFontFromFileTTF(iconFontFile, 13.0f, &iconsConfig, iconsRanges);
+    iconsConfig.OversampleH = 1;
+    iconsConfig.OversampleV = 1;
+    ImFont* iconFont = io.Fonts->AddFontFromFileTTF(iconFontFile, 13.0f, &iconsConfig);
 
     // Generate font texture
-    unsigned char* tex_data;
-    int tex_w, tex_h;
-    int bytes;
+    unsigned char* tex_data = nullptr;
+    int tex_w = 0, tex_h = 0;
+    int bytes = 0;
     io.Fonts->GetTexDataAsRGBA32(&tex_data, &tex_w, &tex_h, &bytes);
     fontTexture = bgfx::createTexture2D((uint16_t)tex_w, (uint16_t)tex_h,
                                         false, 1, bgfx::TextureFormat::RGBA8,
                                         0, bgfx::copy(tex_data, tex_w * tex_h * bytes));
-    io.Fonts->SetTexID(ImTextureID(fontTexture.idx));
+    io.Fonts->SetTexID((ImTextureID)fontTexture.idx);
 }
 
 void ClusterUI::update(float dt)
