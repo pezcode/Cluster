@@ -40,7 +40,7 @@ private:
     static constexpr float MIN_FOV = 10.0f;
     static constexpr float MAX_FOV = 90.0f;
 
-    glm::vec3 orthUp = Y;
+    glm::vec3 upAxis = Y;
 
     glm::vec3 pos = { 0.0f, 0.0f, 0.0f };
     glm::quat rotation = glm::identity<glm::quat>();

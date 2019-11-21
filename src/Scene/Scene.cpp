@@ -150,9 +150,10 @@ bool Scene::load(const char* file)
             }
             else
             {
-                Log->info("No camera, using default");
-
-                camera.lookAt(center - glm::vec3(0.0f, 0.0f, diagonal / 2.0f), center, glm::vec3(0.0f, 1.0f, 0.0f));
+                Log->info("No camera");
+                camera.lookAt(center - glm::vec3(0.0f, 0.0f, diagonal / 2.0f),
+                              center,
+                              glm::vec3(0.0f, 1.0f, 0.0f));
                 camera.zFar = diagonal;
                 camera.zNear = camera.zFar / 50.0f;
             }

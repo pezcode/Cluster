@@ -17,7 +17,7 @@ void Camera::rotate(glm::vec2 delta)
     delta = glm::radians(delta);
 
     // limit pitch
-    float dot = glm::dot(orthUp, forward());
+    float dot = glm::dot(upAxis, forward());
     if((dot < -0.99f && delta.x < 0.0f) || // angle nearing 180 degrees
        (dot >  0.99f && delta.x > 0.0f))   // angle nearing 0 degrees
         delta.x = 0.0f;
@@ -40,21 +40,19 @@ void Camera::zoom(float offset)
 void Camera::lookAt(const glm::vec3& position, const glm::vec3& target, const glm::vec3& up)
 {
     pos = position;
+    upAxis = up;
 
-    rotation = glm::quatLookAtLH(target - position, up);
-
-    /*
     // model rotation
     // maps vectors to camera space (x, y, z)
     glm::vec3 forward = glm::normalize(target - position);
     rotation = glm::rotation(forward, Z);
 
     // correct the up vector
-    glm::vec3 right = glm::cross(glm::normalize(up), forward); // left-handed coordinate system
-    orthUp = -glm::cross(right, forward);
+    // the cross product of non-orthogonal vectors is not normalized
+    glm::vec3 right = glm::normalize(glm::cross(glm::normalize(up), forward)); // left-handed coordinate system
+    glm::vec3 orthUp = glm::cross(forward, right);
     glm::quat upRotation = glm::rotation(rotation * orthUp, Y);
     rotation = upRotation * rotation;
-    */
 
     // inverse of the model rotation
     // maps camera space vectors to model vectors

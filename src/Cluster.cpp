@@ -114,12 +114,7 @@ void Cluster::initialize(int _argc, char* _argv[])
 
     // Sponza
     // debug camera + lights
-
-    //scene->camera.move({ -7.0f, 2.0f, 0.0f });
-    //scene->camera.rotate({ -45.0f, -90.0f });
-
-    //scene->camera.lookAt({ -7.0f, 2.0f, 0.0f }, scene->center, glm::vec3(0.0f, 1.0f, 0.0f));
-
+    scene->camera.lookAt({ -7.0f, 2.0f, 0.0f }, scene->center, glm::vec3(0.0f, 1.0f, 0.0f));
     scene->pointLights.lights = {
         // pos, power
         { { -5.0f, 0.3f, 0.0f }, { 100.0f, 100.0f, 100.0f } },
@@ -127,9 +122,7 @@ void Cluster::initialize(int _argc, char* _argv[])
         { {  5.0f, 0.3f, 0.0f }, { 100.0f, 100.0f, 100.0f } }
     };
     scene->pointLights.update();
-    config->lights = 3;
-
-    //generateLights(config->lights);
+    config->lights = scene->pointLights.lights.size();
 
     frameNumber = 0;
 }
@@ -413,7 +406,8 @@ void Cluster::generateLights(unsigned int count)
     for(size_t i = keep; i < count; i++)
     {
         glm::vec3 position = glm::vec3(dist(mt), dist(mt), dist(mt)) * scale - (scale * 0.5f);
-        position.y = glm::abs(position.y);
+        //position += scene->center; // not Sponza
+        position.y = glm::abs(position.y); // Sponza
         glm::vec3 color = glm::vec3(dist(mt), dist(mt), dist(mt));
         glm::vec3 power = color * (dist(mt) * (POWER_MAX - POWER_MIN) + POWER_MIN);
         lights[i] = {

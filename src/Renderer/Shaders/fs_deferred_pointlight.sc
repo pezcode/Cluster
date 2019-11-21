@@ -8,7 +8,6 @@
 SAMPLER2D(s_texDiffuseA,          SAMPLER_DEFERRED_DIFFUSE_A);
 SAMPLER2D(s_texNormal,            SAMPLER_DEFERRED_NORMAL);
 SAMPLER2D(s_texF0Metallic,        SAMPLER_DEFERRED_F0_METALLIC);
-SAMPLER2D(s_texEmissiveOcclusion, SAMPLER_DEFERRED_EMISSIVE_OCCLUSION);
 SAMPLER2D(s_texDepth,             SAMPLER_DEFERRED_DEPTH);
 
 uniform vec4 u_lightIndexVec;
@@ -35,8 +34,6 @@ void main()
     screen.z = texture2D(s_texDepth, texcoord).x;
     vec3 fragPos = screen2Eye(screen).xyz;
 
-    vec3 V = normalize(-fragPos);
-
     // lighting
 
     PointLight light = getPointLight(u_lightIndex);
@@ -47,6 +44,7 @@ void main()
     float attenuation = smoothAttenuation(dist, light.radius);
     if(attenuation > 0.0)
     {
+        vec3 V = normalize(-fragPos);
         vec3 L = normalize(light.position - fragPos);
         vec3 radianceIn = light.intensity * attenuation;
         float NoL = saturate(dot(N, L));

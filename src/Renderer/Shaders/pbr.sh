@@ -81,7 +81,9 @@ vec3 pbrNormal(vec2 texcoord)
 {
     if(u_hasNormalTexture)
     {
-        return normalize((texture2D(s_texNormal, texcoord).rgb * 2.0) - 1.0) * u_normalScale;
+        // the normal scale can cause problems and serves no real purpose
+        // normal compression and BRDF calculations assume unit length
+        return normalize((texture2D(s_texNormal, texcoord).rgb * 2.0) - 1.0); // * u_normalScale;
     }
     else
     {
