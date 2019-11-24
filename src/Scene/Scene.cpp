@@ -326,7 +326,7 @@ Material Scene::loadMaterial(const aiMaterial* material, const char* dir)
     }
 
     ai_real occlusionStrength;
-    if(AI_SUCCESS == material->Get(AI_MATKEY_GLTF_TEXTURE_STRENGTH(aiTextureType_AMBIENT, 0), occlusionStrength))
+    if(AI_SUCCESS == material->Get(AI_MATKEY_GLTF_TEXTURE_STRENGTH(aiTextureType_LIGHTMAP, 0), occlusionStrength))
         out.occlusionStrength = glm::clamp(occlusionStrength, 0.0f, 1.0f);
 
     // emissive texture
