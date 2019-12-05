@@ -8,7 +8,6 @@ namespace spdlog
 {
 namespace ext
 {
-
 template<typename Mutex, typename Func>
 class clusterui_sink : public sinks::base_sink<Mutex>
 {
@@ -29,8 +28,10 @@ protected:
     virtual void flush_() override {}
 };
 
-template<typename Func> using clusterui_sink_mt = clusterui_sink<std::mutex, Func>;
-template<typename Func> using clusterui_sink_st = clusterui_sink<details::null_mutex, Func>;
+template<typename Func>
+using clusterui_sink_mt = clusterui_sink<std::mutex, Func>;
+template<typename Func>
+using clusterui_sink_st = clusterui_sink<details::null_mutex, Func>;
 
 } // namespace ext
 } // namespace spdlog

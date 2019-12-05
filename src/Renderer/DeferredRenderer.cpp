@@ -11,28 +11,18 @@ DeferredRenderer::DeferredRenderer(const Scene* scene) :
     Renderer(scene),
     pointLightVertexBuffer(BGFX_INVALID_HANDLE),
     pointLightIndexBuffer(BGFX_INVALID_HANDLE),
-    gBufferTextures {
-        { BGFX_INVALID_HANDLE, "Diffuse + roughness"  },
-        { BGFX_INVALID_HANDLE, "Normal"               },
-        { BGFX_INVALID_HANDLE, "F0 + metallic"        },
-        { BGFX_INVALID_HANDLE, "Emissive + occlusion" },
-        { BGFX_INVALID_HANDLE, "Depth"                },
-        { BGFX_INVALID_HANDLE, nullptr                }
-    },
-    gBufferTextureUnits {
-        Samplers::DEFERRED_DIFFUSE_A,
-        Samplers::DEFERRED_NORMAL,
-        Samplers::DEFERRED_F0_METALLIC,
-        Samplers::DEFERRED_EMISSIVE_OCCLUSION,
-        Samplers::DEFERRED_DEPTH
-    },
-    gBufferSamplerNames {
-        "s_texDiffuseA",  
-        "s_texNormal",
-        "s_texF0Metallic",
-        "s_texEmissiveOcclusion",
-        "s_texDepth"
-    },
+    gBufferTextures { { BGFX_INVALID_HANDLE, "Diffuse + roughness" },
+                      { BGFX_INVALID_HANDLE, "Normal" },
+                      { BGFX_INVALID_HANDLE, "F0 + metallic" },
+                      { BGFX_INVALID_HANDLE, "Emissive + occlusion" },
+                      { BGFX_INVALID_HANDLE, "Depth" },
+                      { BGFX_INVALID_HANDLE, nullptr } },
+    gBufferTextureUnits { Samplers::DEFERRED_DIFFUSE_A,
+                          Samplers::DEFERRED_NORMAL,
+                          Samplers::DEFERRED_F0_METALLIC,
+                          Samplers::DEFERRED_EMISSIVE_OCCLUSION,
+                          Samplers::DEFERRED_DEPTH },
+    gBufferSamplerNames { "s_texDiffuseA", "s_texNormal", "s_texF0Metallic", "s_texEmissiveOcclusion", "s_texDepth" },
     gBuffer(BGFX_INVALID_HANDLE),
     lightDepthTexture(BGFX_INVALID_HANDLE),
     accumFrameBuffer(BGFX_INVALID_HANDLE),
@@ -46,10 +36,6 @@ DeferredRenderer::DeferredRenderer(const Scene* scene) :
         handle = BGFX_INVALID_HANDLE;
     }
     buffers = gBufferTextures;
-}
-
-DeferredRenderer::~DeferredRenderer()
-{
 }
 
 bool DeferredRenderer::supported()
@@ -86,9 +72,10 @@ void DeferredRenderer::onInitialize()
     constexpr float LEFT = -1.0f, RIGHT = 1.0f, BOTTOM = -1.0f, TOP = 1.0f, FRONT = -1.0f, BACK = 1.0f;
     const PosVertex vertices[8] = {
         { LEFT, BOTTOM, FRONT }, { RIGHT, BOTTOM, FRONT }, { LEFT, TOP, FRONT }, { RIGHT, TOP, FRONT },
-        { LEFT, BOTTOM, BACK  }, { RIGHT, BOTTOM, BACK  }, { LEFT, TOP, BACK  }, { RIGHT, TOP, BACK  },
+        { LEFT, BOTTOM, BACK },  { RIGHT, BOTTOM, BACK },  { LEFT, TOP, BACK },  { RIGHT, TOP, BACK },
     };
-    const uint16_t indices[6 * 6] = { // CCW
+    const uint16_t indices[6 * 6] = {
+        // CCW
         0, 1, 3, 3, 2, 0, // front
         5, 4, 6, 6, 7, 5, // back
         4, 0, 2, 2, 6, 4, // left
@@ -145,10 +132,8 @@ void DeferredRenderer::onReset()
 
     if(!bgfx::isValid(accumFrameBuffer))
     {
-        const bgfx::TextureHandle textures[2] = {
-            bgfx::getTexture(frameBuffer, 0),
-            bgfx::getTexture(gBuffer, GBufferAttachment::Depth)
-        };
+        const bgfx::TextureHandle textures[2] = { bgfx::getTexture(frameBuffer, 0),
+                                                  bgfx::getTexture(gBuffer, GBufferAttachment::Depth) };
         accumFrameBuffer = bgfx::createFrameBuffer(BX_COUNTOF(textures), textures); // don't destroy textures
     }
 }
@@ -278,7 +263,8 @@ void DeferredRenderer::onRender(float dt)
         bgfx::setUniform(lightIndexVecUniform, lightIndexVec);
         bindGBuffer();
         lights.bindLights(scene);
-        bgfx::setState(BGFX_STATE_WRITE_RGB | BGFX_STATE_DEPTH_TEST_GEQUAL | BGFX_STATE_CULL_CCW | BGFX_STATE_BLEND_ADD);
+        bgfx::setState(BGFX_STATE_WRITE_RGB | BGFX_STATE_DEPTH_TEST_GEQUAL | BGFX_STATE_CULL_CCW |
+                       BGFX_STATE_BLEND_ADD);
         bgfx::submit(vLight, pointLightProgram);
     }
 
@@ -341,13 +327,15 @@ bgfx::FrameBufferHandle DeferredRenderer::createGBuffer()
     for(size_t i = 0; i < GBufferAttachment::Depth; i++)
     {
         assert(bgfx::isTextureValid(0, false, 1, gBufferAttachmentFormats[i], BGFX_TEXTURE_RT | samplerFlags));
-        textures[i] = bgfx::createTexture2D(bgfx::BackbufferRatio::Equal, false, 1, gBufferAttachmentFormats[i], BGFX_TEXTURE_RT | samplerFlags);
+        textures[i] = bgfx::createTexture2D(
+            bgfx::BackbufferRatio::Equal, false, 1, gBufferAttachmentFormats[i], BGFX_TEXTURE_RT | samplerFlags);
     }
 
     // not write only
     bgfx::TextureFormat::Enum depthFormat = findDepthFormat(BGFX_TEXTURE_RT | samplerFlags);
     assert(depthFormat != bgfx::TextureFormat::Count);
-    textures[Depth] = bgfx::createTexture2D(bgfx::BackbufferRatio::Equal, false, 1, depthFormat, BGFX_TEXTURE_RT | samplerFlags);
+    textures[Depth] =
+        bgfx::createTexture2D(bgfx::BackbufferRatio::Equal, false, 1, depthFormat, BGFX_TEXTURE_RT | samplerFlags);
 
     bgfx::FrameBufferHandle gb = bgfx::createFrameBuffer((uint8_t)GBufferAttachment::Count, textures, true);
 

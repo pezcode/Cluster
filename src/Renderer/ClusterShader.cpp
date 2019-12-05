@@ -17,7 +17,8 @@ ClusterShader::ClusterShader() :
     atomicIndexBuffer(BGFX_INVALID_HANDLE),
     lightCount(0)
 {
-    static_assert(CLUSTERS_Z % CLUSTERS_Z_THREADS == 0, "number of cluster depth slices must be divisible by thread count z-dimension");
+    static_assert(CLUSTERS_Z % CLUSTERS_Z_THREADS == 0,
+                  "number of cluster depth slices must be divisible by thread count z-dimension");
 }
 
 void ClusterShader::initialize()
@@ -27,10 +28,13 @@ void ClusterShader::initialize()
     clusterSizesVecUniform = bgfx::createUniform("u_clusterSizesVec", bgfx::UniformType::Vec4);
     zNearFarVecUniform = bgfx::createUniform("u_zNearFarVec", bgfx::UniformType::Vec4);
 
-    clustersBuffer     = bgfx::createDynamicVertexBuffer(CLUSTER_COUNT, ClusterVertex::decl,     BGFX_BUFFER_COMPUTE_READ_WRITE);
-    lightIndicesBuffer = bgfx::createDynamicIndexBuffer (CLUSTER_COUNT * MAX_LIGHTS_PER_CLUSTER, BGFX_BUFFER_COMPUTE_READ_WRITE | BGFX_BUFFER_INDEX32);
-    lightGridBuffer    = bgfx::createDynamicIndexBuffer (CLUSTER_COUNT * 4,                      BGFX_BUFFER_COMPUTE_READ_WRITE | BGFX_BUFFER_INDEX32);
-    atomicIndexBuffer  = bgfx::createDynamicIndexBuffer (1,                                      BGFX_BUFFER_COMPUTE_READ_WRITE | BGFX_BUFFER_INDEX32);
+    clustersBuffer =
+        bgfx::createDynamicVertexBuffer(CLUSTER_COUNT, ClusterVertex::decl, BGFX_BUFFER_COMPUTE_READ_WRITE);
+    lightIndicesBuffer = bgfx::createDynamicIndexBuffer(CLUSTER_COUNT * MAX_LIGHTS_PER_CLUSTER,
+                                                        BGFX_BUFFER_COMPUTE_READ_WRITE | BGFX_BUFFER_INDEX32);
+    lightGridBuffer =
+        bgfx::createDynamicIndexBuffer(CLUSTER_COUNT * 4, BGFX_BUFFER_COMPUTE_READ_WRITE | BGFX_BUFFER_INDEX32);
+    atomicIndexBuffer = bgfx::createDynamicIndexBuffer(1, BGFX_BUFFER_COMPUTE_READ_WRITE | BGFX_BUFFER_INDEX32);
 }
 
 void ClusterShader::shutdown()
@@ -52,11 +56,8 @@ void ClusterShader::setUniforms(const Scene* scene, uint16_t screenWidth, uint16
 {
     assert(scene != nullptr);
 
-    float clusterSizesVec[4] =
-    {
-        std::ceil((float)screenWidth  / CLUSTERS_X),
-        std::ceil((float)screenHeight / CLUSTERS_Y)
-    };
+    float clusterSizesVec[4] = { std::ceil((float)screenWidth / CLUSTERS_X),
+                                 std::ceil((float)screenHeight / CLUSTERS_Y) };
 
     bgfx::setUniform(clusterSizesVecUniform, clusterSizesVec);
     float zNearFarVec[4] = { scene->camera.zNear, scene->camera.zFar };

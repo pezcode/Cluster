@@ -13,17 +13,7 @@
 
 using namespace std::placeholders;
 
-ClusterUI::ClusterUI(Cluster& app) :
-    logUISink(nullptr),
-    app(app),
-    mTime(0.0f),
-    fontTexture(BGFX_INVALID_HANDLE)
-{
-}
-
-ClusterUI::~ClusterUI()
-{
-}
+ClusterUI::ClusterUI(Cluster& app) : logUISink(nullptr), app(app), mTime(0.0f), fontTexture(BGFX_INVALID_HANDLE) {}
 
 void ClusterUI::initialize()
 {
@@ -82,9 +72,13 @@ void ClusterUI::initialize()
     int tex_w = 0, tex_h = 0;
     int bytes = 0;
     io.Fonts->GetTexDataAsRGBA32(&tex_data, &tex_w, &tex_h, &bytes);
-    fontTexture = bgfx::createTexture2D((uint16_t)tex_w, (uint16_t)tex_h,
-                                        false, 1, bgfx::TextureFormat::RGBA8,
-                                        0, bgfx::copy(tex_data, tex_w * tex_h * bytes));
+    fontTexture = bgfx::createTexture2D((uint16_t)tex_w,
+                                        (uint16_t)tex_h,
+                                        false,
+                                        1,
+                                        bgfx::TextureFormat::RGBA8,
+                                        0,
+                                        bgfx::copy(tex_data, tex_w * tex_h * bytes));
     io.Fonts->SetTexID((ImTextureID)fontTexture.idx);
 }
 
@@ -115,16 +109,14 @@ void ClusterUI::update(float dt)
         // what is max exposure?
         ImGui::SliderFloat("Exposure", &app.scene->camera.exposure, 0.0f, 30.0f, "%.3f", 5.0f);
 
-        const char* operators[] = {
-            "None",
-            "Exponential",
-            "Reinhard",
-            "Reinhard - Luminance",
-            "Hable (Uncharted 2)",
-            "Duiker (Kodak curve)",
-            "ACES",
-            "ACES - Luminance"
-        };
+        const char* operators[] = { "None",
+                                    "Exponential",
+                                    "Reinhard",
+                                    "Reinhard - Luminance",
+                                    "Hable (Uncharted 2)",
+                                    "Duiker (Kodak curve)",
+                                    "ACES",
+                                    "ACES - Luminance" };
         int tonemappingMode = (int)app.config->tonemappingMode;
         ImGui::Combo("Tonemapping", &tonemappingMode, operators, IM_ARRAYSIZE(operators));
         app.config->tonemappingMode = (Renderer::TonemappingMode)tonemappingMode;
@@ -170,9 +162,8 @@ void ClusterUI::update(float dt)
         }
         */
 
-        if(ImGui::Button(app.config->fullscreen
-                            ? (ICON_FK_WINDOW_RESTORE  "  Restore")
-                            : (ICON_FK_WINDOW_MAXIMIZE "  Fullscreen"),
+        if(ImGui::Button(app.config->fullscreen ? (ICON_FK_WINDOW_RESTORE "  Restore")
+                                                : (ICON_FK_WINDOW_MAXIMIZE "  Fullscreen"),
                          ImVec2(100, 0)))
         {
             app.toggleFullscreen();
@@ -194,12 +185,11 @@ void ClusterUI::update(float dt)
         ImVec4 clrText = ImGui::GetStyleColorVec4(ImGuiCol_Text);
         ImVec4 clrDisabled = ImGui::GetStyleColorVec4(ImGuiCol_TextDisabled);
         ImVec4 clrWarning = ImVec4(1.0f, 0.5f, 0.0f, 1.0f); // yellow/orange ("Gold")
-        ImVec4 clrError = ImVec4(0.8f, 0.0f, 0.1f, 1.0f); // yellow/orange ("Crimson")
+        ImVec4 clrError = ImVec4(0.8f, 0.0f, 0.1f, 1.0f);   // yellow/orange ("Crimson")
         // trace, debug, info, warn, error, critical
         const ImVec4 colors[] = { clrDisabled, clrDisabled, clrText, clrWarning, clrError, clrError };
         const char icons[][4] = { ICON_FK_INFO,        ICON_FK_INFO,        ICON_FK_INFO,
-                                  ICON_FK_EXCLAMATION, ICON_FK_EXCLAMATION, ICON_FK_EXCLAMATION
-        };
+                                  ICON_FK_EXCLAMATION, ICON_FK_EXCLAMATION, ICON_FK_EXCLAMATION };
         for(const LogEntry& entry : logEntries)
         {
             ImGui::TextColored(colors[entry.level], "%s %s", icons[entry.level], logText.begin() + entry.messageOffset);
@@ -251,14 +241,28 @@ void ClusterUI::update(float dt)
         {
             ImGui::Separator();
             ImGui::Text("FPS");
-            ImGui::PlotLines("", fpsValues, IM_ARRAYSIZE(fpsValues), (int)offset + 1, nullptr, 0.0f, 200.0f, ImVec2(overlayWidth, 50));
+            ImGui::PlotLines("",
+                             fpsValues,
+                             IM_ARRAYSIZE(fpsValues),
+                             (int)offset + 1,
+                             nullptr,
+                             0.0f,
+                             200.0f,
+                             ImVec2(overlayWidth, 50));
             ImGui::Text("%.0f", fpsValues[offset]);
         }
         if(app.config->overlays.frameTime)
         {
             ImGui::Separator();
             ImGui::Text("Frame time");
-            ImGui::PlotLines("", frameTimeValues, IM_ARRAYSIZE(frameTimeValues), (int)offset + 1, nullptr, 0.0f, 30.0f, ImVec2(overlayWidth, 50));
+            ImGui::PlotLines("",
+                             frameTimeValues,
+                             IM_ARRAYSIZE(frameTimeValues),
+                             (int)offset + 1,
+                             nullptr,
+                             0.0f,
+                             30.0f,
+                             ImVec2(overlayWidth, 50));
             ImGui::Text("CPU: %.2f ms", float(stats->cpuTimeEnd - stats->cpuTimeBegin) * toCpuMs);
             ImGui::Text("GPU: %.2f ms", float(stats->gpuTimeEnd - stats->gpuTimeBegin) * toGpuMs);
             ImGui::Text("Total: %.2f ms", frameTimeValues[offset]);
@@ -289,21 +293,25 @@ void ClusterUI::update(float dt)
                             ImGui::Text("%d", viewStats.view);
 
                             const float maxWidth = overlayWidth * 0.35f;
-                            const float cpuWidth = bx::clamp(float(viewStats.cpuTimeElapsed * toCpuMs) * scale, 1.0f, maxWidth);
-                            const float gpuWidth = bx::clamp(float(viewStats.gpuTimeElapsed * toGpuMs) * scale, 1.0f, maxWidth);
+                            const float cpuWidth =
+                                bx::clamp(float(viewStats.cpuTimeElapsed * toCpuMs) * scale, 1.0f, maxWidth);
+                            const float gpuWidth =
+                                bx::clamp(float(viewStats.gpuTimeElapsed * toGpuMs) * scale, 1.0f, maxWidth);
 
                             ImGui::SameLine(overlayWidth * 0.3f);
 
                             if(drawBar(cpuWidth, maxWidth, itemHeight, cpuColor))
                             {
-                                ImGui::SetTooltip("%s -- CPU: %.2f ms", viewStats.name, viewStats.cpuTimeElapsed * toCpuMs);
+                                ImGui::SetTooltip(
+                                    "%s -- CPU: %.2f ms", viewStats.name, viewStats.cpuTimeElapsed * toCpuMs);
                             }
 
                             ImGui::SameLine();
 
                             if(drawBar(gpuWidth, maxWidth, itemHeight, gpuColor))
                             {
-                                ImGui::SetTooltip("%s -- GPU: %.2f ms", viewStats.name, viewStats.gpuTimeElapsed * toGpuMs);
+                                ImGui::SetTooltip(
+                                    "%s -- GPU: %.2f ms", viewStats.name, viewStats.gpuTimeElapsed * toGpuMs);
                             }
                         }
                     }
@@ -325,7 +333,14 @@ void ClusterUI::update(float dt)
             if(used > 0 && max > 0)
             {
                 ImGui::Text("GPU memory");
-                ImGui::PlotLines("", gpuMemoryValues, IM_ARRAYSIZE(gpuMemoryValues), (int)offset + 1, nullptr, 0.0f, float(max), ImVec2(overlayWidth, 50));
+                ImGui::PlotLines("",
+                                 gpuMemoryValues,
+                                 IM_ARRAYSIZE(gpuMemoryValues),
+                                 (int)offset + 1,
+                                 nullptr,
+                                 0.0f,
+                                 float(max),
+                                 ImVec2(overlayWidth, 50));
                 char strUsed[64];
                 bx::prettify(strUsed, BX_COUNTOF(strUsed), stats->gpuMemoryUsed);
                 char strMax[64];
@@ -470,7 +485,7 @@ void ClusterUI::imageTooltip(ImTextureID tex, ImVec2 texSize, float regionSize, 
         float zoom = 4.0f;
         ImGui::Text("Min: (%.2f, %.2f)", region.x, region.y);
         ImGui::Text("Max: (%.2f, %.2f)", region.x + regionSize, region.y + regionSize);
-        ImVec2 topLeft     = ImVec2((region.x)              / texSize.x, (region.y)              / texSize.y);
+        ImVec2 topLeft = ImVec2((region.x) / texSize.x, (region.y) / texSize.y);
         ImVec2 bottomRight = ImVec2((region.x + regionSize) / texSize.x, (region.y + regionSize) / texSize.y);
         if(bgfx::getCaps()->originBottomLeft)
         {

@@ -36,7 +36,7 @@ void main()
     const uint clusterIndex = gl_GlobalInvocationID.z * gl_WorkGroupSize.x * gl_WorkGroupSize.y +
                               gl_GlobalInvocationID.y * gl_WorkGroupSize.x +
                               gl_GlobalInvocationID.x;
-
+    
     // we have a cache of GROUP_SIZE lights
     // have to run this loop several times if we have more than GROUP_SIZE lights
     uint lightCount = pointLightCount();
@@ -108,11 +108,14 @@ bool pointLightAffectsCluster(PointLight light, Cluster cluster)
 float distsqToCluster(vec3 pos, Cluster cluster)
 {
     // only add distance in either dimension if it's outside the bounding box
-    vec3 isBelow = 1.0 - step(cluster.minBounds, pos);
-    vec3 isAbove = step(cluster.maxBounds, pos);
+    //vec3 isBelow = 1.0 - step(cluster.minBounds, pos);
+    //vec3 isAbove = step(cluster.maxBounds, pos);
 
     vec3 belowDist = cluster.minBounds - pos;
     vec3 aboveDist = pos - cluster.maxBounds;
+
+    vec3 isBelow = vec3(greaterThan(belowDist, vec3_splat(0.0)));
+    vec3 isAbove = vec3(greaterThan(aboveDist, vec3_splat(0.0)));
 
     vec3 distSqVec = (isBelow * belowDist) + (isAbove * aboveDist);
     float distsq = dot(distSqVec, distSqVec);

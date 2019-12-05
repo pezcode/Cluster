@@ -13,7 +13,7 @@ class Renderer
 {
 public:
     Renderer(const Scene* scene);
-    virtual ~Renderer();
+    virtual ~Renderer() {}
 
     void initialize();
     void reset(uint16_t width, uint16_t height);
@@ -70,9 +70,7 @@ protected:
 
         static void init()
         {
-            decl.begin()
-                .add(bgfx::Attrib::Position, 3, bgfx::AttribType::Float)
-                .end();
+            decl.begin().add(bgfx::Attrib::Position, 3, bgfx::AttribType::Float).end();
         }
 
         static bgfx::VertexDecl decl;

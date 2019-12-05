@@ -30,10 +30,6 @@ Scene::Scene() :
     Assimp::DefaultLogger::set(&logSource);
 }
 
-Scene::~Scene()
-{
-}
-
 void Scene::init()
 {
     Mesh::PosNormalTangentTex0Vertex::init();
@@ -82,18 +78,19 @@ bool Scene::load(const char* file)
     importer.SetPropertyInteger(AI_CONFIG_PP_SBP_REMOVE, aiPrimitiveType_LINE | aiPrimitiveType_POINT);
     // Settings for aiProcess_SplitLargeMeshes
     // Limit vertices to 65k (we use 16-bit indices)
-    importer.SetPropertyInteger(AI_CONFIG_PP_SLM_VERTEX_LIMIT, static_cast<int>(std::numeric_limits<uint16_t>::max()) + 1);
+    importer.SetPropertyInteger(AI_CONFIG_PP_SLM_VERTEX_LIMIT,
+                                static_cast<int>(std::numeric_limits<uint16_t>::max()) + 1);
 
     // TODO? importer.SetProgressHandler
 
-    unsigned int flags = aiProcessPreset_TargetRealtime_Quality | // some optimizations and safety checks
-        aiProcess_OptimizeMeshes       | // minimize number of meshes
-        aiProcess_PreTransformVertices | // apply node matrices
-        aiProcess_FixInfacingNormals   |
-        aiProcess_TransformUVCoords    | // apply UV transformations
+    unsigned int flags =
+        aiProcessPreset_TargetRealtime_Quality |                     // some optimizations and safety checks
+        aiProcess_OptimizeMeshes |                                   // minimize number of meshes
+        aiProcess_PreTransformVertices |                             // apply node matrices
+        aiProcess_FixInfacingNormals | aiProcess_TransformUVCoords | // apply UV transformations
         //aiProcess_FlipWindingOrder   | // we cull clock-wise, keep the default CCW winding order
-        aiProcess_MakeLeftHanded       | // we set GLM_FORCE_LEFT_HANDED and use left-handed bx matrix functions
-        aiProcess_FlipUVs;               // bimg loads textures with flipped Y (top left is 0,0)
+        aiProcess_MakeLeftHanded | // we set GLM_FORCE_LEFT_HANDED and use left-handed bx matrix functions
+        aiProcess_FlipUVs;         // bimg loads textures with flipped Y (top left is 0,0)
 
     const aiScene* scene = nullptr;
     try
@@ -140,9 +137,8 @@ bool Scene::load(const char* file)
 
             // bring opaque meshes to the front so alpha blending works
             // still need depth sorting for scenes with overlapping transparent meshes
-            std::partition(meshes.begin(), meshes.end(), [this](const Mesh& mesh) {
-                return !materials[mesh.material].blend;
-            });
+            std::partition(
+                meshes.begin(), meshes.end(), [this](const Mesh& mesh) { return !materials[mesh.material].blend; });
 
             if(scene->HasCameras())
             {
@@ -151,9 +147,7 @@ bool Scene::load(const char* file)
             else
             {
                 Log->info("No camera");
-                camera.lookAt(center - glm::vec3(0.0f, 0.0f, diagonal / 2.0f),
-                              center,
-                              glm::vec3(0.0f, 1.0f, 0.0f));
+                camera.lookAt(center - glm::vec3(0.0f, 0.0f, diagonal / 2.0f), center, glm::vec3(0.0f, 1.0f, 0.0f));
                 camera.zFar = diagonal;
                 camera.zNear = camera.zFar / 50.0f;
             }
@@ -339,10 +333,10 @@ Material Scene::loadMaterial(const aiMaterial* material, const char* dir)
         out.emissiveTexture = loadTexture(pathEmissive.C_Str());
     }
 
-    // assimp doesn't define this
-    #ifndef AI_MATKEY_GLTF_EMISSIVE_FACTOR
-        #define AI_MATKEY_GLTF_EMISSIVE_FACTOR AI_MATKEY_COLOR_EMISSIVE
-    #endif
+// assimp doesn't define this
+#ifndef AI_MATKEY_GLTF_EMISSIVE_FACTOR
+#define AI_MATKEY_GLTF_EMISSIVE_FACTOR AI_MATKEY_COLOR_EMISSIVE
+#endif
 
     aiColor3D emissiveFactor;
     if(AI_SUCCESS == material->Get(AI_MATKEY_GLTF_EMISSIVE_FACTOR, emissiveFactor))
@@ -354,9 +348,7 @@ Material Scene::loadMaterial(const aiMaterial* material, const char* dir)
 
 Camera Scene::loadCamera(const aiCamera* camera)
 {
-    float aspect = camera->mAspect == 0.0f
-                       ? 16.0f/9.0f
-                       : camera->mAspect;
+    float aspect = camera->mAspect == 0.0f ? 16.0f / 9.0f : camera->mAspect;
     glm::vec3 pos(camera->mPosition.x, camera->mPosition.y, camera->mPosition.z);
     glm::vec3 target(camera->mLookAt.x, camera->mLookAt.y, camera->mLookAt.z);
     glm::vec3 up(camera->mUp.x, camera->mUp.y, camera->mUp.z);
@@ -366,7 +358,7 @@ Camera Scene::loadCamera(const aiCamera* camera)
     // convert horizontal half angle (radians) to vertical full angle (degrees)
     cam.fov = glm::degrees(2.0f * glm::atan(glm::tan(camera->mHorizontalFOV) / aspect));
     cam.zNear = camera->mClipPlaneNear;
-    cam.zFar  = camera->mClipPlaneFar;
+    cam.zFar = camera->mClipPlaneFar;
 
     return cam;
 }
@@ -396,20 +388,24 @@ bgfx::TextureHandle Scene::loadTexture(const char* file)
     if(image)
     {
         // the callback gets called when bgfx is done using the data (after 2 frames)
-        const bgfx::Memory* mem = bgfx::makeRef(image->m_data, image->m_size, [](void*, void* data) {
-            bimg::imageFree((bimg::ImageContainer*)data);
-        }, image);
+        const bgfx::Memory* mem = bgfx::makeRef(
+            image->m_data,
+            image->m_size,
+            [](void*, void* data) { bimg::imageFree((bimg::ImageContainer*)data); },
+            image);
         BX_FREE(&allocator, data);
 
-        if(bgfx::isTextureValid(0, false, image->m_numLayers, (bgfx::TextureFormat::Enum)image->m_format, BGFX_TEXTURE_NONE))
+        if(bgfx::isTextureValid(
+               0, false, image->m_numLayers, (bgfx::TextureFormat::Enum)image->m_format, BGFX_TEXTURE_NONE))
         {
-            bgfx::TextureHandle tex = bgfx::createTexture2D((uint16_t)image->m_width,
-                                                            (uint16_t)image->m_height,
-                                                            image->m_numMips > 1,
-                                                            image->m_numLayers,
-                                                            (bgfx::TextureFormat::Enum)image->m_format,
-                                                            BGFX_TEXTURE_NONE | BGFX_SAMPLER_MIN_ANISOTROPIC | BGFX_SAMPLER_MAG_ANISOTROPIC,
-                                                            mem);
+            bgfx::TextureHandle tex =
+                bgfx::createTexture2D((uint16_t)image->m_width,
+                                      (uint16_t)image->m_height,
+                                      image->m_numMips > 1,
+                                      image->m_numLayers,
+                                      (bgfx::TextureFormat::Enum)image->m_format,
+                                      BGFX_TEXTURE_NONE | BGFX_SAMPLER_MIN_ANISOTROPIC | BGFX_SAMPLER_MAG_ANISOTROPIC,
+                                      mem);
             //bgfx::setName(tex, file); // causes debug errors with DirectX SetPrivateProperty duplicate
             return tex;
         }

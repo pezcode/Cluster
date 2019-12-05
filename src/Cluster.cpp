@@ -115,11 +115,10 @@ void Cluster::initialize(int _argc, char* _argv[])
     // Sponza
     // debug camera + lights
     scene->camera.lookAt({ -7.0f, 2.0f, 0.0f }, scene->center, glm::vec3(0.0f, 1.0f, 0.0f));
-    scene->pointLights.lights = {
-        // pos, power
-        { { -5.0f, 0.3f, 0.0f }, { 100.0f, 100.0f, 100.0f } },
-        { {  0.0f, 0.3f, 0.0f }, { 100.0f, 100.0f, 100.0f } },
-        { {  5.0f, 0.3f, 0.0f }, { 100.0f, 100.0f, 100.0f } }
+    scene->pointLights.lights = { // pos, power
+                                  { { -5.0f, 0.3f, 0.0f }, { 100.0f, 100.0f, 100.0f } },
+                                  { { 0.0f, 0.3f, 0.0f }, { 100.0f, 100.0f, 100.0f } },
+                                  { { 5.0f, 0.3f, 0.0f }, { 100.0f, 100.0f, 100.0f } }
     };
     scene->pointLights.update();
     config->lights = scene->pointLights.lights.size();
@@ -259,19 +258,19 @@ void Cluster::BgfxCallbacks::traceVargs(const char* filePath, uint16_t line, con
     if(written > 0 && written < BX_COUNTOF(buffer))
     {
         // bgfx sends lines with newlines, spdlog adds another
-        if(buffer[written-1] == '\n')
+        if(buffer[written - 1] == '\n')
             buffer[written - 1] = '\0';
         Log->trace(buffer);
     }
 }
 
 void Cluster::BgfxCallbacks::screenShot(const char* name,
-                                       uint32_t width,
-                                       uint32_t height,
-                                       uint32_t pitch,
-                                       const void* data,
-                                       uint32_t /*size*/,
-                                       bool yflip)
+                                        uint32_t width,
+                                        uint32_t height,
+                                        uint32_t pitch,
+                                        const void* data,
+                                        uint32_t /*size*/,
+                                        bool yflip)
 {
     // save screen shot as PNG
     char filePath[1024];
@@ -410,10 +409,7 @@ void Cluster::generateLights(unsigned int count)
         position.y = glm::abs(position.y); // Sponza
         glm::vec3 color = glm::vec3(dist(mt), dist(mt), dist(mt));
         glm::vec3 power = color * (dist(mt) * (POWER_MAX - POWER_MIN) + POWER_MIN);
-        lights[i] = {
-            position,
-            power
-        };
+        lights[i] = { position, power };
     }
 
     scene->pointLights.update();

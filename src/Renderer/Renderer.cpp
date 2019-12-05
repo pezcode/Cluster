@@ -34,10 +34,6 @@ Renderer::Renderer(const Scene* scene) :
 {
 }
 
-Renderer::~Renderer()
-{
-}
-
 void Renderer::initialize()
 {
     PosVertex::init();
@@ -50,11 +46,7 @@ void Renderer::initialize()
 
     // triangle used for blitting
     constexpr float BOTTOM = -1.0f, TOP = 3.0f, LEFT = -1.0f, RIGHT = 3.0f;
-    PosVertex vertices[3] = {
-        { LEFT,  BOTTOM, 0.0f },
-        { RIGHT, BOTTOM, 0.0f },
-        { LEFT,  TOP,    0.0f }
-    };
+    PosVertex vertices[3] = { { LEFT, BOTTOM, 0.0f }, { RIGHT, BOTTOM, 0.0f }, { LEFT, TOP, 0.0f } };
     blitTriangleBuffer = bgfx::createVertexBuffer(bgfx::copy(&vertices, sizeof(vertices)), PosVertex::decl);
 
     char vsName[128], fsName[128];
@@ -126,7 +118,8 @@ void Renderer::shutdown()
         bgfx::destroy(frameBuffer);
 
     blitProgram = BGFX_INVALID_HANDLE;
-    blitSampler = camPosUniform = normalMatrixUniform = exposureVecUniform = tonemappingModeVecUniform = BGFX_INVALID_HANDLE;
+    blitSampler = camPosUniform = normalMatrixUniform = exposureVecUniform = tonemappingModeVecUniform =
+        BGFX_INVALID_HANDLE;
     blitTriangleBuffer = BGFX_INVALID_HANDLE;
     frameBuffer = BGFX_INVALID_HANDLE;
 }
@@ -145,11 +138,11 @@ bool Renderer::supported()
 {
     const bgfx::Caps* caps = bgfx::getCaps();
     return
-           // SDR color attachment
-           (caps->formats[bgfx::TextureFormat::BGRA8]   & BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER) != 0 &&
-           // HDR color attachment
-           (caps->formats[bgfx::TextureFormat::RGBA16F] & BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER) != 0;
-           // TODO depth formats
+        // SDR color attachment
+        (caps->formats[bgfx::TextureFormat::BGRA8] & BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER) != 0 &&
+        // HDR color attachment
+        (caps->formats[bgfx::TextureFormat::RGBA16F] & BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER) != 0;
+    // TODO depth formats
 }
 
 void Renderer::setViewProjection(bgfx::ViewId view)
@@ -203,16 +196,9 @@ void Renderer::blitToScreen(bgfx::ViewId view)
 
 bgfx::TextureFormat::Enum Renderer::findDepthFormat(uint64_t textureFlags, bool stencil)
 {
-    const bgfx::TextureFormat::Enum depthFormats[] =
-    {
-        bgfx::TextureFormat::D16,
-        bgfx::TextureFormat::D32
-    };
+    const bgfx::TextureFormat::Enum depthFormats[] = { bgfx::TextureFormat::D16, bgfx::TextureFormat::D32 };
 
-    const bgfx::TextureFormat::Enum depthStencilFormats[] =
-    {
-        bgfx::TextureFormat::D24S8
-    };
+    const bgfx::TextureFormat::Enum depthStencilFormats[] = { bgfx::TextureFormat::D24S8 };
 
     const bgfx::TextureFormat::Enum* formats = stencil ? depthStencilFormats : depthFormats;
     size_t count = stencil ? BX_COUNTOF(depthStencilFormats) : BX_COUNTOF(depthFormats);
@@ -241,17 +227,20 @@ bgfx::FrameBufferHandle Renderer::createFrameBuffer(bool hdr, bool depth)
     // TODO try blitting for screenshots (new texture with BGFX_TEXTURE_BLIT_DST and BGFX_TEXTURE_READ_BACK)
 
     const uint64_t samplerFlags = BGFX_SAMPLER_MIN_POINT | BGFX_SAMPLER_MAG_POINT | BGFX_SAMPLER_MIP_POINT |
-                                BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP;
+                                  BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP;
 
-    bgfx::TextureFormat::Enum format = hdr ? bgfx::TextureFormat::RGBA16F : bgfx::TextureFormat::BGRA8; // BGRA is often faster (internal GPU format)
+    bgfx::TextureFormat::Enum format =
+        hdr ? bgfx::TextureFormat::RGBA16F : bgfx::TextureFormat::BGRA8; // BGRA is often faster (internal GPU format)
     assert(bgfx::isTextureValid(0, false, 1, format, BGFX_TEXTURE_RT | samplerFlags));
-    textures[attachments++] = bgfx::createTexture2D(bgfx::BackbufferRatio::Equal, false, 1, format, BGFX_TEXTURE_RT | samplerFlags);
+    textures[attachments++] =
+        bgfx::createTexture2D(bgfx::BackbufferRatio::Equal, false, 1, format, BGFX_TEXTURE_RT | samplerFlags);
 
     if(depth)
     {
         bgfx::TextureFormat::Enum depthFormat = findDepthFormat(BGFX_TEXTURE_RT_WRITE_ONLY | samplerFlags);
         assert(depthFormat != bgfx::TextureFormat::Enum::Count);
-        textures[attachments++] = bgfx::createTexture2D(bgfx::BackbufferRatio::Equal, false, 1, depthFormat, BGFX_TEXTURE_RT_WRITE_ONLY | samplerFlags);
+        textures[attachments++] = bgfx::createTexture2D(
+            bgfx::BackbufferRatio::Equal, false, 1, depthFormat, BGFX_TEXTURE_RT_WRITE_ONLY | samplerFlags);
     }
 
     bgfx::FrameBufferHandle fb = bgfx::createFrameBuffer(attachments, textures, true);

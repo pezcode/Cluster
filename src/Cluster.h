@@ -60,8 +60,14 @@ private:
         virtual void profilerBegin(const char*, uint32_t, const char*, uint16_t) override {}
         virtual void profilerBeginLiteral(const char*, uint32_t, const char*, uint16_t) override {}
         virtual void profilerEnd() override {}
-        virtual uint32_t cacheReadSize(uint64_t) override { return 0; }
-        virtual bool cacheRead(uint64_t, void*, uint32_t) override { return false; }
+        virtual uint32_t cacheReadSize(uint64_t) override
+        {
+            return 0;
+        }
+        virtual bool cacheRead(uint64_t, void*, uint32_t) override
+        {
+            return false;
+        }
         virtual void cacheWrite(uint64_t, const void*, uint32_t) override {}
         virtual void captureBegin(uint32_t, uint32_t, uint32_t, bgfx::TextureFormat::Enum, bool) override {}
         virtual void captureEnd() override {}

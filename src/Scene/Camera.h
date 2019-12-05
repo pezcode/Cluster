@@ -14,14 +14,14 @@ struct Camera
     // the ratio zFar/zNear should be minimal
     // the higher it is, the more precision loss we get in the depth buffer (-> z-fighting)
     float zNear = 0.1f; // projection plane
-    float zFar = 5.0f; // far plane
+    float zFar = 5.0f;  // far plane
 
     // simply a multiplier for the radiance arriving at the camera
     float exposure = 1.0f;
 
     void move(glm::vec3 delta); // coordinates are in world-space (use forward/up/right to move relative to the camera)
     void rotate(glm::vec2 delta); // rotation around x, y axis
-    void zoom(float offset); // > 0 = zoom in (decrease FOV by <offset> angles)
+    void zoom(float offset);      // > 0 = zoom in (decrease FOV by <offset> angles)
 
     void lookAt(const glm::vec3& position, const glm::vec3& target, const glm::vec3& up);
 
@@ -34,7 +34,6 @@ struct Camera
     glm::vec3 right() const;
 
 private:
-
     static const glm::vec3 X, Y, Z;
 
     static constexpr float MIN_FOV = 10.0f;

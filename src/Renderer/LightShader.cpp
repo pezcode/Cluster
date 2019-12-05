@@ -6,8 +6,7 @@
 #include <cassert>
 
 LightShader::LightShader() :
-    lightCountVecUniform(BGFX_INVALID_HANDLE),
-    ambientLightIrradianceUniform(BGFX_INVALID_HANDLE)
+    lightCountVecUniform(BGFX_INVALID_HANDLE), ambientLightIrradianceUniform(BGFX_INVALID_HANDLE)
 {
 }
 

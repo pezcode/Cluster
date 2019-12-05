@@ -7,7 +7,6 @@ class ClusteredRenderer : public Renderer
 {
 public:
     ClusteredRenderer(const Scene* scene);
-    virtual ~ClusteredRenderer();
 
     static bool supported();
 

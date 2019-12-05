@@ -18,7 +18,6 @@ class Scene
 {
 public:
     Scene();
-    ~Scene();
 
     static void init();
 
@@ -41,7 +40,6 @@ public:
     PointLightList pointLights;
 
 private:
-
     static bx::DefaultAllocator allocator;
     AssimpLogSource logSource;
 

@@ -28,7 +28,6 @@ public:
     static constexpr uint32_t MAX_LIGHTS_PER_CLUSTER = 100;
 
 private:
-
     struct ClusterVertex
     {
         // w is padding

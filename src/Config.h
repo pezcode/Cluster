@@ -13,7 +13,7 @@ public:
 
     // Log
 
-    bool writeLog; // not exposed to UI
+    bool writeLog;       // not exposed to UI
     const char* logFile; // not exposed to UI
 
     // Renderer
@@ -23,8 +23,8 @@ public:
     Renderer::TonemappingMode tonemappingMode;
 
     bool profile; // not exposed to UI
-    bool vsync; // not exposed to UI
-    bool msaa; // not exposed to UI
+    bool vsync;   // not exposed to UI
+    bool msaa;    // not exposed to UI
 
     // Scene
 

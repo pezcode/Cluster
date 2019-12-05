@@ -5,14 +5,13 @@
 
 bgfx::VertexDecl LightList::PointLightVertex::decl;
 
-PointLightList::PointLightList() : buffer(BGFX_INVALID_HANDLE)
-{
-}
+PointLightList::PointLightList() : buffer(BGFX_INVALID_HANDLE) {}
 
 void PointLightList::init()
 {
     LightList::PointLightVertex::init();
-    buffer = bgfx::createDynamicVertexBuffer(1, PointLightVertex::decl, BGFX_BUFFER_COMPUTE_READ | BGFX_BUFFER_ALLOW_RESIZE);
+    buffer =
+        bgfx::createDynamicVertexBuffer(1, PointLightVertex::decl, BGFX_BUFFER_COMPUTE_READ | BGFX_BUFFER_ALLOW_RESIZE);
 }
 
 void PointLightList::shutdown()

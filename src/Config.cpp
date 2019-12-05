@@ -24,7 +24,7 @@ Config::Config() :
     showConfigWindow(true),
     showLog(true),
     showStatsOverlay(true),
-    overlays({true, true, true, true}),
+    overlays({ true, true, true, true }),
     showBuffers(true),
     debugVisualization(false)
 {

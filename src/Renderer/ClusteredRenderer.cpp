@@ -15,10 +15,6 @@ ClusteredRenderer::ClusteredRenderer(const Scene* scene) :
 {
 }
 
-ClusteredRenderer::~ClusteredRenderer()
-{
-}
-
 bool ClusteredRenderer::supported()
 {
     const bgfx::Caps* caps = bgfx::getCaps();
@@ -146,5 +142,6 @@ void ClusteredRenderer::onShutdown()
     bgfx::destroy(lightingProgram);
     bgfx::destroy(debugVisProgram);
 
-    clusterBuildingComputeProgram = lightCullingComputeProgram = lightingProgram = debugVisProgram = BGFX_INVALID_HANDLE;
+    clusterBuildingComputeProgram = lightCullingComputeProgram = lightingProgram = debugVisProgram =
+        BGFX_INVALID_HANDLE;
 }

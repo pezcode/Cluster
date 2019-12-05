@@ -10,7 +10,6 @@ class ClusterUI
 {
 public:
     ClusterUI(Cluster& app);
-    ~ClusterUI();
 
     void initialize();
     void update(float dt);
@@ -20,7 +19,11 @@ public:
 
 private:
     bool drawBar(float width, float maxWidth, float height, const ImVec4& color);
-    void imageTooltip(ImTextureID tex, ImVec2 tex_size, float region_size, ImVec4 tintColor = ImVec4(1.0f, 1.0f, 1.0f, 1.0f), ImVec4 borderColor = ImVec4(1.0f, 1.0f, 1.0f, 0.5f));
+    void imageTooltip(ImTextureID tex,
+                      ImVec2 tex_size,
+                      float region_size,
+                      ImVec4 tintColor = ImVec4(1.0f, 1.0f, 1.0f, 1.0f),
+                      ImVec4 borderColor = ImVec4(1.0f, 1.0f, 1.0f, 0.5f));
 
     spdlog::sink_ptr logUISink;
 

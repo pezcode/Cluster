@@ -6,7 +6,6 @@ class DeferredRenderer : public Renderer
 {
 public:
     DeferredRenderer(const Scene* scene);
-    virtual ~DeferredRenderer();
 
     static bool supported();
 
@@ -45,8 +44,7 @@ private:
         Count
     };
 
-    static constexpr bgfx::TextureFormat::Enum gBufferAttachmentFormats[GBufferAttachment::Count - 1] =
-    {
+    static constexpr bgfx::TextureFormat::Enum gBufferAttachmentFormats[GBufferAttachment::Count - 1] = {
         bgfx::TextureFormat::BGRA8,
         bgfx::TextureFormat::RG16F,
         bgfx::TextureFormat::BGRA8,

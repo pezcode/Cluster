@@ -6,7 +6,6 @@ class ForwardRenderer : public Renderer
 {
 public:
     ForwardRenderer(const Scene* scene);
-    virtual ~ForwardRenderer();
 
     static bool supported();
 

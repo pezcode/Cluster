@@ -19,15 +19,14 @@ void Camera::rotate(glm::vec2 delta)
     // limit pitch
     float dot = glm::dot(upAxis, forward());
     if((dot < -0.99f && delta.x < 0.0f) || // angle nearing 180 degrees
-       (dot >  0.99f && delta.x > 0.0f))   // angle nearing 0 degrees
+       (dot > 0.99f && delta.x > 0.0f))    // angle nearing 0 degrees
         delta.x = 0.0f;
 
     // pitch is relative to current sideways rotation
     // yaw happens independently
     // this prevents roll
-    rotation = glm::rotate(glm::identity<glm::quat>(), delta.x, X) * // pitch
-               rotation *
-               glm::rotate(glm::identity<glm::quat>(), delta.y, Y); // yaw
+    rotation = glm::rotate(glm::identity<glm::quat>(), delta.x, X) *           // pitch
+               rotation * glm::rotate(glm::identity<glm::quat>(), delta.y, Y); // yaw
     // normalize?
     invRotation = glm::conjugate(rotation);
 }
