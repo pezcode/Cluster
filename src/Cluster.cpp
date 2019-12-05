@@ -121,7 +121,7 @@ void Cluster::initialize(int _argc, char* _argv[])
                                   { { 5.0f, 0.3f, 0.0f }, { 100.0f, 100.0f, 100.0f } }
     };
     scene->pointLights.update();
-    config->lights = scene->pointLights.lights.size();
+    config->lights = (int)scene->pointLights.lights.size();
 
     frameNumber = 0;
 }

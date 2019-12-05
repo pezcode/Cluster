@@ -243,7 +243,6 @@ Mesh Scene::loadMesh(const aiMesh* mesh)
     const bgfx::Memory* iMem = bgfx::alloc(mesh->mNumFaces * 3 * sizeof(uint16_t));
     uint16_t* indices = (uint16_t*)iMem->data;
 
-    const aiFace* faces = mesh->mFaces;
     for(unsigned int i = 0; i < mesh->mNumFaces; i++)
     {
         assert(mesh->mFaces[i].mNumIndices == 3);

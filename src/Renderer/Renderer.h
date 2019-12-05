@@ -55,7 +55,7 @@ public:
         const char* name;
     };
 
-    TextureBuffer* buffers = nullptr;
+    TextureBuffer* buffers;
 
     // final output
     // used for tonemapping, screenshots

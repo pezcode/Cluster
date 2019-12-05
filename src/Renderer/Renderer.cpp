@@ -15,6 +15,8 @@
 bgfx::VertexDecl Renderer::PosVertex::decl;
 
 Renderer::Renderer(const Scene* scene) :
+    buffers(nullptr),
+    frameBuffer(BGFX_INVALID_HANDLE),
     tonemappingMode(TonemappingMode::NONE),
     scene(scene),
     width(0),
@@ -23,7 +25,6 @@ Renderer::Renderer(const Scene* scene) :
     time(0.0f),
     viewMat(1.0f),
     projMat(1.0f),
-    frameBuffer(BGFX_INVALID_HANDLE),
     blitTriangleBuffer(BGFX_INVALID_HANDLE),
     blitProgram(BGFX_INVALID_HANDLE),
     blitSampler(BGFX_INVALID_HANDLE),

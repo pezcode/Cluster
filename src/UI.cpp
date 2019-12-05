@@ -65,7 +65,7 @@ void ClusterUI::initialize()
     iconsConfig.PixelSnapH = true;
     iconsConfig.OversampleH = 1;
     iconsConfig.OversampleV = 1;
-    ImFont* iconFont = io.Fonts->AddFontFromFileTTF(iconFontFile, 13.0f, &iconsConfig);
+    io.Fonts->AddFontFromFileTTF(iconFontFile, 13.0f, &iconsConfig);
 
     // Generate font texture
     unsigned char* tex_data = nullptr;
@@ -79,7 +79,7 @@ void ClusterUI::initialize()
                                         bgfx::TextureFormat::RGBA8,
                                         0,
                                         bgfx::copy(tex_data, tex_w * tex_h * bytes));
-    io.Fonts->SetTexID((ImTextureID)fontTexture.idx);
+    io.Fonts->SetTexID((ImTextureID)(uintptr_t)fontTexture.idx);
 }
 
 void ClusterUI::update(float dt)
@@ -395,7 +395,7 @@ void ClusterUI::update(float dt)
 
         for(size_t i = 0; buffers[i].name != nullptr; i++)
         {
-            ImGui::Text(buffers[i].name);
+            ImGui::Text("%s", buffers[i].name);
             ImTextureID texId = ImTextureID(uintptr_t(buffers[i].handle.idx));
             ImVec2 texSize = io.DisplaySize;
             texSize = { 128.0f, 128.0f };
