@@ -39,21 +39,44 @@ void Scene::clear()
 {
     if(loaded)
     {
-        for(const Mesh& mesh : meshes)
+        for(Mesh& mesh : meshes)
         {
             bgfx::destroy(mesh.vertexBuffer);
             bgfx::destroy(mesh.indexBuffer);
+            mesh.vertexBuffer = BGFX_INVALID_HANDLE;
+            mesh.indexBuffer = BGFX_INVALID_HANDLE;
         }
-        meshes.clear();
-        for(const Material& mat : materials)
+
+        for(Material& mat : materials)
         {
             if(bgfx::isValid(mat.baseColorTexture))
+            {
                 bgfx::destroy(mat.baseColorTexture);
+                mat.baseColorTexture = BGFX_INVALID_HANDLE;
+            }
             if(bgfx::isValid(mat.metallicRoughnessTexture))
+            {
                 bgfx::destroy(mat.metallicRoughnessTexture);
+                mat.metallicRoughnessTexture = BGFX_INVALID_HANDLE;
+            }
             if(bgfx::isValid(mat.normalTexture))
+            {
                 bgfx::destroy(mat.normalTexture);
+                mat.normalTexture = BGFX_INVALID_HANDLE;
+            }
+            if(bgfx::isValid(mat.occlusionTexture))
+            {
+                bgfx::destroy(mat.occlusionTexture);
+                mat.occlusionTexture = BGFX_INVALID_HANDLE;
+            }
+            if(bgfx::isValid(mat.emissiveTexture))
+            {
+                bgfx::destroy(mat.emissiveTexture);
+                mat.emissiveTexture = BGFX_INVALID_HANDLE;
+            }
         }
+
+        meshes.clear();
         materials.clear();
         pointLights.shutdown();
         pointLights.lights.clear();
