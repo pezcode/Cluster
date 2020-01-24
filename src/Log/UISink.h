@@ -21,7 +21,7 @@ protected:
     {
         // msg.payload is the raw string without any formatting
         memory_buf_t formatted;
-        base_sink::formatter_->format(msg, formatted);
+        this->formatter_->format(msg, formatted);
         func(fmt::to_string(formatted).c_str(), msg.level);
     }
 
