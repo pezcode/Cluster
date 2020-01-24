@@ -66,6 +66,17 @@ set(SHADERS
     Renderer/Shaders/util.sh
 )
 
+option(CLUSTER_GLSL "Generate OpenGL shaders" ON)
+option(CLUSTER_DX11 "Generate DX11 shaders" ON)
+
+if(CLUSTER_GLSL)
+    set(SHADER_PLATFORMS ${SHADER_PLATFORMS} glsl)
+endif()
+
+if(CLUSTER_DX11)
+    set(SHADER_PLATFORMS ${SHADER_PLATFORMS} dx11)
+endif()
+
 add_executable(Cluster ${SOURCES} ${SHADERS})
 target_include_directories(Cluster PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(Cluster PRIVATE bigg IconFontCppHeaders assimp spdlog)
@@ -120,11 +131,11 @@ foreach(SHADER ${SHADERS})
     set(DX_MODEL 5_0)
 
     if(SHADER_NAME MATCHES "^vs_")
-        add_shader("${SHADER_FILE}" VERTEX   OUTPUT "${SHADER_DIR}" GLSL_VERSION ${GLSL_VERSION} DX11_MODEL ${DX_MODEL} PLATFORMS dx11 glsl)
+        add_shader("${SHADER_FILE}" VERTEX   OUTPUT "${SHADER_DIR}" GLSL_VERSION ${GLSL_VERSION} DX11_MODEL ${DX_MODEL} PLATFORMS ${SHADER_PLATFORMS})
     elseif(SHADER_NAME MATCHES "^fs_")
-        add_shader("${SHADER_FILE}" FRAGMENT OUTPUT "${SHADER_DIR}" GLSL_VERSION ${GLSL_VERSION} DX11_MODEL ${DX_MODEL} PLATFORMS dx11 glsl)
+        add_shader("${SHADER_FILE}" FRAGMENT OUTPUT "${SHADER_DIR}" GLSL_VERSION ${GLSL_VERSION} DX11_MODEL ${DX_MODEL} PLATFORMS ${SHADER_PLATFORMS})
     elseif(SHADER_NAME MATCHES "^cs_")
-        add_shader("${SHADER_FILE}" COMPUTE  OUTPUT "${SHADER_DIR}" GLSL_VERSION ${GLSL_COMPUTE_VERSION} DX11_MODEL ${DX_MODEL} PLATFORMS dx11 glsl)
+        add_shader("${SHADER_FILE}" COMPUTE  OUTPUT "${SHADER_DIR}" GLSL_VERSION ${GLSL_COMPUTE_VERSION} DX11_MODEL ${DX_MODEL} PLATFORMS ${SHADER_PLATFORMS})
     endif()
     add_custom_command(TARGET invalidate_shaders PRE_BUILD
         COMMAND "${CMAKE_COMMAND}" -E touch "${SHADER_FILE}")
