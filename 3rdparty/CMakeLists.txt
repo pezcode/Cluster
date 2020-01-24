@@ -10,9 +10,9 @@
 # for setting BGFX_CONFIG_RENDERER_OPENGL
 # need a newer version of bgfx/bigg to take effect
 
-add_compile_definitions(BGFX_CONFIG_RENDERER_OPENGL_MIN_VERSION=43)
-#add_compile_definitions(BGFX_CONFIG_RENDERER_OPENGLES_MIN_VERSION=43)
-#add_compile_definitions(BGFX_CONFIG_RENDERER_OPENGL=43)
+add_definitions(-DBGFX_CONFIG_RENDERER_OPENGL_MIN_VERSION=43)
+#add_definitions(-DBGFX_CONFIG_RENDERER_OPENGLES_MIN_VERSION=43)
+#add_definitions(-DBGFX_CONFIG_RENDERER_OPENGL=43)
 set(BIGG_EXAMPLES OFF CACHE INTERNAL "")
 set(BGFX_BUILD_EXAMPLES OFF CACHE INTERNAL "")
 add_subdirectory(bigg)

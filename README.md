@@ -80,7 +80,7 @@ A few useful resources that helped with the implementation:
 
 ## Compilation
 
-Recent [CMake](https://cmake.org/) version (>= 3.13) required.
+[CMake](https://cmake.org/) (>= 3.2) is required for building.
 
 1. Generate project files:
    ```bash

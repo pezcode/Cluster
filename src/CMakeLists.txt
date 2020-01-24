@@ -66,7 +66,14 @@ set(SHADERS
     Renderer/Shaders/util.sh
 )
 
-add_executable(Cluster ${SOURCES} ${SHADERS})
+if(MSVC)
+    # hide console window on Windows
+    # for some reason this still requires WIN32 in add_executable to work
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /SUBSYSTEM:WINDOWS /ENTRY:mainCRTStartup")
+    set(PLATFORM WIN32)
+endif()
+
+add_executable(Cluster ${PLATFORM} ${SOURCES} ${SHADERS})
 target_include_directories(Cluster PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(Cluster PRIVATE bigg IconFontCppHeaders assimp spdlog)
 target_compile_definitions(Cluster PRIVATE
@@ -94,8 +101,6 @@ if(MSVC)
     # disable macro redefinition warning
     # ideally 3rd party include folders were marked as SYSTEM so we wouldn't get these warnings
     target_compile_options(Cluster PRIVATE "/wd4005")
-    # hide console window
-    target_link_options(Cluster PRIVATE "/SUBSYSTEM:WINDOWS" "/ENTRY:mainCRTStartup")
 endif()
 
 set(SHADER_DIR "${PROJECT_BINARY_DIR}/shaders")
