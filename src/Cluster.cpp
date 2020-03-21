@@ -86,7 +86,7 @@ void Cluster::initialize(int _argc, char* _argv[])
     if(config->profile)
         bgfx::setDebug(BGFX_DEBUG_PROFILER);
 
-    uint32_t resetFlags = BGFX_RESET_MAXANISOTROPY;
+    uint32_t resetFlags = BGFX_RESET_MAXANISOTROPY | BGFX_RESET_SRGB_BACKBUFFER;
     if(config->vsync)
         resetFlags |= BGFX_RESET_VSYNC;
     reset(resetFlags);

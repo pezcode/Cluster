@@ -91,8 +91,5 @@ void main()
         result.rgb = tonemap_aces_luminance(result.rgb);
     }
 
-    // gamma correction
-    result.rgb = LinearTosRGB(result.rgb);
-
     gl_FragColor = result;
 }

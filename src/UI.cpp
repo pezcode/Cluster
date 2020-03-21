@@ -6,8 +6,10 @@
 #include "Renderer/Renderer.h"
 #include "Log/UISink.h"
 #include "Log/Log.h"
+#include <glm/gtc/type_ptr.hpp>
+#include <glm/gtc/color_space.hpp>
 #include <bx/string.h>
-#include <IconsForkAwesome.h>
+#include <IconsForkAwesome_c.h>
 #include <functional>
 #include <cctype>
 
@@ -29,10 +31,19 @@ void ClusterUI::initialize()
 
     ImGuiIO& io = ImGui::GetIO();
     //io.IniFilename = nullptr;   // don't save window positions etc. to ini
-    io.MouseDrawCursor = true; // let imgui draw cursors
+    //io.MouseDrawCursor = true; // let imgui draw cursors
 
     ImGuiStyle& style = ImGui::GetStyle();
     ImGui::StyleColorsDark(&style);
+
+    // convert imgui style colors to linear RGB
+    // since we have an sRGB backbuffer
+    for(size_t i = 0; i < ImGuiCol_COUNT; i++)
+    {
+        glm::vec3 sRGB = glm::make_vec3(&style.Colors[i].x);
+        glm::vec3 linear = glm::convertSRGBToLinear(sRGB);
+        style.Colors[i] = ImVec4(linear.x, linear.y, linear.z, style.Colors[i].w);
+    }
 
     // no round corners
     style.WindowRounding = 0.0f;

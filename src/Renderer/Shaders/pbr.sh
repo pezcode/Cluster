@@ -2,7 +2,6 @@
 #define PBR_SH_HEADER_GUARD
 
 #include "samplers.sh"
-#include "tonemapping.sh"
 
 // only define this if you need to retrieve the material parameters
 // without it you can still use the struct definition or BRDF functions
@@ -55,9 +54,7 @@ vec4 pbrBaseColor(vec2 texcoord)
 {
     if(u_hasBaseColorTexture)
     {
-        vec4 color = texture2D(s_texBaseColor, texcoord);
-        // GLTF base color texture is stored as sRGB
-        return vec4(sRGBToLinear(color.rgb), color.a) * u_baseColorFactor;
+        return texture2D(s_texBaseColor, texcoord) * u_baseColorFactor;
     }
     else
     {
@@ -111,7 +108,7 @@ vec3 pbrEmissive(vec2 texcoord)
 {
     if(u_hasEmissiveTexture)
     {
-        return sRGBToLinear(texture2D(s_texEmissive, texcoord).rgb) * u_emissiveFactor;
+        return texture2D(s_texEmissive, texcoord).rgb * u_emissiveFactor;
     }
     else
     {

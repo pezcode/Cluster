@@ -141,6 +141,10 @@ bool Scene::load(const char* file)
                 }
             }
 
+            center = minBounds + (maxBounds - minBounds) / 2.0f;
+            glm::vec3 extent = glm::abs(maxBounds - minBounds);
+            diagonal = glm::sqrt(glm::dot(extent, extent));
+
             char dir[bx::kMaxFilePath] = "";
             bx::strCopy(dir, BX_COUNTOF(dir), bx::FilePath(file).getPath());
             for(unsigned int i = 0; i < scene->mNumMaterials; i++)
@@ -214,9 +218,6 @@ Mesh Scene::loadMesh(const aiMesh* mesh)
 
         minBounds = glm::min(minBounds, { pos.x, pos.y, pos.z });
         maxBounds = glm::max(maxBounds, { pos.x, pos.y, pos.z });
-        center = minBounds + (maxBounds - minBounds) / 2.0f;
-        glm::vec3 extent = glm::abs(maxBounds - minBounds);
-        diagonal = glm::sqrt(glm::dot(extent, extent));
 
         aiVector3D nrm = mesh->mNormals[i];
         vertex.nx = nrm.x;
@@ -286,7 +287,7 @@ Material Scene::loadMaterial(const aiMaterial* material, const char* dir)
         aiString pathBaseColor;
         pathBaseColor.Set(dir);
         pathBaseColor.Append(fileBaseColor.C_Str());
-        out.baseColorTexture = loadTexture(pathBaseColor.C_Str());
+        out.baseColorTexture = loadTexture(pathBaseColor.C_Str(), true /* sRGB */);
     }
 
     aiColor4D baseColorFactor;
@@ -352,7 +353,7 @@ Material Scene::loadMaterial(const aiMaterial* material, const char* dir)
         aiString pathEmissive;
         pathEmissive.Set(dir);
         pathEmissive.Append(fileEmissive.C_Str());
-        out.emissiveTexture = loadTexture(pathEmissive.C_Str());
+        out.emissiveTexture = loadTexture(pathEmissive.C_Str(), true /* sRGB */);
     }
 
 // assimp doesn't define this
@@ -385,7 +386,7 @@ Camera Scene::loadCamera(const aiCamera* camera)
     return cam;
 }
 
-bgfx::TextureHandle Scene::loadTexture(const char* file)
+bgfx::TextureHandle Scene::loadTexture(const char* file, bool sRGB)
 {
     void* data = nullptr;
     uint32_t size = 0;
@@ -417,8 +418,11 @@ bgfx::TextureHandle Scene::loadTexture(const char* file)
             image);
         BX_FREE(&allocator, data);
 
-        if(bgfx::isTextureValid(
-               0, false, image->m_numLayers, (bgfx::TextureFormat::Enum)image->m_format, BGFX_TEXTURE_NONE))
+        uint64_t textureFlags = BGFX_TEXTURE_NONE | BGFX_SAMPLER_MIN_ANISOTROPIC | BGFX_SAMPLER_MAG_ANISOTROPIC;
+        if(sRGB)
+            textureFlags |= BGFX_TEXTURE_SRGB;
+
+        if(bgfx::isTextureValid(0, false, image->m_numLayers, (bgfx::TextureFormat::Enum)image->m_format, textureFlags))
         {
             bgfx::TextureHandle tex =
                 bgfx::createTexture2D((uint16_t)image->m_width,
@@ -426,7 +430,7 @@ bgfx::TextureHandle Scene::loadTexture(const char* file)
                                       image->m_numMips > 1,
                                       image->m_numLayers,
                                       (bgfx::TextureFormat::Enum)image->m_format,
-                                      BGFX_TEXTURE_NONE | BGFX_SAMPLER_MIN_ANISOTROPIC | BGFX_SAMPLER_MAG_ANISOTROPIC,
+                                      textureFlags,
                                       mem);
             //bgfx::setName(tex, file); // causes debug errors with DirectX SetPrivateProperty duplicate
             return tex;

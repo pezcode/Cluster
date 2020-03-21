@@ -47,5 +47,5 @@ private:
     static Material loadMaterial(const aiMaterial* material, const char* dir);
     static Camera loadCamera(const aiCamera* camera);
 
-    static bgfx::TextureHandle loadTexture(const char* file);
+    static bgfx::TextureHandle loadTexture(const char* file, bool sRGB = false);
 };

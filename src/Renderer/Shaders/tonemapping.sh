@@ -1,35 +1,6 @@
 #ifndef TONEMAPPING_SH_HEADER_GUARD
 #define TONEMAPPING_SH_HEADER_GUARD
 
-// Taken from
-// https://gamedev.stackexchange.com/a/148088/45850
-
-// sRGB gamma encoding
-vec3 LinearTosRGB(vec3 linearRGB)
-{
-#ifdef SRGB_CONVERSION_FAST
-    return pow(linearRGB, vec3_splat(1.0/2.2));
-#else
-    vec3 cutoff = step(linearRGB, vec3_splat(0.0031308));
-    vec3 higher = 1.055 * pow(linearRGB, vec3_splat(1.0/2.4)) - 0.055;
-    vec3 lower = linearRGB * 12.92;
-    return mix(higher, lower, cutoff);
-#endif
-}
-
-// sRGB gamma decoding
-vec3 sRGBToLinear(vec3 sRGB)
-{
-#ifdef SRGB_CONVERSION_FAST
-    return pow(sRGB, vec3_splat(2.2));
-#else
-    vec3 cutoff = step(sRGB, vec3_splat(0.04045));
-    vec3 higher = pow((sRGB + 0.055) / 1.055, vec3_splat(2.4));
-    vec3 lower = sRGB / 12.92;
-    return mix(higher, lower, cutoff);
-#endif
-}
-
 // relative luminance of linear RGB(!)
 // BT.709 primaries
 float luminance(vec3 RGB)
