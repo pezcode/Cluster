@@ -16,12 +16,12 @@ struct LightList
 
         static void init()
         {
-            decl.begin()
+            layout.begin()
                 .add(bgfx::Attrib::TexCoord0, 4, bgfx::AttribType::Float)
                 .add(bgfx::Attrib::TexCoord1, 4, bgfx::AttribType::Float)
                 .end();
         }
-        static bgfx::VertexDecl decl;
+        static bgfx::VertexLayout layout;
     };
 };
 

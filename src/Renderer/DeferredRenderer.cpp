@@ -86,7 +86,7 @@ void DeferredRenderer::onInitialize()
         4, 5, 1, 1, 0, 4  // bottom
     };
 
-    pointLightVertexBuffer = bgfx::createVertexBuffer(bgfx::copy(&vertices, sizeof(vertices)), PosVertex::decl);
+    pointLightVertexBuffer = bgfx::createVertexBuffer(bgfx::copy(&vertices, sizeof(vertices)), PosVertex::layout);
     pointLightIndexBuffer = bgfx::createIndexBuffer(bgfx::copy(&indices, sizeof(indices)));
 
     char vsName[128], fsName[128];
@@ -152,21 +152,25 @@ void DeferredRenderer::onRender(float dt)
 
     const uint32_t BLACK = 0x000000FF;
 
+    bgfx::setViewName(vGeometry, "Deferred geometry pass");
     bgfx::setViewClear(vGeometry, BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH, BLACK, 1.0f);
     bgfx::setViewRect(vGeometry, 0, 0, width, height);
     bgfx::setViewFrameBuffer(vGeometry, gBuffer);
     bgfx::touch(vGeometry);
 
+    bgfx::setViewName(vFullscreenLight, "Deferred light pass (ambient + emissive)");
     bgfx::setViewClear(vFullscreenLight, BGFX_CLEAR_COLOR, clearColor);
     bgfx::setViewRect(vFullscreenLight, 0, 0, width, height);
     bgfx::setViewFrameBuffer(vFullscreenLight, accumFrameBuffer);
     bgfx::touch(vFullscreenLight);
 
+    bgfx::setViewName(vLight, "Deferred light pass (point lights)");
     bgfx::setViewClear(vLight, BGFX_CLEAR_NONE);
     bgfx::setViewRect(vLight, 0, 0, width, height);
     bgfx::setViewFrameBuffer(vLight, accumFrameBuffer);
     bgfx::touch(vLight);
 
+    bgfx::setViewName(vTransparent, "Transparent forward pass");
     bgfx::setViewClear(vTransparent, BGFX_CLEAR_NONE);
     bgfx::setViewRect(vTransparent, 0, 0, width, height);
     bgfx::setViewFrameBuffer(vTransparent, accumFrameBuffer);
@@ -183,8 +187,6 @@ void DeferredRenderer::onRender(float dt)
     bgfx::setViewTransform(vFullscreenLight, glm::value_ptr(identity), glm::value_ptr(identity));
     setViewProjection(vLight);
     setViewProjection(vTransparent);
-
-    bgfx::setViewName(vGeometry, "Deferred geometry pass");
 
     // render geometry, write to G-Buffer
 
@@ -206,8 +208,6 @@ void DeferredRenderer::onRender(float dt)
             bgfx::submit(vGeometry, geometryProgram);
         }
     }
-
-    bgfx::setViewName(vFullscreenLight, "Deferred light pass (ambient + emissive)");
 
     // render lights to framebuffer
     // cull with light geometry
@@ -242,8 +242,6 @@ void DeferredRenderer::onRender(float dt)
     bgfx::setState(BGFX_STATE_WRITE_RGB | BGFX_STATE_DEPTH_TEST_GREATER | BGFX_STATE_CULL_CW);
     bgfx::submit(vFullscreenLight, fullscreenProgram);
 
-    bgfx::setViewName(vLight, "Deferred light pass (point lights)");
-
     // point lights
 
     for(size_t i = 0; i < scene->pointLights.lights.size(); i++)
@@ -270,7 +268,7 @@ void DeferredRenderer::onRender(float dt)
         bgfx::submit(vLight, pointLightProgram);
     }
 
-    bgfx::setViewName(vTransparent, "Transparent forward pass");
+    // transparent
 
     for(const Mesh& mesh : scene->meshes)
     {

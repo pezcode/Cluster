@@ -3,17 +3,6 @@
 
 #include <bgfx_shader.sh>
 
-// added in a later bgfx version
-// https://github.com/bkaradzic/bgfx/commit/a133fb11c6de8b7aa3c47bdfe405294f2136d4fb
-mat3 mtxFromCols(vec3 c0, vec3 c1, vec3 c2)
-{
-#if BGFX_SHADER_LANGUAGE_GLSL
-	return mat3(c0, c1, c2);
-#else
-	return transpose(mat3(c0, c1, c2));
-#endif
-}
-
 // from screen coordinates (gl_FragCoord) to eye space
 vec4 screen2Eye(vec4 coord)
 {

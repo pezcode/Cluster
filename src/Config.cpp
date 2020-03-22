@@ -35,21 +35,20 @@ void Config::readArgv(int argc, char* argv[])
     bx::CommandLine cmdLine(argc, argv);
 
     // D3D 9.0c (shader model 3.0) doesn't allow indexing into the light buffer
-    // so shaders for D3D9 aren't even compiled anymore
-
     // D3D11, D3D12, OpenGL work
-    // Vulkan? need to update bgfx/bigg
-
-    //cmdLine.hasArg("gl");
+    // Vulkan has issues:
+    // - no sRGB backbuffer support
+    // - clustered shading doesn't work, some descriptors are not getting bound correctly
+    //   it works in RenderDoc for a few seconds (with similar errors but different bindings), then crashes
 
     renderer = bgfx::RendererType::OpenGL;
+    //renderer = bgfx::RendererType::Direct3D11;
     //renderer = bgfx::RendererType::Direct3D12;
+    renderer = bgfx::RendererType::Vulkan;
 
     profile = true;
 
     showStatsOverlay = false;
     showLog = false;
     showBuffers = false;
-
-    msaa = true;
 }

@@ -1,5 +1,6 @@
 #define WRITE_CLUSTERS
 
+#include "common.sh"
 #include <bgfx_compute.sh>
 #include "clusters.sh"
 #include "util.sh"

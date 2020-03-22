@@ -70,10 +70,10 @@ protected:
 
         static void init()
         {
-            decl.begin().add(bgfx::Attrib::Position, 3, bgfx::AttribType::Float).end();
+            layout.begin().add(bgfx::Attrib::Position, 3, bgfx::AttribType::Float).end();
         }
 
-        static bgfx::VertexDecl decl;
+        static bgfx::VertexLayout layout;
     };
 
     static constexpr bgfx::ViewId MAX_VIEW = 199; // imgui in bigg uses view 200

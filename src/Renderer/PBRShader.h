@@ -25,4 +25,6 @@ private:
     bgfx::UniformHandle normalSampler;
     bgfx::UniformHandle occlusionSampler;
     bgfx::UniformHandle emissiveSampler;
+
+    bgfx::TextureHandle defaultTexture;
 };

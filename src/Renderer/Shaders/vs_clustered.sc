@@ -1,6 +1,7 @@
 $input a_position, a_normal, a_tangent, a_texcoord0
 $output v_worldpos, v_normal, v_tangent, v_texcoord0
 
+#include "common.sh"
 #include <bgfx_shader.sh>
 
 uniform mat3 u_normalMatrix;

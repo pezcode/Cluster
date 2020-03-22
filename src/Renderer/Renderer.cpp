@@ -12,7 +12,7 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtx/matrix_operation.hpp>
 
-bgfx::VertexDecl Renderer::PosVertex::decl;
+bgfx::VertexLayout Renderer::PosVertex::layout;
 
 Renderer::Renderer(const Scene* scene) :
     buffers(nullptr),
@@ -47,8 +47,8 @@ void Renderer::initialize()
 
     // triangle used for blitting
     constexpr float BOTTOM = -1.0f, TOP = 3.0f, LEFT = -1.0f, RIGHT = 3.0f;
-    PosVertex vertices[3] = { { LEFT, BOTTOM, 0.0f }, { RIGHT, BOTTOM, 0.0f }, { LEFT, TOP, 0.0f } };
-    blitTriangleBuffer = bgfx::createVertexBuffer(bgfx::copy(&vertices, sizeof(vertices)), PosVertex::decl);
+    const PosVertex vertices[3] = { { LEFT, BOTTOM, 0.0f }, { RIGHT, BOTTOM, 0.0f }, { LEFT, TOP, 0.0f } };
+    blitTriangleBuffer = bgfx::createVertexBuffer(bgfx::copy(&vertices, sizeof(vertices)), PosVertex::layout);
 
     char vsName[128], fsName[128];
     bx::snprintf(vsName, BX_COUNTOF(vsName), "%s%s", shaderDir(), "vs_tonemap.bin");

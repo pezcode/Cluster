@@ -202,7 +202,7 @@ Mesh Scene::loadMesh(const aiMesh* mesh)
 
     // vertices
 
-    uint32_t stride = Mesh::PosNormalTangentTex0Vertex::decl.getStride();
+    uint32_t stride = Mesh::PosNormalTangentTex0Vertex::layout.getStride();
 
     const bgfx::Memory* vertexMem = bgfx::alloc(mesh->mNumVertices * stride);
 
@@ -237,7 +237,7 @@ Mesh Scene::loadMesh(const aiMesh* mesh)
         }
     }
 
-    bgfx::VertexBufferHandle vbh = bgfx::createVertexBuffer(vertexMem, Mesh::PosNormalTangentTex0Vertex::decl);
+    bgfx::VertexBufferHandle vbh = bgfx::createVertexBuffer(vertexMem, Mesh::PosNormalTangentTex0Vertex::layout);
 
     // indices (triangles)
 

@@ -3,7 +3,7 @@
 #include <algorithm>
 #include <glm/gtc/type_ptr.hpp>
 
-bgfx::VertexDecl LightList::PointLightVertex::decl;
+bgfx::VertexLayout LightList::PointLightVertex::layout;
 
 PointLightList::PointLightList() : buffer(BGFX_INVALID_HANDLE) {}
 
@@ -11,7 +11,7 @@ void PointLightList::init()
 {
     LightList::PointLightVertex::init();
     buffer =
-        bgfx::createDynamicVertexBuffer(1, PointLightVertex::decl, BGFX_BUFFER_COMPUTE_READ | BGFX_BUFFER_ALLOW_RESIZE);
+        bgfx::createDynamicVertexBuffer(1, PointLightVertex::layout, BGFX_BUFFER_COMPUTE_READ | BGFX_BUFFER_ALLOW_RESIZE);
 }
 
 void PointLightList::shutdown()
@@ -22,7 +22,7 @@ void PointLightList::shutdown()
 
 void PointLightList::update()
 {
-    size_t stride = PointLightVertex::decl.getStride();
+    size_t stride = PointLightVertex::layout.getStride();
     const bgfx::Memory* mem = bgfx::alloc(uint32_t(stride * std::max(lights.size(), (size_t)1)));
 
     for(size_t i = 0; i < lights.size(); i++)

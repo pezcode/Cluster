@@ -6,7 +6,7 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <cmath>
 
-bgfx::VertexDecl ClusterShader::ClusterVertex::decl;
+bgfx::VertexLayout ClusterShader::ClusterVertex::layout;
 
 ClusterShader::ClusterShader() :
     clusterSizesVecUniform(BGFX_INVALID_HANDLE),
@@ -29,7 +29,7 @@ void ClusterShader::initialize()
     zNearFarVecUniform = bgfx::createUniform("u_zNearFarVec", bgfx::UniformType::Vec4);
 
     clustersBuffer =
-        bgfx::createDynamicVertexBuffer(CLUSTER_COUNT, ClusterVertex::decl, BGFX_BUFFER_COMPUTE_READ_WRITE);
+        bgfx::createDynamicVertexBuffer(CLUSTER_COUNT, ClusterVertex::layout, BGFX_BUFFER_COMPUTE_READ_WRITE);
     lightIndicesBuffer = bgfx::createDynamicIndexBuffer(CLUSTER_COUNT * MAX_LIGHTS_PER_CLUSTER,
                                                         BGFX_BUFFER_COMPUTE_READ_WRITE | BGFX_BUFFER_INDEX32);
     lightGridBuffer =
@@ -66,7 +66,7 @@ void ClusterShader::setUniforms(const Scene* scene, uint16_t screenWidth, uint16
 
 void ClusterShader::bindBuffers(bool lightingPass) const
 {
-    // binding ReadWrite in the fragment shader doesn't work
+    // binding ReadWrite in the fragment shader doesn't work with D3D11/12
     bgfx::Access::Enum access = lightingPass ? bgfx::Access::Read : bgfx::Access::ReadWrite;
     if(!lightingPass)
     {

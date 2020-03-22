@@ -1,3 +1,4 @@
+#include "common.sh"
 #include <bgfx_shader.sh>
 #include "samplers.sh"
 #include "pbr.sh"
@@ -36,10 +37,12 @@ void main()
 
     // lighting
 
+    vec3 radianceOut = vec3_splat(0.0);
+
     PointLight light = getPointLight(u_lightIndex);
     light.position = mul(u_view, vec4(light.position, 1.0)).xyz;
 
-    vec3 radianceOut = vec3_splat(0.0);
+    
     float dist = distance(light.position, fragPos);
     float attenuation = smoothAttenuation(dist, light.radius);
     if(attenuation > 0.0)
@@ -48,7 +51,7 @@ void main()
         vec3 L = normalize(light.position - fragPos);
         vec3 radianceIn = light.intensity * attenuation;
         float NoL = saturate(dot(N, L));
-        radianceOut = BRDF(V, L, N, mat) * radianceIn * NoL;
+        radianceOut += BRDF(V, L, N, mat) * radianceIn * NoL;
     }
 
     gl_FragColor = vec4(radianceOut, 1.0);

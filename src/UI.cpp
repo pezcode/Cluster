@@ -199,8 +199,8 @@ void ClusterUI::update(float dt)
         ImVec4 clrError = ImVec4(0.8f, 0.0f, 0.1f, 1.0f);   // yellow/orange ("Crimson")
         // trace, debug, info, warn, error, critical
         const ImVec4 colors[] = { clrDisabled, clrDisabled, clrText, clrWarning, clrError, clrError };
-        const char icons[][4] = { ICON_FK_INFO,        ICON_FK_INFO,        ICON_FK_INFO,
-                                  ICON_FK_EXCLAMATION, ICON_FK_EXCLAMATION, ICON_FK_EXCLAMATION };
+        const char* icons[] = { ICON_FK_INFO,        ICON_FK_INFO,        ICON_FK_INFO,
+                                ICON_FK_EXCLAMATION, ICON_FK_EXCLAMATION, ICON_FK_EXCLAMATION };
         for(const LogEntry& entry : logEntries)
         {
             ImGui::TextColored(colors[entry.level], "%s %s", icons[entry.level], logText.begin() + entry.messageOffset);
@@ -300,29 +300,27 @@ void ClusterUI::update(float dt)
                         for(int32_t pos = clipper.DisplayStart; pos < clipper.DisplayEnd; ++pos)
                         {
                             const bgfx::ViewStats& viewStats = stats->viewStats[pos];
+                            float cpuElapsed = float((viewStats.cpuTimeEnd - viewStats.cpuTimeBegin) * toCpuMs);
+                            float gpuElapsed = float((viewStats.gpuTimeEnd - viewStats.gpuTimeBegin) * toGpuMs);
 
                             ImGui::Text("%d", viewStats.view);
 
                             const float maxWidth = overlayWidth * 0.35f;
-                            const float cpuWidth =
-                                bx::clamp(float(viewStats.cpuTimeElapsed * toCpuMs) * scale, 1.0f, maxWidth);
-                            const float gpuWidth =
-                                bx::clamp(float(viewStats.gpuTimeElapsed * toGpuMs) * scale, 1.0f, maxWidth);
+                            const float cpuWidth = bx::clamp(cpuElapsed * scale, 1.0f, maxWidth);
+                            const float gpuWidth = bx::clamp(gpuElapsed * scale, 1.0f, maxWidth);
 
                             ImGui::SameLine(overlayWidth * 0.3f);
 
                             if(drawBar(cpuWidth, maxWidth, itemHeight, cpuColor))
                             {
-                                ImGui::SetTooltip(
-                                    "%s -- CPU: %.2f ms", viewStats.name, viewStats.cpuTimeElapsed * toCpuMs);
+                                ImGui::SetTooltip("%s -- CPU: %.2f ms", viewStats.name, cpuElapsed);
                             }
 
                             ImGui::SameLine();
 
                             if(drawBar(gpuWidth, maxWidth, itemHeight, gpuColor))
                             {
-                                ImGui::SetTooltip(
-                                    "%s -- GPU: %.2f ms", viewStats.name, viewStats.gpuTimeElapsed * toGpuMs);
+                                ImGui::SetTooltip("%s -- GPU: %.2f ms", viewStats.name, gpuElapsed);
                             }
                         }
                     }

@@ -30,7 +30,9 @@ void ForwardRenderer::onRender(float dt)
     bgfx::setViewRect(vDefault, 0, 0, width, height);
     bgfx::setViewFrameBuffer(vDefault, frameBuffer);
 
-    bgfx::touch(vDefault); // empty primitive in case nothing follows
+    // empty primitive in case nothing follows
+    // this makes sure the clear happens
+    bgfx::touch(vDefault);
 
     if(!scene->loaded)
         return;

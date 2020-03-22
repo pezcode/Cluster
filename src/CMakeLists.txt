@@ -64,6 +64,7 @@ set(SHADERS
     Renderer/Shaders/clusters.sh
     Renderer/Shaders/colormap.sh
     Renderer/Shaders/util.sh
+    Renderer/Shaders/common.sh
 )
 
 if(MSVC)
@@ -115,27 +116,39 @@ foreach(SHADER ${SHADERS})
     get_filename_component(SHADER_NAME "${SHADER}" NAME)
     get_filename_component(SHADER_FILE "${SHADER}" ABSOLUTE)
     # add_shader defaults to GLSL 120, 430 for compute
-    # 130 is needed for switch statements but requires OpenGL 3.0 or higher
-    # need a newer bgfx version that uses BGFX_CONFIG_RENDERER_OPENGL_MIN_VERSION to set
-    # OpenGL version without forcing the OpenGL renderer
-    # (https://github.com/bkaradzic/bgfx/commit/3f6d8a516d5e61db795c0c1881e9b333fedc5d43)
+    # GLSL 1.30 is needed for switch statements but shaderc produces
+    # shader binaries without any #version directive unless 4.30 is used
+    # this makes shader compilation fail with no error message
+    # just use 4.30 for all shaders
     # default DX11 model is 5_0
-    set(GLSL_VERSION 130)
+    set(GLSL_VERSION 430)
     set(GLSL_COMPUTE_VERSION 430)
     set(DX_MODEL 5_0)
 
     # DX9/11 shaders can only be compiled on Windows
-    set(SHADER_PLATFORMS glsl)
+    set(SHADER_PLATFORMS glsl spirv)
     if(WIN32)
         set(SHADER_PLATFORMS ${SHADER_PLATFORMS} dx11)
     endif()
 
     if(SHADER_NAME MATCHES "^vs_")
-        add_shader("${SHADER_FILE}" VERTEX   OUTPUT "${SHADER_DIR}" GLSL_VERSION ${GLSL_VERSION} DX11_MODEL ${DX_MODEL} PLATFORMS ${SHADER_PLATFORMS})
+        add_shader("${SHADER_FILE}" VERTEX
+            OUTPUT "${SHADER_DIR}"
+            GLSL_VERSION ${GLSL_VERSION}
+            DX11_MODEL ${DX_MODEL}
+            PLATFORMS ${SHADER_PLATFORMS})
     elseif(SHADER_NAME MATCHES "^fs_")
-        add_shader("${SHADER_FILE}" FRAGMENT OUTPUT "${SHADER_DIR}" GLSL_VERSION ${GLSL_VERSION} DX11_MODEL ${DX_MODEL} PLATFORMS ${SHADER_PLATFORMS})
+        add_shader("${SHADER_FILE}" FRAGMENT
+            OUTPUT "${SHADER_DIR}"
+            GLSL_VERSION ${GLSL_VERSION}
+            DX11_MODEL ${DX_MODEL}
+            PLATFORMS ${SHADER_PLATFORMS})
     elseif(SHADER_NAME MATCHES "^cs_")
-        add_shader("${SHADER_FILE}" COMPUTE  OUTPUT "${SHADER_DIR}" GLSL_VERSION ${GLSL_COMPUTE_VERSION} DX11_MODEL ${DX_MODEL} PLATFORMS ${SHADER_PLATFORMS})
+        add_shader("${SHADER_FILE}" COMPUTE
+            OUTPUT "${SHADER_DIR}"
+            GLSL_VERSION ${GLSL_COMPUTE_VERSION}
+            DX11_MODEL ${DX_MODEL}
+            PLATFORMS ${SHADER_PLATFORMS})
     endif()
     add_custom_command(TARGET invalidate_shaders PRE_BUILD
         COMMAND "${CMAKE_COMMAND}" -E touch "${SHADER_FILE}")
