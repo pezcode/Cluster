@@ -14,6 +14,7 @@
 #define gl_NumWorkGroups uvec3(CLUSTERS_X, CLUSTERS_Y, CLUSTERS_Z)
 
 // each thread handles one cluster
+// TODO use workgroups that fill GPU wavefronts (32 on Nvidia, 64 on AMD)
 NUM_THREADS(1, 1, 1)
 void main()
 {

@@ -7,48 +7,53 @@ Config::Config() :
     writeLog(true),
     logFile("Cluster.log"),
     renderer(bgfx::RendererType::Count), // default renderer, chosen by platform
-    renderPath(Cluster::RenderPath::Forward),
+    renderPath(Cluster::RenderPath::Clustered),
     tonemappingMode(Renderer::TonemappingMode::ACES),
     profile(false),
     vsync(false),
-    msaa(false),
-    //sceneFile("assets/models/BoomBox/glTF/BoomBox.gltf"),
-    //sceneFile("assets/models/Duck/glTF/Duck.gltf"),
-    //sceneFile("assets/models/MetalRoughSpheres/glTF/MetalRoughSpheres.gltf"),
     sceneFile("assets/models/Sponza/glTF/Sponza.gltf"),
+    customScene(false),
     lights(1),
     maxLights(1000),
     movingLights(false),
     fullscreen(false),
     showUI(true),
     showConfigWindow(true),
-    showLog(true),
-    showStatsOverlay(true),
+    showLog(false),
+    showStatsOverlay(false),
     overlays({ true, true, true, true }),
-    showBuffers(true),
+    showBuffers(false),
     debugVisualization(false)
 {
 }
 
 void Config::readArgv(int argc, char* argv[])
 {
+    // argv must outlive Config
+    // we store pointers into argv for the scene file
     bx::CommandLine cmdLine(argc, argv);
 
-    // D3D 9.0c (shader model 3.0) doesn't allow indexing into the light buffer
-    // D3D11, D3D12, OpenGL work
-    // Vulkan has issues:
-    // - no sRGB backbuffer support
-    // - clustered shading doesn't work, some descriptors are not getting bound correctly
-    //   it works in RenderDoc for a few seconds (with similar errors but different bindings), then crashes
+    if(cmdLine.hasArg("noop"))
+        renderer = bgfx::RendererType::Noop;
+	else if(cmdLine.hasArg("gl"))
+        renderer = bgfx::RendererType::OpenGL;
+    else if(cmdLine.hasArg("vk"))
+        renderer = bgfx::RendererType::Vulkan;
+    // missing required features
+    //else if(cmdLine.hasArg("d3d9"))
+    //    renderer = bgfx::RendererType::Direct3D9;
+    else if(cmdLine.hasArg("d3d11"))
+        renderer = bgfx::RendererType::Direct3D11;
+    else if(cmdLine.hasArg("d3d12"))
+        renderer = bgfx::RendererType::Direct3D12;
+    // not tested
+    //else if(cmdLine.hasArg("mtl"))
+    //    renderer = bgfx::RendererType::Metal;
 
-    renderer = bgfx::RendererType::OpenGL;
-    //renderer = bgfx::RendererType::Direct3D11;
-    //renderer = bgfx::RendererType::Direct3D12;
-    renderer = bgfx::RendererType::Vulkan;
-
-    profile = true;
-
-    showStatsOverlay = false;
-    showLog = false;
-    showBuffers = false;
+    const char* scene = cmdLine.findOption("scene");
+    if(scene)
+    {
+        sceneFile = scene;
+        customScene = true;
+    }
 }

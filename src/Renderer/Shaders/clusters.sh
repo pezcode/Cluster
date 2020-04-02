@@ -14,7 +14,9 @@
 #define CLUSTERS_Z 24
 
 // workgroup size of the culling compute shader
-#define CLUSTERS_Z_THREADS 8
+#define CLUSTERS_X_THREADS 16
+#define CLUSTERS_Y_THREADS 8
+#define CLUSTERS_Z_THREADS 4
 
 #define MAX_LIGHTS_PER_CLUSTER 100
 

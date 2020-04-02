@@ -6,7 +6,7 @@ Implementation of [Clustered Shading](https://efficientshading.com/wp-content/up
 
 ![Cluster light count visualization](images/sponza_cluster_vis.png)
 
-The code is programmed to support bgfx's OpenGL and DirectX 11/12 backends. I've only tested it on one Windows 10 machine with an Nvidia GTX 1070, however. Other hardware or operating systems might have subtle bugs I'm not aware of.
+Currently bgfx's OpenGL, DirectX 11/12 and Vulkan backends are supported. I've only tested on Windows 10 with an Nvidia GTX 1070. Other hardware or operating systems might have subtle bugs I'm not aware of.
 
 ## Functionality
 

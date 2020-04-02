@@ -46,10 +46,9 @@ bool DeferredRenderer::supported()
     bool supported = Renderer::supported() &&
                      // blitting depth texture after geometry pass
                      (caps->supported & BGFX_CAPS_TEXTURE_BLIT) != 0 &&
-                     // fragment depth available in fragment shader
-                     (caps->supported & BGFX_CAPS_FRAGMENT_DEPTH) != 0 &&
                      // multiple render targets
-                     caps->limits.maxFBAttachments >= GBufferAttachment::Count; // does depth count as an attachment?
+                     // depth doesn't count as an attachment
+                     caps->limits.maxFBAttachments >= GBufferAttachment::Count - 1;
     if(!supported)
         return false;
 

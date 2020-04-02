@@ -116,8 +116,8 @@ foreach(SHADER ${SHADERS})
     get_filename_component(SHADER_NAME "${SHADER}" NAME)
     get_filename_component(SHADER_FILE "${SHADER}" ABSOLUTE)
     # add_shader defaults to GLSL 120, 430 for compute
-    # GLSL 1.30 is needed for switch statements but shaderc produces
-    # shader binaries without any #version directive unless 4.30 is used
+    # GLSL 1.30 is needed for switch statements but shaderc produces shader
+    # binaries without any #version directive unless we request 4.00 or higher
     # this makes shader compilation fail with no error message
     # just use 4.30 for all shaders
     # default DX11 model is 5_0

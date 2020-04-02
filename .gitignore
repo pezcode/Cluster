@@ -6,3 +6,5 @@
 */.vscode/
 /CMakeSettings.json
 /*.cap
+/*.rdc
+/Nsight/

@@ -46,11 +46,7 @@ Cluster::~Cluster()
 int Cluster::run(int argc, char* argv[])
 {
     config->readArgv(argc, argv);
-    return Application::run(argc, argv, config->renderer, BGFX_PCI_ID_NONE, 0, &callbacks, nullptr);
-}
 
-void Cluster::initialize(int _argc, char* _argv[])
-{
     if(config->writeLog)
     {
         // _mt (thread safe) necessary because of flush_every
@@ -64,6 +60,11 @@ void Cluster::initialize(int _argc, char* _argv[])
     Log->set_level(spdlog::level::trace);
     spdlog::flush_every(std::chrono::seconds(2));
 
+    return Application::run(argc, argv, config->renderer, BGFX_PCI_ID_NONE, 0, &callbacks, nullptr);
+}
+
+void Cluster::initialize(int _argc, char* _argv[])
+{
     if(!ForwardRenderer::supported())
     {
         Log->error("Forward renderer not supported on this hardware");
@@ -102,9 +103,7 @@ void Cluster::initialize(int _argc, char* _argv[])
     ui->initialize();
 
     Scene::init();
-    // TODO multithreaded
-    // textures still have to be loaded from main thread
-    // keep list and load one texture every X frames
+
     if(!scene->load(config->sceneFile))
     {
         Log->error("Loading scene model failed");
@@ -112,14 +111,17 @@ void Cluster::initialize(int _argc, char* _argv[])
         return;
     }
 
-    // Sponza
-    // debug camera + lights
-    scene->camera.lookAt({ -7.0f, 2.0f, 0.0f }, scene->center, glm::vec3(0.0f, 1.0f, 0.0f));
-    scene->pointLights.lights = { // pos, power
-                                  { { -5.0f, 0.3f, 0.0f }, { 100.0f, 100.0f, 100.0f } },
-                                  { { 0.0f, 0.3f, 0.0f }, { 100.0f, 100.0f, 100.0f } },
-                                  { { 5.0f, 0.3f, 0.0f }, { 100.0f, 100.0f, 100.0f } }
-    };
+    // Sponza debug camera + lights
+    if(!config->customScene)
+    {
+        scene->camera.lookAt({ -7.0f, 2.0f, 0.0f }, scene->center, glm::vec3(0.0f, 1.0f, 0.0f));
+        scene->pointLights.lights = { // pos, power
+                                      { { -5.0f, 0.3f, 0.0f }, { 100.0f, 100.0f, 100.0f } },
+                                      { { 0.0f, 0.3f, 0.0f }, { 100.0f, 100.0f, 100.0f } },
+                                      { { 5.0f, 0.3f, 0.0f }, { 100.0f, 100.0f, 100.0f } }
+        };
+    }
+
     scene->pointLights.update();
     config->lights = (int)scene->pointLights.lights.size();
 
@@ -190,7 +192,7 @@ void Cluster::onScroll(double xoffset, double yoffset)
 void Cluster::update(float dt)
 {
     float velocity = scene->diagonal / 5.0f; // m/s
-    // TODO faster with Shift
+    // TODO move faster with Shift
     // need to cache mods & GLFW_MOD_SHIFT in onKey
     if(isKeyDown(GLFW_KEY_W))
         scene->camera.move(scene->camera.forward() * velocity * dt);
@@ -226,11 +228,6 @@ void Cluster::update(float dt)
 
 int Cluster::shutdown()
 {
-    // TODO
-    // not all resources are freed
-    // e.g. Renderer::blitSampler has count 3 on shutdown
-    // might be because of threaded renderer or command buffer taking a while
-
     ui->shutdown();
     renderer->shutdown();
     scene->clear();
@@ -404,9 +401,12 @@ void Cluster::generateLights(unsigned int count)
 
     for(size_t i = keep; i < count; i++)
     {
-        glm::vec3 position = glm::vec3(dist(mt), dist(mt), dist(mt)) * scale - (scale * 0.5f);
-        //position += scene->center; // not Sponza
-        position.y = glm::abs(position.y); // Sponza
+        glm::vec3 position = scene->center;
+        position += glm::vec3(dist(mt), dist(mt), dist(mt)) * scale - (scale * 0.5f);
+
+        if(!config->customScene) // Sponza, no lights under the floor
+            position.y = glm::abs(position.y);
+
         glm::vec3 color = glm::vec3(dist(mt), dist(mt), dist(mt));
         glm::vec3 power = color * (dist(mt) * (POWER_MAX - POWER_MIN) + POWER_MIN);
         lights[i] = { position, power };

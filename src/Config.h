@@ -11,26 +11,28 @@ public:
 
     void readArgv(int argc, char* argv[]);
 
+    // * = not exposed to UI
+
     // Log
 
-    bool writeLog;       // not exposed to UI
-    const char* logFile; // not exposed to UI
+    bool writeLog;       // *
+    const char* logFile; // *
 
     // Renderer
 
-    bgfx::RendererType::Enum renderer; // not exposed to UI
+    bgfx::RendererType::Enum renderer; // *
     Cluster::RenderPath renderPath;
     Renderer::TonemappingMode tonemappingMode;
 
-    bool profile; // not exposed to UI
-    bool vsync;   // not exposed to UI
-    bool msaa;    // not exposed to UI
+    bool profile; // enable bgfx view profiling *
+    bool vsync;   // *
 
     // Scene
 
-    const char* sceneFile; // not exposed to UI
+    const char* sceneFile; // gltf file to load *
+    bool customScene; // not the standard Sponza scene, don't place debug lights/camera *
     int lights;
-    int maxLights; // not exposed to UI
+    int maxLights; // *
     bool movingLights;
 
     // UI

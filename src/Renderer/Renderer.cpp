@@ -143,7 +143,6 @@ bool Renderer::supported()
         (caps->formats[bgfx::TextureFormat::BGRA8] & BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER) != 0 &&
         // HDR color attachment
         (caps->formats[bgfx::TextureFormat::RGBA16F] & BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER) != 0;
-    // TODO depth formats
 }
 
 void Renderer::setViewProjection(bgfx::ViewId view)

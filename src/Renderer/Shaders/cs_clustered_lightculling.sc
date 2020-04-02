@@ -15,8 +15,8 @@ bool pointLightAffectsCluster(PointLight light, Cluster cluster);
 float distsqToCluster(vec3 pos, Cluster cluster);
 
 // bgfx doesn't define this in shaders
-#define gl_WorkGroupSize uvec3(CLUSTERS_X, CLUSTERS_Y, CLUSTERS_Z_THREADS)
-#define GROUP_SIZE (CLUSTERS_X * CLUSTERS_Y * CLUSTERS_Z_THREADS)
+#define gl_WorkGroupSize uvec3(CLUSTERS_X_THREADS, CLUSTERS_Y_THREADS, CLUSTERS_Z_THREADS)
+#define GROUP_SIZE (CLUSTERS_X_THREADS * CLUSTERS_Y_THREADS * CLUSTERS_Z_THREADS)
 
 // light cache for the current work group
 SHARED PointLight lights[GROUP_SIZE];
@@ -24,7 +24,7 @@ SHARED PointLight lights[GROUP_SIZE];
 // work group size
 // each thread handles one cluster
 // D3D compute shaders only seem to allow 1024 threads
-NUM_THREADS(CLUSTERS_X, CLUSTERS_Y, CLUSTERS_Z_THREADS)
+NUM_THREADS(CLUSTERS_X_THREADS, CLUSTERS_Y_THREADS, CLUSTERS_Z_THREADS)
 void main()
 {
     // local thread variables
@@ -34,9 +34,9 @@ void main()
 
     // the way we calculate the index doesn't really matter here since we write to the same index as we read from the cluster buffer
     // it only matters that the cluster buildung and fragment shader calculate the cluster index the same way
-    const uint clusterIndex = gl_GlobalInvocationID.z * gl_WorkGroupSize.x * gl_WorkGroupSize.y +
-                              gl_GlobalInvocationID.y * gl_WorkGroupSize.x +
-                              gl_GlobalInvocationID.x;
+    uint clusterIndex = gl_GlobalInvocationID.z * gl_WorkGroupSize.x * gl_WorkGroupSize.y +
+                        gl_GlobalInvocationID.y * gl_WorkGroupSize.x +
+                        gl_GlobalInvocationID.x;
     
     // we have a cache of GROUP_SIZE lights
     // have to run this loop several times if we have more than GROUP_SIZE lights
@@ -109,8 +109,6 @@ bool pointLightAffectsCluster(PointLight light, Cluster cluster)
 float distsqToCluster(vec3 pos, Cluster cluster)
 {
     // only add distance in either dimension if it's outside the bounding box
-    //vec3 isBelow = 1.0 - step(cluster.minBounds, pos);
-    //vec3 isAbove = step(cluster.maxBounds, pos);
 
     vec3 belowDist = cluster.minBounds - pos;
     vec3 aboveDist = pos - cluster.maxBounds;

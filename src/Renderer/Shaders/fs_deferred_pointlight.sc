@@ -41,7 +41,6 @@ void main()
 
     PointLight light = getPointLight(u_lightIndex);
     light.position = mul(u_view, vec4(light.position, 1.0)).xyz;
-
     
     float dist = distance(light.position, fragPos);
     float attenuation = smoothAttenuation(dist, light.radius);

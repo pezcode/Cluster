@@ -19,9 +19,11 @@ public:
     static constexpr uint32_t CLUSTERS_Y = 8;
     static constexpr uint32_t CLUSTERS_Z = 24;
 
-    // D3D compute shaders only allow up to 1024 threads
-    // shader will be invoked 3 times
-    static constexpr uint32_t CLUSTERS_Z_THREADS = 8;
+    // limit number of threads (D3D only allows up to 1024, there might also be shared memory limitations)
+    // shader will be run by 6 work groups
+    static constexpr uint32_t CLUSTERS_X_THREADS = 16;
+    static constexpr uint32_t CLUSTERS_Y_THREADS = 8;
+    static constexpr uint32_t CLUSTERS_Z_THREADS = 4;
 
     static constexpr uint32_t CLUSTER_COUNT = CLUSTERS_X * CLUSTERS_Y * CLUSTERS_Z;
 

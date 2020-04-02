@@ -22,9 +22,7 @@ bool ClusteredRenderer::supported()
            // compute shader
            (caps->supported & BGFX_CAPS_COMPUTE) != 0 &&
            // 32-bit index buffers, used for light grid structure
-           ((caps->supported & BGFX_CAPS_INDEX32) != 0) &&
-           // fragment depth available in fragment shader
-           (caps->supported & BGFX_CAPS_FRAGMENT_DEPTH) != 0;
+           (caps->supported & BGFX_CAPS_INDEX32) != 0;
 }
 
 void ClusteredRenderer::onInitialize()
@@ -58,7 +56,7 @@ void ClusteredRenderer::onRender(float dt)
     };
         
     bgfx::setViewName(vClusterBuilding, "Cluster building pass (compute)");
-    bgfx::setViewClear(vClusterBuilding, BGFX_CLEAR_NONE);
+    //bgfx::setViewClear(vClusterBuilding, BGFX_CLEAR_NONE);
     // set u_viewRect for screen2Eye to work correctly
     bgfx::setViewRect(vClusterBuilding, 0, 0, width, height);
     // this could be set by a different renderer, reset it (D3D12 cares and crashes)
@@ -66,7 +64,7 @@ void ClusteredRenderer::onRender(float dt)
     //bgfx::touch(vClusterBuilding);
 
     bgfx::setViewName(vLightCulling, "Clustered light culling pass (compute)");
-    bgfx::setViewClear(vLightCulling, BGFX_CLEAR_NONE);
+    //bgfx::setViewClear(vLightCulling, BGFX_CLEAR_NONE);
     bgfx::setViewRect(vLightCulling, 0, 0, width, height);
     bgfx::setViewFrameBuffer(vLightCulling, BGFX_INVALID_HANDLE);
     //bgfx::touch(vLightCulling);
@@ -102,19 +100,17 @@ void ClusteredRenderer::onRender(float dt)
 
     lights.bindLights(scene);
     clusters.bindBuffers(false); // write access, all buffers
-
     bgfx::dispatch(vLightCulling,
                     lightCullingComputeProgram,
-                    1,
-                    1,
+                    ClusterShader::CLUSTERS_X / ClusterShader::CLUSTERS_X_THREADS,
+                    ClusterShader::CLUSTERS_Y / ClusterShader::CLUSTERS_Y_THREADS,
                     ClusterShader::CLUSTERS_Z / ClusterShader::CLUSTERS_Z_THREADS);
-
-    // lighting    
-
-    uint64_t state = BGFX_STATE_DEFAULT & ~BGFX_STATE_CULL_MASK;
+    // lighting
 
     bool debugVis = variables["DEBUG_VIS"] == "true";
     bgfx::ProgramHandle program = debugVis ? debugVisProgram : lightingProgram;
+
+    uint64_t state = BGFX_STATE_DEFAULT & ~BGFX_STATE_CULL_MASK;
 
     for(const Mesh& mesh : scene->meshes)
     {
@@ -125,10 +121,11 @@ void ClusteredRenderer::onRender(float dt)
         bgfx::setIndexBuffer(mesh.indexBuffer);
         const Material& mat = scene->materials[mesh.material];
         uint64_t materialState = pbr.bindMaterial(mat);
+        bgfx::setState(state | materialState);
         lights.bindLights(scene);
         clusters.bindBuffers();
-        bgfx::setState(state | materialState);
-        bgfx::submit(vLighting, program);
+        // TODO compute bindings don't seem to be preserved despite excluding BGFX_DISCARD_COMPUTE
+        bgfx::submit(vLighting, program, 0, BGFX_DISCARD_ALL & ~BGFX_DISCARD_COMPUTE);
     }
 }
 
