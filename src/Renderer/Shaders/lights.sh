@@ -17,6 +17,10 @@ BUFFER_RO(b_pointLights, vec4, SAMPLER_LIGHTS_POINTLIGHTS);
 struct PointLight
 {
     vec3 position;
+    // this padding is necessary for Vulkan when using the struct in a shared workgroup array
+    // otherwise memory reads/writes are corrupted
+    // I can't find where this is required per the spec so I'll assume this is a bug with Nvidia drivers/HW
+    float _padding;
     vec3 intensity;
     float radius;
 };
