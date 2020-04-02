@@ -194,7 +194,7 @@ void DeferredRenderer::onRender(float dt)
     for(const Mesh& mesh : scene->meshes)
     {
         const Material& mat = scene->materials[mesh.material];
-        // transparent materials are rendered in a seperate forward pass (view vTransparent)
+        // transparent materials are rendered in a separate forward pass (view vTransparent)
         if(!mat.blend)
         {
             glm::mat4 model = glm::identity<glm::mat4>();
@@ -208,6 +208,34 @@ void DeferredRenderer::onRender(float dt)
         }
     }
 
+    // copy G-Buffer depth attachment to depth texture for sampling in the light pass
+    // we can't attach it to the frame buffer and read it in the shader (unprojecting world position) at the same time
+    // blit happens before any compute or draw calls
+    bgfx::blit(vFullscreenLight, lightDepthTexture, 0, 0, bgfx::getTexture(gBuffer, GBufferAttachment::Depth));
+
+    // bind these once for all following submits
+    // excluding BGFX_DISCARD_TEXTURE_SAMPLERS from the discard flags passed to submit makes sure
+    // they don't get unbound
+    bindGBuffer();
+    lights.bindLights(scene);
+
+    // ambient light + emissive
+
+    // full screen triangle
+    // could also attach the accumulation buffer as a render target and write out during the geometry pass
+    // this is a bit cleaner
+
+    // move triangle to far plane (z = 1)
+    // only render if the geometry is in front so we leave the background untouched
+    glm::mat4 model = glm::identity<glm::mat4>();
+    model = glm::translate(model, glm::vec3(0.0f, 0.0f, 1.0f));
+    bgfx::setTransform(glm::value_ptr(model));
+    bgfx::setVertexBuffer(0, blitTriangleBuffer);
+    bgfx::setState(BGFX_STATE_WRITE_RGB | BGFX_STATE_DEPTH_TEST_GREATER | BGFX_STATE_CULL_CW);
+    bgfx::submit(vFullscreenLight, fullscreenProgram, 0, ~BGFX_DISCARD_TEXTURE_SAMPLERS);
+
+    // point lights
+
     // render lights to framebuffer
     // cull with light geometry
     //   - axis-aligned bounding box (TODO? sphere for point lights)
@@ -219,29 +247,8 @@ void DeferredRenderer::onRender(float dt)
     // TODO? tiled-deferred is probably faster for small lights
     // https://software.intel.com/sites/default/files/m/d/4/1/d/8/lauritzen_deferred_shading_siggraph_2010.pdf
 
-    // copy G-Buffer depth attachment to depth texture for sampling in the light pass
-    // we can't attach it to the frame buffer and read it in the shader (unprojecting world position) at the same time
-    // blit happens before any compute or draw calls
-    bgfx::blit(vFullscreenLight, lightDepthTexture, 0, 0, bgfx::getTexture(gBuffer, GBufferAttachment::Depth));
-
-    // ambient light + emissive
-
-    // full screen triangle
-    // could also attach the accumulation buffer as a render target and write out during the geometry pass
-    // this is a bit cleaner
-
-    // move triangle to far plane
-    // only render if the geometry is in front so we leave the background untouched
-    glm::mat4 model = glm::identity<glm::mat4>();
-    model = glm::translate(model, glm::vec3(0.0f, 0.0f, 1.0f));
-    bgfx::setTransform(glm::value_ptr(model));
-    bgfx::setVertexBuffer(0, blitTriangleBuffer);
-    bindGBuffer();
-    lights.bindLights(scene);
-    bgfx::setState(BGFX_STATE_WRITE_RGB | BGFX_STATE_DEPTH_TEST_GREATER | BGFX_STATE_CULL_CW);
-    bgfx::submit(vFullscreenLight, fullscreenProgram);
-
-    // point lights
+    bgfx::setVertexBuffer(0, pointLightVertexBuffer);
+    bgfx::setIndexBuffer(pointLightIndexBuffer);
 
     for(size_t i = 0; i < scene->pointLights.lights.size(); i++)
     {
@@ -256,15 +263,14 @@ void DeferredRenderer::onRender(float dt)
         glm::mat4 translate = glm::translate(glm::identity<glm::mat4>(), light.position);
         glm::mat4 model = translate * scale;
         bgfx::setTransform(glm::value_ptr(model));
-        bgfx::setVertexBuffer(0, pointLightVertexBuffer);
-        bgfx::setIndexBuffer(pointLightIndexBuffer);
         float lightIndexVec[4] = { (float)i };
         bgfx::setUniform(lightIndexVecUniform, lightIndexVec);
-        bindGBuffer();
-        lights.bindLights(scene);
         bgfx::setState(BGFX_STATE_WRITE_RGB | BGFX_STATE_DEPTH_TEST_GEQUAL | BGFX_STATE_CULL_CCW |
                        BGFX_STATE_BLEND_ADD);
-        bgfx::submit(vLight, pointLightProgram);
+        bgfx::submit(vLight,
+                     pointLightProgram,
+                     0,
+                     ~(BGFX_DISCARD_VERTEX_STREAMS | BGFX_DISCARD_INDEX_BUFFER | BGFX_DISCARD_TEXTURE_SAMPLERS));
     }
 
     // transparent
@@ -280,11 +286,12 @@ void DeferredRenderer::onRender(float dt)
             bgfx::setVertexBuffer(0, mesh.vertexBuffer);
             bgfx::setIndexBuffer(mesh.indexBuffer);
             uint64_t materialState = pbr.bindMaterial(mat);
-            lights.bindLights(scene);
             bgfx::setState(state | materialState);
-            bgfx::submit(vTransparent, transparencyProgram);
+            bgfx::submit(vTransparent, transparencyProgram, 0, ~BGFX_DISCARD_TEXTURE_SAMPLERS);
         }
     }
+
+    bgfx::discard(BGFX_DISCARD_ALL);
 }
 
 void DeferredRenderer::onShutdown()
@@ -330,7 +337,6 @@ bgfx::FrameBufferHandle DeferredRenderer::createGBuffer()
             bgfx::BackbufferRatio::Equal, false, 1, gBufferAttachmentFormats[i], BGFX_TEXTURE_RT | samplerFlags);
     }
 
-    // not write only
     bgfx::TextureFormat::Enum depthFormat = findDepthFormat(BGFX_TEXTURE_RT | samplerFlags);
     assert(depthFormat != bgfx::TextureFormat::Count);
     textures[Depth] =

@@ -41,6 +41,8 @@ void ForwardRenderer::onRender(float dt)
 
     uint64_t state = BGFX_STATE_DEFAULT & ~BGFX_STATE_CULL_MASK;
 
+    lights.bindLights(scene);
+
     for(const Mesh& mesh : scene->meshes)
     {
         glm::mat4 model = glm::identity<glm::mat4>();
@@ -50,10 +52,11 @@ void ForwardRenderer::onRender(float dt)
         bgfx::setIndexBuffer(mesh.indexBuffer);
         const Material& mat = scene->materials[mesh.material];
         uint64_t materialState = pbr.bindMaterial(mat);
-        lights.bindLights(scene);
         bgfx::setState(state | materialState);
-        bgfx::submit(vDefault, program);
+        bgfx::submit(vDefault, program, 0, ~BGFX_DISCARD_TEXTURE_SAMPLERS);
     }
+
+    bgfx::discard(BGFX_DISCARD_ALL);
 }
 
 void ForwardRenderer::onShutdown()

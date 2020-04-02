@@ -100,6 +100,7 @@ void ClusteredRenderer::onRender(float dt)
 
     lights.bindLights(scene);
     clusters.bindBuffers(false); // write access, all buffers
+
     bgfx::dispatch(vLightCulling,
                     lightCullingComputeProgram,
                     ClusterShader::CLUSTERS_X / ClusterShader::CLUSTERS_X_THREADS,
@@ -112,6 +113,9 @@ void ClusteredRenderer::onRender(float dt)
 
     uint64_t state = BGFX_STATE_DEFAULT & ~BGFX_STATE_CULL_MASK;
 
+    lights.bindLights(scene);
+    clusters.bindBuffers(true /*lightingPass*/); // read access, only light grid and indices
+
     for(const Mesh& mesh : scene->meshes)
     {
         glm::mat4 model = glm::identity<glm::mat4>();
@@ -122,11 +126,11 @@ void ClusteredRenderer::onRender(float dt)
         const Material& mat = scene->materials[mesh.material];
         uint64_t materialState = pbr.bindMaterial(mat);
         bgfx::setState(state | materialState);
-        lights.bindLights(scene);
-        clusters.bindBuffers();
-        // TODO compute bindings don't seem to be preserved despite excluding BGFX_DISCARD_COMPUTE
-        bgfx::submit(vLighting, program, 0, BGFX_DISCARD_ALL & ~BGFX_DISCARD_COMPUTE);
+        // preserve buffer bindings between submit calls
+        bgfx::submit(vLighting, program, 0, ~BGFX_DISCARD_TEXTURE_SAMPLERS);
     }
+
+    bgfx::discard(BGFX_DISCARD_ALL);
 }
 
 void ClusteredRenderer::onShutdown()
