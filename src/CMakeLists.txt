@@ -78,9 +78,7 @@ add_executable(Cluster ${PLATFORM} ${SOURCES} ${SHADERS})
 target_include_directories(Cluster PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(Cluster PRIVATE bigg IconFontCppHeaders assimp spdlog)
 target_compile_definitions(Cluster PRIVATE
-    # make all types aligned
-    # GLM_FORCE_DEFAULT_ALIGNED_GENTYPES
-    # SIMD optimizations
+    # enable SIMD optimizations
     GLM_FORCE_INTRINSICS
     # inline code where possible
     GLM_FORCE_INLINE
@@ -88,8 +86,6 @@ target_compile_definitions(Cluster PRIVATE
     GLM_FORCE_EXPLICIT_CTOR
     # length() returns size_t instead of int
     GLM_FORCE_SIZE_T_LENGTH
-    # left-handed projection matrices
-    GLM_FORCE_LEFT_HANDED
 )
 
 set_target_properties(Cluster PROPERTIES
