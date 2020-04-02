@@ -9,7 +9,7 @@ Config::Config() :
     renderer(bgfx::RendererType::Count), // default renderer, chosen by platform
     renderPath(Cluster::RenderPath::Clustered),
     tonemappingMode(Renderer::TonemappingMode::ACES),
-    profile(false),
+    profile(true),
     vsync(false),
     sceneFile("assets/models/Sponza/glTF/Sponza.gltf"),
     customScene(false),

@@ -2,7 +2,6 @@
 
 add_definitions(-DBGFX_CONFIG_RENDERER_OPENGL_MIN_VERSION=43)
 set(BIGG_EXAMPLES OFF CACHE INTERNAL "")
-set(BGFX_BUILD_EXAMPLES OFF CACHE INTERNAL "")
 add_subdirectory(bigg)
 
 # icon font headers
