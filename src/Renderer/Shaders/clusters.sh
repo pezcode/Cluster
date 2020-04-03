@@ -14,6 +14,7 @@
 #define CLUSTERS_Z 24
 
 // workgroup size of the culling compute shader
+// D3D compute shaders only allow up to 1024 threads per workgroup
 #define CLUSTERS_X_THREADS 16
 #define CLUSTERS_Y_THREADS 8
 #define CLUSTERS_Z_THREADS 4
@@ -37,13 +38,12 @@ uniform vec4 u_zNearFarVec;
 // light indices belonging to clusters
 CLUSTER_BUFFER(b_clusterLightIndices, uint, SAMPLER_CLUSTERS_LIGHTINDICES);
 // for each cluster: (start index in b_clusterLightIndices, number of point lights, empty, empty)
+// uint because uvec4 doesn't seem to work with D3D11
 CLUSTER_BUFFER(b_clusterLightGrid, uint, SAMPLER_CLUSTERS_LIGHTGRID);
-// uvec4 doesn't seem to work with DX11
-//CLUSTER_BUFFER(b_clusterLightGrid, uvec4, SAMPLER_CLUSTERS_LIGHTGRID);
 
 // these are only needed for building clusters and light culling, not in the fragment shader
 #ifdef WRITE_CLUSTERS
-// list of clusters (2 vec4's each, min + max pos)
+// list of clusters (2 vec4's each, min + max pos for AABB)
 CLUSTER_BUFFER(b_clusters, vec4, SAMPLER_CLUSTERS_CLUSTERS);
 // atomic counter for building the light grid
 // must be reset to 0 every frame
@@ -60,6 +60,8 @@ struct LightGrid
 {
     uint offset;
     uint pointLights;
+    // TODO
+    //uint spotLights;
 };
 
 #ifdef WRITE_CLUSTERS
@@ -74,7 +76,6 @@ Cluster getCluster(uint index)
 
 LightGrid getLightGrid(uint cluster)
 {
-    //uvec4 gridvec = b_clusterLightGrid[cluster];
     uvec4 gridvec = uvec4(b_clusterLightGrid[4 * cluster + 0], b_clusterLightGrid[4 * cluster + 1], 0, 0);
     LightGrid grid;
     grid.offset = gridvec.x;
@@ -90,6 +91,8 @@ uint getGridLightIndex(uint start, uint offset)
 // cluster depth index from depth in screen coordinates (gl_FragCoord.z)
 uint getClusterZIndex(float screenDepth)
 {
+    // this can be calculated on the CPU and passed as a uniform
+    // only leaving it here to keep most of the relevant code in the shaders for learning purposes
     float scale = float(CLUSTERS_Z) / log(u_zFar / u_zNear);
     float bias = -(float(CLUSTERS_Z) * log(u_zNear) / log(u_zFar / u_zNear));
 

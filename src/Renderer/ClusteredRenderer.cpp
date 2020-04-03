@@ -5,9 +5,11 @@
 #include <bx/string.h>
 #include <glm/matrix.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#include <glm/ext/matrix_relational.hpp>
 
 ClusteredRenderer::ClusteredRenderer(const Scene* scene) :
     Renderer(scene),
+    oldProjMat(glm::zero<glm::mat4>()),
     clusterBuildingComputeProgram(BGFX_INVALID_HANDLE),
     lightCullingComputeProgram(BGFX_INVALID_HANDLE),
     lightingProgram(BGFX_INVALID_HANDLE),
@@ -54,20 +56,18 @@ void ClusteredRenderer::onRender(float dt)
         vLightCulling,
         vLighting
     };
-        
+
     bgfx::setViewName(vClusterBuilding, "Cluster building pass (compute)");
-    //bgfx::setViewClear(vClusterBuilding, BGFX_CLEAR_NONE);
+    bgfx::setViewClear(vClusterBuilding, BGFX_CLEAR_NONE);
     // set u_viewRect for screen2Eye to work correctly
     bgfx::setViewRect(vClusterBuilding, 0, 0, width, height);
     // this could be set by a different renderer, reset it (D3D12 cares and crashes)
     bgfx::setViewFrameBuffer(vClusterBuilding, BGFX_INVALID_HANDLE);
-    //bgfx::touch(vClusterBuilding);
 
     bgfx::setViewName(vLightCulling, "Clustered light culling pass (compute)");
-    //bgfx::setViewClear(vLightCulling, BGFX_CLEAR_NONE);
+    bgfx::setViewClear(vLightCulling, BGFX_CLEAR_NONE);
     bgfx::setViewRect(vLightCulling, 0, 0, width, height);
     bgfx::setViewFrameBuffer(vLightCulling, BGFX_INVALID_HANDLE);
-    //bgfx::touch(vLightCulling);
 
     bgfx::setViewName(vLighting, "Clustered lighting pass");
     bgfx::setViewClear(vLighting, BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH, clearColor, 1.0f, 0);
@@ -88,13 +88,26 @@ void ClusteredRenderer::onRender(float dt)
 
     // cluster building
 
-    clusters.bindBuffers(false); // write access, all buffers
+    // only run this step if the camera parameters changed (aspect ratio, fov, near/far plane)
+    // cluster bounds are saved in camera coordinates so they don't change with camera movement
 
-    bgfx::dispatch(vClusterBuilding,
-                    clusterBuildingComputeProgram,
-                    ClusterShader::CLUSTERS_X,
-                    ClusterShader::CLUSTERS_Y,
-                    ClusterShader::CLUSTERS_Z);
+    // ideally we'd compare the relative error here but a correct implementation would involve
+    // a bunch of costly matrix operations: https://floating-point-gui.de/errors/comparison/
+    // comparing the absolute error against a rather small epsilon here works as long as the values
+    // in the projection matrix aren't getting too large
+    bool buildClusters = glm::any(glm::notEqual(projMat, oldProjMat, 0.00001f));
+    if(buildClusters)
+    {
+        oldProjMat = projMat;
+
+        clusters.bindBuffers(false); // write access, all buffers
+
+        bgfx::dispatch(vClusterBuilding,
+                       clusterBuildingComputeProgram,
+                       ClusterShader::CLUSTERS_X / ClusterShader::CLUSTERS_X_THREADS,
+                       ClusterShader::CLUSTERS_Y / ClusterShader::CLUSTERS_Y_THREADS,
+                       ClusterShader::CLUSTERS_Z / ClusterShader::CLUSTERS_Z_THREADS);
+    }
 
     // light culling
 
@@ -102,10 +115,10 @@ void ClusteredRenderer::onRender(float dt)
     clusters.bindBuffers(false); // write access, all buffers
 
     bgfx::dispatch(vLightCulling,
-                    lightCullingComputeProgram,
-                    ClusterShader::CLUSTERS_X / ClusterShader::CLUSTERS_X_THREADS,
-                    ClusterShader::CLUSTERS_Y / ClusterShader::CLUSTERS_Y_THREADS,
-                    ClusterShader::CLUSTERS_Z / ClusterShader::CLUSTERS_Z_THREADS);
+                   lightCullingComputeProgram,
+                   ClusterShader::CLUSTERS_X / ClusterShader::CLUSTERS_X_THREADS,
+                   ClusterShader::CLUSTERS_Y / ClusterShader::CLUSTERS_Y_THREADS,
+                   ClusterShader::CLUSTERS_Z / ClusterShader::CLUSTERS_Z_THREADS);
     // lighting
 
     bool debugVis = variables["DEBUG_VIS"] == "true";

@@ -10,21 +10,20 @@
 // z-subdivision concept from http://advances.realtimerendering.com/s2016/Siggraph2016_idTech6.pdf
 
 // bgfx doesn't define this in shaders
-#define gl_WorkGroupSize uvec3(1, 1, 1)
-#define gl_NumWorkGroups uvec3(CLUSTERS_X, CLUSTERS_Y, CLUSTERS_Z)
+#define gl_WorkGroupSize uvec3(CLUSTERS_X_THREADS, CLUSTERS_Y_THREADS, CLUSTERS_Z_THREADS)
 
 // each thread handles one cluster
-// TODO use workgroups that fill GPU wavefronts (32 on Nvidia, 64 on AMD)
-NUM_THREADS(1, 1, 1)
+NUM_THREADS(CLUSTERS_X_THREADS, CLUSTERS_Y_THREADS, CLUSTERS_Z_THREADS)
 void main()
 {
-    const uint clusterIndex = gl_WorkGroupID.z * gl_NumWorkGroups.x * gl_NumWorkGroups.y +
-                              gl_WorkGroupID.y * gl_NumWorkGroups.x +
-                              gl_WorkGroupID.x;
+    // index calculation must match the inverse operation in the fragment shader (see getClusterIndex)
+    uint clusterIndex = gl_GlobalInvocationID.z * gl_WorkGroupSize.x * gl_WorkGroupSize.y +
+                        gl_GlobalInvocationID.y * gl_WorkGroupSize.x +
+                        gl_GlobalInvocationID.x;
 
     // calculate min (bottom left) and max (top right) xy in screen coordinates
-    vec4 minScreen = vec4(gl_WorkGroupID.xy * u_clusterSizes.xy, 1.0, 1.0);
-    vec4 maxScreen = vec4(vec2(gl_WorkGroupID.x + 1, gl_WorkGroupID.y + 1) * u_clusterSizes.xy, 1.0, 1.0);
+    vec4 minScreen = vec4( gl_GlobalInvocationID.xy               * u_clusterSizes.xy, 1.0, 1.0);
+    vec4 maxScreen = vec4((gl_GlobalInvocationID.xy + vec2(1, 1)) * u_clusterSizes.xy, 1.0, 1.0);
 
     // -> eye coordinates
     // z is the camera far plane (1 in screen coordinates)
@@ -32,8 +31,8 @@ void main()
     vec3 maxEye = screen2Eye(maxScreen).xyz;
 
     // calculate near and far depth edges of the cluster
-    float clusterNear = u_zNear * pow(u_zFar / u_zNear,  gl_WorkGroupID.z      / float(gl_NumWorkGroups.z));
-    float clusterFar  = u_zNear * pow(u_zFar / u_zNear, (gl_WorkGroupID.z + 1) / float(gl_NumWorkGroups.z));
+    float clusterNear = u_zNear * pow(u_zFar / u_zNear,  gl_GlobalInvocationID.z      / float(CLUSTERS_Z));
+    float clusterFar  = u_zNear * pow(u_zFar / u_zNear, (gl_GlobalInvocationID.z + 1) / float(CLUSTERS_Z));
 
     // this calculates the intersection between:
     // - a line from the camera (origin) to the eye point (at the camera's far plane)
@@ -44,17 +43,11 @@ void main()
     vec3 maxNear = maxEye * clusterNear / maxEye.z;
     vec3 maxFar  = maxEye * clusterFar  / maxEye.z;
 
-    // get max extent of the cluster in all dimensions (axis-aligned bounding box)
+    // get extent of the cluster in all dimensions (axis-aligned bounding box)
+    // there is some overlap here but it's easier to calculate intersections with AABB
     vec3 minBounds = min(min(minNear, minFar), min(maxNear, maxFar));
     vec3 maxBounds = max(max(minNear, minFar), max(maxNear, maxFar));
 
     b_clusters[2 * clusterIndex + 0] = vec4(minBounds, 1.0);
     b_clusters[2 * clusterIndex + 1] = vec4(maxBounds, 1.0);
-
-    // reset the atomic counter for the light culling shader
-    // writable compute buffers can't be updated by CPU so do it here
-    if(clusterIndex == 0)
-    {
-        b_globalIndex[0] = 0;
-    }
 }

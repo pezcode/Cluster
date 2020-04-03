@@ -15,6 +15,8 @@ public:
     virtual void onShutdown() override;
 
 private:
+    glm::mat4 oldProjMat;
+
     bgfx::ProgramHandle clusterBuildingComputeProgram;
     bgfx::ProgramHandle lightCullingComputeProgram;
     bgfx::ProgramHandle lightingProgram;

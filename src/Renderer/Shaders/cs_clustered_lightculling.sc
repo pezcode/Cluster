@@ -10,20 +10,15 @@
 // largely inspired by http://www.aortiz.me/2018/12/21/CG.html
 
 // point lights only for now
+bool pointLightIntersectsCluster(PointLight light, Cluster cluster);
 
-bool pointLightAffectsCluster(PointLight light, Cluster cluster);
-float distsqToCluster(vec3 pos, Cluster cluster);
-
-// bgfx doesn't define this in shaders
 #define gl_WorkGroupSize uvec3(CLUSTERS_X_THREADS, CLUSTERS_Y_THREADS, CLUSTERS_Z_THREADS)
 #define GROUP_SIZE (CLUSTERS_X_THREADS * CLUSTERS_Y_THREADS * CLUSTERS_Z_THREADS)
 
 // light cache for the current work group
 SHARED PointLight lights[GROUP_SIZE];
 
-// work group size
 // each thread handles one cluster
-// D3D compute shaders only seem to allow 1024 threads
 NUM_THREADS(CLUSTERS_X_THREADS, CLUSTERS_Y_THREADS, CLUSTERS_Z_THREADS)
 void main()
 {
@@ -32,11 +27,19 @@ void main()
     uint visibleLights[MAX_LIGHTS_PER_CLUSTER];
     uint visibleCount = 0;
 
-    // the way we calculate the index doesn't really matter here since we write to the same index as we read from the cluster buffer
-    // it only matters that the cluster buildung and fragment shader calculate the cluster index the same way
+    // the way we calculate the index doesn't really matter here since we write to the same index in the light grid as we read from the cluster buffer
     uint clusterIndex = gl_GlobalInvocationID.z * gl_WorkGroupSize.x * gl_WorkGroupSize.y +
                         gl_GlobalInvocationID.y * gl_WorkGroupSize.x +
                         gl_GlobalInvocationID.x;
+
+    // reset the atomic counter
+    // writable compute buffers can't be updated by CPU so do it here
+    if(clusterIndex == 0)
+    {
+        b_globalIndex[0] = 0;
+    }
+
+    Cluster cluster = getCluster(clusterIndex);
     
     // we have a cache of GROUP_SIZE lights
     // have to run this loop several times if we have more than GROUP_SIZE lights
@@ -89,34 +92,30 @@ void main()
     }
 
     // write light grid for this cluster
-    //b_clusterLightGrid[clusterIndex] = uvec4(offset, visibleCount, 0, 0);
     b_clusterLightGrid[4 * clusterIndex + 0] = offset;
     b_clusterLightGrid[4 * clusterIndex + 1] = visibleCount;
-    //b_clusterLightGrid[4 * clusterIndex + 2] = 0; // unused, spot lights etc.
+    // unused, spot lights etc.
+    //b_clusterLightGrid[4 * clusterIndex + 2] = 0;
     //b_clusterLightGrid[4 * clusterIndex + 3] = 0;
 }
 
 // check if light radius extends into the cluster
-bool pointLightAffectsCluster(PointLight light, Cluster cluster)
+bool pointLightIntersectsCluster(PointLight light, Cluster cluster)
 {
     // NOTE: expects light.position to be in view space like the cluster bounds
     // global light list has world space coordinates, but we transform the
     // coordinates in the shared array of lights after copying
-    return distsqToCluster(light.position, cluster) <= (light.radius * light.radius);
-}
 
-// squared distance of the point to planes of the bounding box
-float distsqToCluster(vec3 pos, Cluster cluster)
-{
     // only add distance in either dimension if it's outside the bounding box
 
-    vec3 belowDist = cluster.minBounds - pos;
-    vec3 aboveDist = pos - cluster.maxBounds;
+    vec3 belowDist = cluster.minBounds - light.position;
+    vec3 aboveDist = light.position - cluster.maxBounds;
 
     vec3 isBelow = vec3(greaterThan(belowDist, vec3_splat(0.0)));
     vec3 isAbove = vec3(greaterThan(aboveDist, vec3_splat(0.0)));
 
     vec3 distSqVec = (isBelow * belowDist) + (isAbove * aboveDist);
     float distsq = dot(distSqVec, distSqVec);
-    return distsq;
+
+    return distsq <= (light.radius * light.radius);
 }
