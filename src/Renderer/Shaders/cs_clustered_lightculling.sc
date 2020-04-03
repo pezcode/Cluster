@@ -65,13 +65,12 @@ void main()
         barrier();
 
         // each thread is one cluster and checks against all lights in the cache
-        for(uint j = 0; j < batchSize; j++)
+        for(uint i = 0; i < batchSize; i++)
         {
-            uint lightIndex = lightOffset + j;
             Cluster cluster = getCluster(clusterIndex);
-            if(visibleCount < MAX_LIGHTS_PER_CLUSTER && pointLightAffectsCluster(lights[lightIndex], cluster))
+            if(visibleCount < MAX_LIGHTS_PER_CLUSTER && pointLightIntersectsCluster(lights[i], cluster))
             {
-                visibleLights[visibleCount] = lightIndex;
+                visibleLights[visibleCount] = lightOffset + i;
                 visibleCount++;
             }
         }
