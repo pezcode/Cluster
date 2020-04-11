@@ -11,6 +11,7 @@ ClusteredRenderer::ClusteredRenderer(const Scene* scene) :
     Renderer(scene),
     oldProjMat(glm::zero<glm::mat4>()),
     clusterBuildingComputeProgram(BGFX_INVALID_HANDLE),
+    resetCounterComputeProgram(BGFX_INVALID_HANDLE),
     lightCullingComputeProgram(BGFX_INVALID_HANDLE),
     lightingProgram(BGFX_INVALID_HANDLE),
     debugVisProgram(BGFX_INVALID_HANDLE)
@@ -37,6 +38,9 @@ void ClusteredRenderer::onInitialize()
     bx::snprintf(csName, BX_COUNTOF(csName), "%s%s", shaderDir(), "cs_clustered_clusterbuilding.bin");
     clusterBuildingComputeProgram = bgfx::createProgram(bigg::loadShader(csName), true);
 
+    bx::snprintf(csName, BX_COUNTOF(csName), "%s%s", shaderDir(), "cs_clustered_reset_counter.bin");
+    resetCounterComputeProgram = bgfx::createProgram(bigg::loadShader(csName), true);
+
     bx::snprintf(csName, BX_COUNTOF(csName), "%s%s", shaderDir(), "cs_clustered_lightculling.bin");
     lightCullingComputeProgram = bgfx::createProgram(bigg::loadShader(csName), true);
 
@@ -61,7 +65,7 @@ void ClusteredRenderer::onRender(float dt)
     bgfx::setViewClear(vClusterBuilding, BGFX_CLEAR_NONE);
     // set u_viewRect for screen2Eye to work correctly
     bgfx::setViewRect(vClusterBuilding, 0, 0, width, height);
-    // this could be set by a different renderer, reset it (D3D12 cares and crashes)
+    // this could still be set from a different renderer, reset it (D3D12 cares and crashes)
     bgfx::setViewFrameBuffer(vClusterBuilding, BGFX_INVALID_HANDLE);
 
     bgfx::setViewName(vLightCulling, "Clustered light culling pass (compute)");
@@ -100,7 +104,7 @@ void ClusteredRenderer::onRender(float dt)
     {
         oldProjMat = projMat;
 
-        clusters.bindBuffers(false); // write access, all buffers
+        clusters.bindBuffers(false /*lightingPass*/); // write access, all buffers
 
         bgfx::dispatch(vClusterBuilding,
                        clusterBuildingComputeProgram,
@@ -111,8 +115,19 @@ void ClusteredRenderer::onRender(float dt)
 
     // light culling
 
+    clusters.bindBuffers(false);
+
+    // reset atomic counter for light grid generation
+    // buffers created with BGFX_BUFFER_COMPUTE_WRITE can't be updated from the CPU
+    // this used to happen during cluster building when it was still run every frame
+    bgfx::dispatch(vLightCulling,
+                   resetCounterComputeProgram,
+                   1,
+                   1,
+                   1);
+
     lights.bindLights(scene);
-    clusters.bindBuffers(false); // write access, all buffers
+    clusters.bindBuffers(false);
 
     bgfx::dispatch(vLightCulling,
                    lightCullingComputeProgram,
@@ -151,10 +166,12 @@ void ClusteredRenderer::onShutdown()
     clusters.shutdown();
 
     bgfx::destroy(clusterBuildingComputeProgram);
+    bgfx::destroy(resetCounterComputeProgram);
     bgfx::destroy(lightCullingComputeProgram);
     bgfx::destroy(lightingProgram);
     bgfx::destroy(debugVisProgram);
 
-    clusterBuildingComputeProgram = lightCullingComputeProgram = lightingProgram = debugVisProgram =
+    clusterBuildingComputeProgram = resetCounterComputeProgram = lightCullingComputeProgram = lightingProgram =
+        debugVisProgram =
         BGFX_INVALID_HANDLE;
 }

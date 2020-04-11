@@ -16,6 +16,7 @@ bool pointLightIntersectsCluster(PointLight light, Cluster cluster);
 #define GROUP_SIZE (CLUSTERS_X_THREADS * CLUSTERS_Y_THREADS * CLUSTERS_Z_THREADS)
 
 // light cache for the current work group
+// group shared memory has lower latency than global memory
 SHARED PointLight lights[GROUP_SIZE];
 
 // each thread handles one cluster
@@ -31,13 +32,6 @@ void main()
     uint clusterIndex = gl_GlobalInvocationID.z * gl_WorkGroupSize.x * gl_WorkGroupSize.y +
                         gl_GlobalInvocationID.y * gl_WorkGroupSize.x +
                         gl_GlobalInvocationID.x;
-
-    // reset the atomic counter
-    // writable compute buffers can't be updated by CPU so do it here
-    if(clusterIndex == 0)
-    {
-        b_globalIndex[0] = 0;
-    }
 
     Cluster cluster = getCluster(clusterIndex);
     

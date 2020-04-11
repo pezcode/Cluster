@@ -47,6 +47,7 @@ set(SHADERS
     Renderer/Shaders/fs_clustered.sc
     Renderer/Shaders/fs_clustered_debug_vis.sc
     Renderer/Shaders/cs_clustered_clusterbuilding.sc
+    Renderer/Shaders/cs_clustered_reset_counter.sc
     Renderer/Shaders/cs_clustered_lightculling.sc
     Renderer/Shaders/vs_deferred_geometry.sc
     Renderer/Shaders/fs_deferred_geometry.sc

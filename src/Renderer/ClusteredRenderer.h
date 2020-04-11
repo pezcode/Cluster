@@ -18,6 +18,7 @@ private:
     glm::mat4 oldProjMat;
 
     bgfx::ProgramHandle clusterBuildingComputeProgram;
+    bgfx::ProgramHandle resetCounterComputeProgram;
     bgfx::ProgramHandle lightCullingComputeProgram;
     bgfx::ProgramHandle lightingProgram;
     bgfx::ProgramHandle debugVisProgram;
