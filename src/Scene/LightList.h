@@ -11,7 +11,9 @@ struct LightList
     {
         glm::vec3 position;
         float padding;
-        glm::vec3 power;
+        // radiant intensity in W/sr
+        // can be calculated from radiant flux
+        glm::vec3 intensity;
         float radius;
 
         static void init()

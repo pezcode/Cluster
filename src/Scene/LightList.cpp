@@ -29,7 +29,9 @@ void PointLightList::update()
     {
         PointLightVertex* light = (PointLightVertex*)(mem->data + (i * stride));
         light->position = lights[i].position;
-        light->power = lights[i].power;
+        // intensity = flux per unit solid angle (steradian)
+        // there are 4*pi steradians in a sphere
+        light->intensity = lights[i].flux / (4.0f * glm::pi<float>());
         light->radius = lights[i].calculateRadius();
     }
 

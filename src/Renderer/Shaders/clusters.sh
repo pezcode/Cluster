@@ -60,8 +60,6 @@ struct LightGrid
 {
     uint offset;
     uint pointLights;
-    // TODO
-    //uint spotLights;
 };
 
 #ifdef WRITE_CLUSTERS

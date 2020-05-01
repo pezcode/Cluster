@@ -11,7 +11,7 @@ uniform vec4 u_ambientLightIrradiance;
 
 // for each light:
 //   vec4 position (w is padding)
-//   vec4 power + radius (xyz is power, w is radius)
+//   vec4 intensity + radius (xyz is intensity, w is radius)
 BUFFER_RO(b_pointLights, vec4, SAMPLER_LIGHTS_POINTLIGHTS);
 
 struct PointLight
@@ -35,21 +35,19 @@ struct AmbientLight
 // also really good:
 // https://blog.selfshadow.com/publications/s2013-shading-course/karis/s2013_pbs_epic_notes_v2.pdf
 
-#define INV_4PI 0.07957747154
-
 float distanceAttenuation(float distance)
 {
     // only for point lights
 
     // physics: inverse square falloff
-    // pretend point lights are tiny spheres of 1 cm radius
+    // to keep irradiance from reaching infinity at really close distances, stop at 1cm
     return 1.0 / max(distance * distance, 0.01 * 0.01);
 }
 
 float smoothAttenuation(float distance, float radius)
 {
     // window function with smooth transition to 0
-    // radius is arbitrary
+    // radius is arbitrary (and usually artist controlled)
     float nom = saturate(1.0 - pow(distance / radius, 4.0));
     return nom * nom * distanceAttenuation(distance);
 }
@@ -63,9 +61,9 @@ PointLight getPointLight(uint i)
 {
     PointLight light;
     light.position = b_pointLights[2 * i + 0].xyz;
-    vec4 powerRadiusVec = b_pointLights[2 * i + 1];
-    light.intensity = powerRadiusVec.xyz * INV_4PI;
-    light.radius = powerRadiusVec.w;
+    vec4 intensityRadiusVec = b_pointLights[2 * i + 1];
+    light.intensity = intensityRadiusVec.xyz;
+    light.radius = intensityRadiusVec.w;
     return light;
 }
 
