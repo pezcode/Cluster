@@ -15,6 +15,7 @@
 
 // workgroup size of the culling compute shader
 // D3D compute shaders only allow up to 1024 threads per workgroup
+// GL_MAX_COMPUTE_WORK_GROUP_INVOCATIONS also only guarantees 1024
 #define CLUSTERS_X_THREADS 16
 #define CLUSTERS_Y_THREADS 8
 #define CLUSTERS_Z_THREADS 4

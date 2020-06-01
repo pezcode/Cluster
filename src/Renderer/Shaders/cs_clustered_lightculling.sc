@@ -15,8 +15,13 @@ bool pointLightIntersectsCluster(PointLight light, Cluster cluster);
 #define gl_WorkGroupSize uvec3(CLUSTERS_X_THREADS, CLUSTERS_Y_THREADS, CLUSTERS_Z_THREADS)
 #define GROUP_SIZE (CLUSTERS_X_THREADS * CLUSTERS_Y_THREADS * CLUSTERS_Z_THREADS)
 
-// light cache for the current work group
+// light cache for the current workgroup
 // group shared memory has lower latency than global memory
+
+// there's no guarantee on the available shared memory
+// as a guideline the minimum value of GL_MAX_COMPUTE_SHARED_MEMORY_SIZE is 32KB
+// with a workgroup size of 16*8*4 this is 64 bytes per light
+// however, using all available memory would limit the compute shader invocation to only 1 workgroup
 SHARED PointLight lights[GROUP_SIZE];
 
 // each thread handles one cluster
@@ -99,16 +104,9 @@ bool pointLightIntersectsCluster(PointLight light, Cluster cluster)
     // global light list has world space coordinates, but we transform the
     // coordinates in the shared array of lights after copying
 
-    // only add distance in either dimension if it's outside the bounding box
-
-    vec3 belowDist = cluster.minBounds - light.position;
-    vec3 aboveDist = light.position - cluster.maxBounds;
-
-    vec3 isBelow = vec3(greaterThan(belowDist, vec3_splat(0.0)));
-    vec3 isAbove = vec3(greaterThan(aboveDist, vec3_splat(0.0)));
-
-    vec3 distSqVec = (isBelow * belowDist) + (isAbove * aboveDist);
-    float distsq = dot(distSqVec, distSqVec);
-
-    return distsq <= (light.radius * light.radius);
+    // get closest point to sphere center
+    vec3 closest = max(cluster.minBounds, min(light.position, cluster.maxBounds));
+    // check if point is inside the sphere
+    vec3 dist = closest - light.position;
+    return dot(dist, dist) <= (light.radius * light.radius);    
 }
