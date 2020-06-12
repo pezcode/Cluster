@@ -116,6 +116,8 @@ vec3 pbrEmissive(vec2 texcoord)
     }
 }
 
+PBRMaterial pbrInitMaterial(PBRMaterial mat);
+
 PBRMaterial pbrMaterial(vec2 texcoord)
 {
     PBRMaterial mat;
@@ -130,6 +132,15 @@ PBRMaterial pbrMaterial(vec2 texcoord)
     mat.occlusion = pbrOcclusion(texcoord);
     mat.emissive = pbrEmissive(texcoord);
 
+    mat = pbrInitMaterial(mat);
+
+    return mat;
+}
+
+#endif // READ_MATERIAL
+
+PBRMaterial pbrInitMaterial(PBRMaterial mat)
+{
     // Taken directly from GLTF 2.0 specs
     // this can be precalculated instead of evaluating it in the BRDF for every light
 
@@ -142,8 +153,6 @@ PBRMaterial pbrMaterial(vec2 texcoord)
 
     return mat;
 }
-
-#endif
 
 // gives a new value a (roughness^2)
 float specularAntiAliasing(vec3 N, float a)
@@ -176,7 +185,7 @@ float specularAntiAliasing(vec3 N, float a)
 // and
 // https://learnopengl.com/PBR/Lighting
 
-#define INV_PI 0.3183098861837906715377675267450
+#define INV_PI (0.3183098861837906715377675267450)
 
 // Schlick approximation to Fresnel equation
 vec3 F_Schlick(float VoH, vec3 F0)
