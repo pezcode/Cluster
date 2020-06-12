@@ -18,8 +18,7 @@ private:
     bgfx::UniformHandle baseColorFactorUniform;
     bgfx::UniformHandle metallicRoughnessNormalOcclusionFactorUniform;
     bgfx::UniformHandle emissiveFactorUniform;
-    bgfx::UniformHandle hasTextures1Uniform;
-    bgfx::UniformHandle hasTextures2Uniform;
+    bgfx::UniformHandle hasTexturesUniform;
     bgfx::UniformHandle baseColorSampler;
     bgfx::UniformHandle metallicRoughnessSampler;
     bgfx::UniformHandle normalSampler;

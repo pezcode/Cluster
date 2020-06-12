@@ -16,14 +16,13 @@ SAMPLER2D(s_texEmissive,          SAMPLER_PBR_EMISSIVE);
 uniform vec4 u_baseColorFactor;
 uniform vec4 u_metallicRoughnessNormalOcclusionFactor;
 uniform vec4 u_emissiveFactorVec;
-uniform vec4 u_hasTextures1;
-uniform vec4 u_hasTextures2;
+uniform vec4 u_hasTextures;
 
-#define u_hasBaseColorTexture         (u_hasTextures1.x != 0.0f)
-#define u_hasMetallicRoughnessTexture (u_hasTextures1.y != 0.0f)
-#define u_hasNormalTexture            (u_hasTextures1.z != 0.0f)
-#define u_hasOcclusionTexture         (u_hasTextures1.w != 0.0f)
-#define u_hasEmissiveTexture          (u_hasTextures2.x != 0.0f)
+#define u_hasBaseColorTexture         ((uint(u_hasTextures.x) & (1 << 0)) != 0)
+#define u_hasMetallicRoughnessTexture ((uint(u_hasTextures.x) & (1 << 1)) != 0)
+#define u_hasNormalTexture            ((uint(u_hasTextures.x) & (1 << 2)) != 0)
+#define u_hasOcclusionTexture         ((uint(u_hasTextures.x) & (1 << 3)) != 0)
+#define u_hasEmissiveTexture          ((uint(u_hasTextures.x) & (1 << 4)) != 0)
 
 #define u_metallicRoughnessFactor (u_metallicRoughnessNormalOcclusionFactor.xy)
 #define u_normalScale             (u_metallicRoughnessNormalOcclusionFactor.z)
