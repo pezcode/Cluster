@@ -8,8 +8,7 @@ PBRShader::PBRShader() :
     baseColorFactorUniform(BGFX_INVALID_HANDLE),
     metallicRoughnessNormalOcclusionFactorUniform(BGFX_INVALID_HANDLE),
     emissiveFactorUniform(BGFX_INVALID_HANDLE),
-    hasTextures1Uniform(BGFX_INVALID_HANDLE),
-    hasTextures2Uniform(BGFX_INVALID_HANDLE),
+    hasTexturesUniform(BGFX_INVALID_HANDLE),
     baseColorSampler(BGFX_INVALID_HANDLE),
     metallicRoughnessSampler(BGFX_INVALID_HANDLE),
     normalSampler(BGFX_INVALID_HANDLE),
@@ -25,8 +24,7 @@ void PBRShader::initialize()
     metallicRoughnessNormalOcclusionFactorUniform =
         bgfx::createUniform("u_metallicRoughnessNormalOcclusionFactor", bgfx::UniformType::Vec4);
     emissiveFactorUniform = bgfx::createUniform("u_emissiveFactorVec", bgfx::UniformType::Vec4);
-    hasTextures1Uniform = bgfx::createUniform("u_hasTextures1", bgfx::UniformType::Vec4);
-    hasTextures2Uniform = bgfx::createUniform("u_hasTextures2", bgfx::UniformType::Vec4);
+    hasTexturesUniform = bgfx::createUniform("u_hasTextures", bgfx::UniformType::Vec4);
     baseColorSampler = bgfx::createUniform("s_texBaseColor", bgfx::UniformType::Sampler);
     metallicRoughnessSampler = bgfx::createUniform("s_texMetallicRoughness", bgfx::UniformType::Sampler);
     normalSampler = bgfx::createUniform("s_texNormal", bgfx::UniformType::Sampler);
@@ -41,8 +39,7 @@ void PBRShader::shutdown()
     bgfx::destroy(baseColorFactorUniform);
     bgfx::destroy(metallicRoughnessNormalOcclusionFactorUniform);
     bgfx::destroy(emissiveFactorUniform);
-    bgfx::destroy(hasTextures1Uniform);
-    bgfx::destroy(hasTextures2Uniform);
+    bgfx::destroy(hasTexturesUniform);
     bgfx::destroy(baseColorSampler);
     bgfx::destroy(metallicRoughnessSampler);
     bgfx::destroy(normalSampler);
@@ -51,7 +48,7 @@ void PBRShader::shutdown()
     bgfx::destroy(defaultTexture);
 
     baseColorFactorUniform = metallicRoughnessNormalOcclusionFactorUniform = emissiveFactorUniform =
-        hasTextures1Uniform = hasTextures2Uniform = baseColorSampler = metallicRoughnessSampler = normalSampler =
+        hasTexturesUniform = baseColorSampler = metallicRoughnessSampler = normalSampler =
             occlusionSampler = emissiveSampler = BGFX_INVALID_HANDLE;
     defaultTexture = BGFX_INVALID_HANDLE;
 }
@@ -66,8 +63,7 @@ uint64_t PBRShader::bindMaterial(const Material& material)
     glm::vec4 emissiveFactor = glm::vec4(material.emissiveFactor, 0.0f);
     bgfx::setUniform(emissiveFactorUniform, glm::value_ptr(emissiveFactor));
 
-    float hasTextures1Values[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
-    float hasTextures2Values[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
+    float hasTexturesValues[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
 
     auto setTextureOrDefault = [&](uint8_t stage, bgfx::UniformHandle uniform, bgfx::TextureHandle texture) -> bool {
         bool valid = bgfx::isValid(texture);
@@ -77,18 +73,15 @@ uint64_t PBRShader::bindMaterial(const Material& material)
         return valid;
     };
 
-    hasTextures1Values[0] =
-        (float)setTextureOrDefault(Samplers::PBR_BASECOLOR, baseColorSampler, material.baseColorTexture);
-    hasTextures1Values[1] = (float)setTextureOrDefault(
-        Samplers::PBR_METALROUGHNESS, metallicRoughnessSampler, material.metallicRoughnessTexture);
-    hasTextures1Values[2] = (float)setTextureOrDefault(Samplers::PBR_NORMAL, normalSampler, material.normalTexture);
-    hasTextures1Values[3] =
-        (float)setTextureOrDefault(Samplers::PBR_OCCLUSION, occlusionSampler, material.occlusionTexture);
-    hasTextures2Values[0] =
-        (float)setTextureOrDefault(Samplers::PBR_EMISSIVE, emissiveSampler, material.emissiveTexture);
+    const uint32_t hasTexturesMask = 0
+        | ((setTextureOrDefault(Samplers::PBR_BASECOLOR, baseColorSampler, material.baseColorTexture) ? 1 : 0) << 0)
+        | ((setTextureOrDefault(Samplers::PBR_METALROUGHNESS, metallicRoughnessSampler, material.metallicRoughnessTexture) ? 1 : 0) << 1)
+        | ((setTextureOrDefault(Samplers::PBR_NORMAL, normalSampler, material.normalTexture) ? 1 : 0) << 2)
+        | ((setTextureOrDefault(Samplers::PBR_OCCLUSION, occlusionSampler, material.occlusionTexture) ? 1 : 0) << 3)
+        | ((setTextureOrDefault(Samplers::PBR_EMISSIVE, emissiveSampler, material.emissiveTexture) ? 1 : 0) << 4);
+    hasTexturesValues[0] = static_cast<float>(hasTexturesMask);
 
-    bgfx::setUniform(hasTextures1Uniform, hasTextures1Values);
-    bgfx::setUniform(hasTextures2Uniform, hasTextures2Values);
+    bgfx::setUniform(hasTexturesUniform, hasTexturesValues);
 
     uint64_t state = 0;
     if(material.blend)
