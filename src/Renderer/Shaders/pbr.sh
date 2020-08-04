@@ -231,6 +231,7 @@ float Fd_Lambert()
     return INV_PI;
 }
 
+// https://github.com/KhronosGroup/glTF/tree/master/specification/2.0#appendix-b-brdf-implementation
 vec3 BRDF(vec3 v, vec3 l, vec3 n, PBRMaterial mat)
 {
     // V is the normalized vector from the shading location to the eye
@@ -243,19 +244,19 @@ vec3 BRDF(vec3 v, vec3 l, vec3 n, PBRMaterial mat)
     float NoV = abs(dot(n, v)) + 1e-5;
     float NoL = saturate(dot(n, l));
     float NoH = saturate(dot(n, h));
-    float LoH = saturate(dot(l, h));
+    // Filament docs mention V*H in math, but code uses LoH
+    float VoH = saturate(dot(v, h));
 
     // specular BRDF
     float D = D_GGX(NoH, mat.a);
-    vec3 F = F_Schlick(LoH, mat.F0);
+    vec3 F = F_Schlick(VoH, mat.F0);
     float V = V_SmithGGXCorrelated(NoV, NoL, mat.a);
     vec3 Fr = (D * V) * F;
 
     // diffuse BRDF
     vec3 Fd = mat.diffuseColor * Fd_Lambert();
 
-    vec3 kD = (1.0 - F) * (1.0 - mat.metallic);
-    return kD * Fd + Fr;
+    return Fr + (1.0 - F) * Fd;
 }
 
 #endif // PBR_SH_HEADER_GUARD
