@@ -32,8 +32,12 @@ void ClusterShader::initialize()
         bgfx::createDynamicVertexBuffer(CLUSTER_COUNT, ClusterVertex::layout, BGFX_BUFFER_COMPUTE_READ_WRITE);
     lightIndicesBuffer = bgfx::createDynamicIndexBuffer(CLUSTER_COUNT * MAX_LIGHTS_PER_CLUSTER,
                                                         BGFX_BUFFER_COMPUTE_READ_WRITE | BGFX_BUFFER_INDEX32);
+    // we have to specify the compute buffer format here since we need uvec4
+    // not needed for the rest, the default format for vertex/index buffers is vec4/uint
     lightGridBuffer =
-        bgfx::createDynamicIndexBuffer(CLUSTER_COUNT * 4, BGFX_BUFFER_COMPUTE_READ_WRITE | BGFX_BUFFER_INDEX32);
+        bgfx::createDynamicIndexBuffer(CLUSTER_COUNT * 4,
+                                       BGFX_BUFFER_COMPUTE_READ_WRITE | BGFX_BUFFER_INDEX32 |
+                                           BGFX_BUFFER_COMPUTE_FORMAT_32X4 | BGFX_BUFFER_COMPUTE_TYPE_UINT);
     atomicIndexBuffer = bgfx::createDynamicIndexBuffer(1, BGFX_BUFFER_COMPUTE_READ_WRITE | BGFX_BUFFER_INDEX32);
 }
 

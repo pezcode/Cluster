@@ -90,11 +90,7 @@ void main()
     }
 
     // write light grid for this cluster
-    b_clusterLightGrid[4 * clusterIndex + 0] = offset;
-    b_clusterLightGrid[4 * clusterIndex + 1] = visibleCount;
-    // unused, spot lights etc.
-    //b_clusterLightGrid[4 * clusterIndex + 2] = 0;
-    //b_clusterLightGrid[4 * clusterIndex + 3] = 0;
+    b_clusterLightGrid[clusterIndex] = uvec4(offset, visibleCount, 0, 0);
 }
 
 // check if light radius extends into the cluster

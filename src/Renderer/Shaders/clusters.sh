@@ -39,8 +39,7 @@ uniform vec4 u_zNearFarVec;
 // light indices belonging to clusters
 CLUSTER_BUFFER(b_clusterLightIndices, uint, SAMPLER_CLUSTERS_LIGHTINDICES);
 // for each cluster: (start index in b_clusterLightIndices, number of point lights, empty, empty)
-// uint because uvec4 doesn't seem to work with D3D11
-CLUSTER_BUFFER(b_clusterLightGrid, uint, SAMPLER_CLUSTERS_LIGHTGRID);
+CLUSTER_BUFFER(b_clusterLightGrid, uvec4, SAMPLER_CLUSTERS_LIGHTGRID);
 
 // these are only needed for building clusters and light culling, not in the fragment shader
 #ifdef WRITE_CLUSTERS
@@ -75,7 +74,7 @@ Cluster getCluster(uint index)
 
 LightGrid getLightGrid(uint cluster)
 {
-    uvec4 gridvec = uvec4(b_clusterLightGrid[4 * cluster + 0], b_clusterLightGrid[4 * cluster + 1], 0, 0);
+    uvec4 gridvec = b_clusterLightGrid[cluster];
     LightGrid grid;
     grid.offset = gridvec.x;
     grid.pointLights = gridvec.y;
