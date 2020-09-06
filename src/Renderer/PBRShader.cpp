@@ -4,20 +4,6 @@
 #include "Renderer/Samplers.h"
 #include <glm/gtc/type_ptr.hpp>
 
-PBRShader::PBRShader() :
-    baseColorFactorUniform(BGFX_INVALID_HANDLE),
-    metallicRoughnessNormalOcclusionFactorUniform(BGFX_INVALID_HANDLE),
-    emissiveFactorUniform(BGFX_INVALID_HANDLE),
-    hasTexturesUniform(BGFX_INVALID_HANDLE),
-    baseColorSampler(BGFX_INVALID_HANDLE),
-    metallicRoughnessSampler(BGFX_INVALID_HANDLE),
-    normalSampler(BGFX_INVALID_HANDLE),
-    occlusionSampler(BGFX_INVALID_HANDLE),
-    emissiveSampler(BGFX_INVALID_HANDLE),
-    defaultTexture(BGFX_INVALID_HANDLE)
-{
-}
-
 void PBRShader::initialize()
 {
     baseColorFactorUniform = bgfx::createUniform("u_baseColorFactor", bgfx::UniformType::Vec4);

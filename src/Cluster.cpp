@@ -13,26 +13,15 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtx/component_wise.hpp>
 #include <spdlog/sinks/basic_file_sink.h>
-#include <thread>
 #include <algorithm>
 #include <random>
 
-bx::DefaultAllocator Cluster::allocator;
-bx::AllocatorI* Cluster::iAlloc = &allocator;
-
 Cluster::Cluster() :
     bigg::Application("Cluster", 1280, 720),
-    logFileSink(nullptr),
-    frameNumber(0),
-    mouseX(-1.0f),
-    mouseY(-1.0f),
-    saveFrame(0),
-    saveData(nullptr),
     callbacks(*this),
     config(std::make_unique<Config>()),
     ui(std::make_unique<ClusterUI>(*this)),
-    scene(std::make_unique<Scene>()),
-    renderer(nullptr)
+    scene(std::make_unique<Scene>())
 {
 }
 
@@ -47,6 +36,11 @@ int Cluster::run(int argc, char* argv[])
 {
     config->readArgv(argc, argv);
 
+    return Application::run(argc, argv, config->renderer, BGFX_PCI_ID_NONE, 0, &callbacks, nullptr);
+}
+
+void Cluster::initialize(int _argc, char* _argv[])
+{
     if(config->writeLog)
     {
         // _mt (thread safe) necessary because of flush_every
@@ -60,11 +54,6 @@ int Cluster::run(int argc, char* argv[])
     Log->set_level(spdlog::level::trace);
     spdlog::flush_every(std::chrono::seconds(2));
 
-    return Application::run(argc, argv, config->renderer, BGFX_PCI_ID_NONE, 0, &callbacks, nullptr);
-}
-
-void Cluster::initialize(int _argc, char* _argv[])
-{
     if(!ForwardRenderer::supported())
     {
         Log->error("Forward renderer not supported on this hardware");
@@ -124,8 +113,6 @@ void Cluster::initialize(int _argc, char* _argv[])
 
     scene->pointLights.update();
     config->lights = (int)scene->pointLights.lights.size();
-
-    frameNumber = 0;
 }
 
 void Cluster::onReset()
@@ -194,8 +181,6 @@ void Cluster::update(float dt)
     const float t = (float)glfwGetTime();
 
     float velocity = scene->diagonal / 5.0f; // m/s
-    // TODO move faster with Shift
-    // need to cache mods & GLFW_MOD_SHIFT in onKey
     if(isKeyDown(GLFW_KEY_W))
         scene->camera.move(scene->camera.forward() * velocity * dt);
     if(isKeyDown(GLFW_KEY_A))
@@ -209,26 +194,12 @@ void Cluster::update(float dt)
     if(isKeyDown(GLFW_KEY_LEFT_CONTROL))
         scene->camera.move(-scene->camera.up() * velocity * dt);
 
-    // screenshot texture data is ready, save in a new thread
-    if(frameNumber > 0 && frameNumber == saveFrame)
-    {
-        // async destructor blocks, even if not assigned
-        // thread destructor also blocks, unless detached
-        std::thread([this]() {
-            callbacks.screenShot("hehe", getWidth(), getHeight(), 0, saveData, 0, false);
-            saveFrame = 0;
-            BX_FREE(&allocator, saveData);
-            saveData = nullptr;
-        }).detach();
-    }
     if(config->movingLights)
         moveLights(t, dt);
     scene->pointLights.update();
 
     renderer->render(dt);
     ui->update(dt);
-
-    frameNumber++;
 }
 
 int Cluster::shutdown()
@@ -263,33 +234,6 @@ void Cluster::BgfxCallbacks::traceVargs(const char* filePath, uint16_t line, con
         if(buffer[written - 1] == '\n')
             buffer[written - 1] = '\0';
         Log->trace(buffer);
-    }
-}
-
-void Cluster::BgfxCallbacks::screenShot(const char* name,
-                                        uint32_t width,
-                                        uint32_t height,
-                                        uint32_t pitch,
-                                        const void* data,
-                                        uint32_t /*size*/,
-                                        bool yflip)
-{
-    // save screen shot as PNG
-    char filePath[1024];
-    bx::snprintf(filePath, BX_COUNTOF(filePath), "screenshots/%s.png", name);
-
-    bx::Error err;
-    // create directory if necessary
-    bx::makeAll("screenshots", &err);
-    if(err.isOk())
-    {
-        bx::FileWriter writer;
-        if(bx::open(&writer, filePath, false, &err))
-        {
-            // write uncompressed PNG
-            bimg::imageWritePng(&writer, width, height, pitch, data, bimg::TextureFormat::BGRA8, yflip, &err);
-            bx::close(&writer);
-        }
     }
 }
 
@@ -355,31 +299,6 @@ void Cluster::setRenderPath(RenderPath path)
     renderer->initialize();
 
     config->renderPath = path;
-}
-
-void Cluster::saveFrameBuffer(bgfx::FrameBufferHandle frameBuffer, const char* name)
-{
-    if(saveData)
-        return;
-
-    if((bgfx::getCaps()->supported & BGFX_CAPS_TEXTURE_READ_BACK) == BGFX_CAPS_TEXTURE_READ_BACK)
-    {
-        // this isn't working for frame buffers (textures with render target flag)
-        // TODO blit to separate texture and then read that
-        bgfx::TextureHandle texture = bgfx::getTexture(frameBuffer);
-        if(isValid(texture))
-        {
-            bgfx::TextureInfo info;
-            bgfx::calcTextureSize(info, getWidth(), getHeight(), 1, false, false, 1, bgfx::TextureFormat::BGRA8);
-            saveData = BX_ALLOC(&allocator, info.storageSize);
-            saveFrame = bgfx::readTexture(texture, saveData);
-            // we manually count frames instead of using the frame number returned by bgfx::frame
-            // (this would require a change to bigg)
-            // use this workaround instead: (is that still valid?)
-            // https://github.com/bkaradzic/bgfx/issues/802#issuecomment-223703256
-            saveFrame = frameNumber + 2;
-        }
-    }
 }
 
 void Cluster::generateLights(unsigned int count)

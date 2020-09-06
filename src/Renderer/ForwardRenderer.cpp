@@ -6,7 +6,9 @@
 #include <glm/matrix.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-ForwardRenderer::ForwardRenderer(const Scene* scene) : Renderer(scene), program(BGFX_INVALID_HANDLE) {}
+ForwardRenderer::ForwardRenderer(const Scene* scene) : Renderer(scene)
+{
+}
 
 bool ForwardRenderer::supported()
 {

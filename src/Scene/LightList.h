@@ -30,15 +30,13 @@ struct LightList
 class PointLightList : public LightList
 {
 public:
-    PointLightList();
-
-    std::vector<PointLight> lights;
-
     void init();
     void shutdown();
 
     // upload changes to GPU
     void update();
 
-    bgfx::DynamicVertexBufferHandle buffer;
+    std::vector<PointLight> lights;
+
+    bgfx::DynamicVertexBufferHandle buffer = BGFX_INVALID_HANDLE;
 };

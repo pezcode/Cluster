@@ -15,7 +15,9 @@
 
 using namespace std::placeholders;
 
-ClusterUI::ClusterUI(Cluster& app) : logUISink(nullptr), app(app), mTime(0.0f), fontTexture(BGFX_INVALID_HANDLE) {}
+ClusterUI::ClusterUI(Cluster& app) : app(app)
+{
+}
 
 void ClusterUI::initialize()
 {
@@ -110,13 +112,10 @@ void ClusterUI::update(float dt)
 
         if(ImGui::SliderInt("No. of lights", &app.config->lights, 0, app.config->maxLights))
             app.generateLights(app.config->lights);
-        ImGui::Checkbox("Moving lights", &app.config->movingLights);            
+        ImGui::Checkbox("Moving lights", &app.config->movingLights);
 
         ImGui::Separator();
 
-        // TODO? show f-stop
-        // higher f-stop = less(!) exposure
-        // what is max exposure?
         ImGui::SliderFloat("Exposure", &app.scene->camera.exposure, 0.0f, 30.0f, "%.3f", 5.0f);
 
         const char* operators[] = { "None",
@@ -134,7 +133,6 @@ void ClusterUI::update(float dt)
 
         ImGui::Separator();
 
-        // Render path radio buttons
         ImGui::Text("Render path:");
         static int renderPathSelected = (int)app.config->renderPath;
         ImGui::RadioButton("Forward", &renderPathSelected, (int)Cluster::RenderPath::Forward);
@@ -147,9 +145,9 @@ void ClusterUI::update(float dt)
         ImGui::Separator();
 
         ImGui::Checkbox("Show log", &app.config->showLog);
-        ImGui::Checkbox("Show stats", &app.config->showStatsOverlay);
+        ImGui::Checkbox("Show performance stats", &app.config->showStatsOverlay);
         if(buffers)
-            ImGui::Checkbox("Show buffers", &app.config->showBuffers);
+            ImGui::Checkbox("Show G-Buffer", &app.config->showBuffers);
         if(path == Cluster::RenderPath::Clustered)
         {
             ImGui::Checkbox("Cluster light count visualization", &app.config->debugVisualization);
@@ -157,20 +155,6 @@ void ClusterUI::update(float dt)
         }
 
         ImGui::Separator();
-
-        // TODO this doesn't work and crashes the Nvidia driver
-        /*
-        if(ImGui::Button(ICON_FK_CAMERA "  Screenshot", ImVec2(100, 0)))
-        {
-            static unsigned int count = 0;
-            count++;
-            char name[32];// = "screenshots/";
-            bx::toString(name, BX_COUNTOF(name), count);
-            app.saveFrameBuffer(app.renderer->frameBuffer, name);
-            // this takes a screenshot of the OS window framebuffer, UI included
-            // bgfx::requestScreenShot(BGFX_INVALID_HANDLE, name);
-        }
-        */
 
         if(ImGui::Button(app.config->fullscreen ? (ICON_FK_WINDOW_RESTORE "  Restore")
                                                 : (ICON_FK_WINDOW_MAXIMIZE "  Fullscreen"),
@@ -414,7 +398,6 @@ void ClusterUI::update(float dt)
                 std::swap(topLeft.y, bottomRight.y);
             }
             ImGui::Image(texId, texSize, topLeft, bottomRight, tintColor, borderColor);
-            //imageTooltip(texId, texSize, 32, tintColor, borderColor);
         }
 
         // move window to bottom right
@@ -477,29 +460,4 @@ bool ClusterUI::drawBar(float width, float maxWidth, float height, const ImVec4&
     ImGui::PopStyleColor(3);
 
     return itemHovered;
-}
-
-// TODO this is not working correctly
-void ClusterUI::imageTooltip(ImTextureID tex, ImVec2 texSize, float regionSize, ImVec4 tintColor, ImVec4 borderColor)
-{
-    ImGuiIO& io = ImGui::GetIO();
-    if(ImGui::IsItemHovered())
-    {
-        ImGui::BeginTooltip();
-        ImVec2 pos = ImGui::GetCursorScreenPos();
-        ImVec2 region = { io.MousePos.x - pos.x - (regionSize * 0.5f), io.MousePos.y - pos.y - (regionSize * 0.5f) };
-        region.x = glm::clamp(region.x, 0.0f, texSize.x - regionSize);
-        region.y = glm::clamp(region.y, 0.0f, texSize.y - regionSize);
-        float zoom = 4.0f;
-        ImGui::Text("Min: (%.2f, %.2f)", region.x, region.y);
-        ImGui::Text("Max: (%.2f, %.2f)", region.x + regionSize, region.y + regionSize);
-        ImVec2 topLeft = ImVec2((region.x) / texSize.x, (region.y) / texSize.y);
-        ImVec2 bottomRight = ImVec2((region.x + regionSize) / texSize.x, (region.y + regionSize) / texSize.y);
-        if(bgfx::getCaps()->originBottomLeft)
-        {
-            std::swap(topLeft.y, bottomRight.y);
-        }
-        ImGui::Image(tex, ImVec2(regionSize * zoom, regionSize * zoom), topLeft, bottomRight, tintColor, borderColor);
-        ImGui::EndTooltip();
-    }
 }

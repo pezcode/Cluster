@@ -15,13 +15,13 @@ public:
     virtual void onShutdown() override;
 
 private:
-    glm::mat4 oldProjMat;
+    glm::mat4 oldProjMat = glm::mat4(0.0f);
 
-    bgfx::ProgramHandle clusterBuildingComputeProgram;
-    bgfx::ProgramHandle resetCounterComputeProgram;
-    bgfx::ProgramHandle lightCullingComputeProgram;
-    bgfx::ProgramHandle lightingProgram;
-    bgfx::ProgramHandle debugVisProgram;
+    bgfx::ProgramHandle clusterBuildingComputeProgram = BGFX_INVALID_HANDLE;
+    bgfx::ProgramHandle resetCounterComputeProgram = BGFX_INVALID_HANDLE;
+    bgfx::ProgramHandle lightCullingComputeProgram = BGFX_INVALID_HANDLE;
+    bgfx::ProgramHandle lightingProgram = BGFX_INVALID_HANDLE;
+    bgfx::ProgramHandle debugVisProgram = BGFX_INVALID_HANDLE;
 
     ClusterShader clusters;
 };

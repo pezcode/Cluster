@@ -5,11 +5,6 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <cassert>
 
-LightShader::LightShader() :
-    lightCountVecUniform(BGFX_INVALID_HANDLE), ambientLightIrradianceUniform(BGFX_INVALID_HANDLE)
-{
-}
-
 void LightShader::initialize()
 {
     lightCountVecUniform = bgfx::createUniform("u_lightCountVec", bgfx::UniformType::Vec4);

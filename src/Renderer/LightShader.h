@@ -7,14 +7,12 @@ class Scene;
 class LightShader
 {
 public:
-    LightShader();
-
     void initialize();
     void shutdown();
 
     void bindLights(const Scene* scene) const;
 
 private:
-    bgfx::UniformHandle lightCountVecUniform;
-    bgfx::UniformHandle ambientLightIrradianceUniform;
+    bgfx::UniformHandle lightCountVecUniform = BGFX_INVALID_HANDLE;
+    bgfx::UniformHandle ambientLightIrradianceUniform = BGFX_INVALID_HANDLE;
 };

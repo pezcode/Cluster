@@ -45,8 +45,6 @@ public:
     };
     void setRenderPath(RenderPath path);
 
-    void saveFrameBuffer(bgfx::FrameBufferHandle frameBuffer, const char* path);
-
     void generateLights(unsigned int count);
     void moveLights(float t, float dt);
 
@@ -73,25 +71,15 @@ private:
         virtual void captureBegin(uint32_t, uint32_t, uint32_t, bgfx::TextureFormat::Enum, bool) override {}
         virtual void captureEnd() override {}
         virtual void captureFrame(const void*, uint32_t) override {}
-
-        virtual void screenShot(const char*, uint32_t, uint32_t, uint32_t, const void*, uint32_t, bool yflip) override;
+        virtual void screenShot(const char*, uint32_t, uint32_t, uint32_t, const void*, uint32_t, bool yflip) override {}
 
     private:
         Cluster& app;
     };
 
-    spdlog::sink_ptr logFileSink;
+    spdlog::sink_ptr logFileSink = nullptr;
 
-    uint32_t frameNumber;
-
-    double mouseX, mouseY;
-
-    static bx::DefaultAllocator allocator;
-    static bx::AllocatorI* iAlloc;
-
-    // screenshots
-    uint32_t saveFrame;
-    void* saveData;
+    double mouseX = -1.0, mouseY = -1.0;
 
     BgfxCallbacks callbacks;
 

@@ -14,5 +14,5 @@ public:
     virtual void onShutdown() override;
 
 private:
-    bgfx::ProgramHandle program;
+    bgfx::ProgramHandle program = BGFX_INVALID_HANDLE;
 };

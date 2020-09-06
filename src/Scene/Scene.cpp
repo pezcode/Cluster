@@ -17,16 +17,10 @@
 bx::DefaultAllocator Scene::allocator;
 
 Scene::Scene() :
-    loaded(false),
-    minBounds(0.0f),
-    maxBounds(0.0f),
-    center(0.0f),
-    diagonal(0.0f),
     skyColor({ 0.53f, 0.81f, 0.98f }), // https://en.wikipedia.org/wiki/Sky_blue#Light_sky_blue
-    //skyColor({ 0.1f, 0.1f, 0.44f }),   // https://en.wikipedia.org/wiki/Midnight_blue#X11
-    //skyColor({ 0.0f, 0.0f, 0.0f }),
     ambientLight({ { 0.03f, 0.03f, 0.03f } })
 {
+    clear();
     Assimp::DefaultLogger::set(&logSource);
 }
 
@@ -103,8 +97,6 @@ bool Scene::load(const char* file)
     // Limit vertices to 65k (we use 16-bit indices)
     importer.SetPropertyInteger(AI_CONFIG_PP_SLM_VERTEX_LIMIT,
                                 static_cast<int>(std::numeric_limits<uint16_t>::max()) + 1);
-
-    // TODO? importer.SetProgressHandler
 
     unsigned int flags =
         aiProcessPreset_TargetRealtime_Quality |                     // some optimizations and safety checks
@@ -193,7 +185,6 @@ Mesh Scene::loadMesh(const aiMesh* mesh)
     if(mesh->mPrimitiveTypes != aiPrimitiveType_TRIANGLE)
         throw std::runtime_error("Mesh has incompatible primitive type");
 
-    // TODO? use 32-bit indices by default
     if(mesh->mNumVertices > (std::numeric_limits<uint16_t>::max() + 1u))
         throw std::runtime_error("Mesh has too many vertices (> uint16_t::max + 1)");
 

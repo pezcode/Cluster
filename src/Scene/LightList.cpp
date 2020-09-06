@@ -5,8 +5,6 @@
 
 bgfx::VertexLayout LightList::PointLightVertex::layout;
 
-PointLightList::PointLightList() : buffer(BGFX_INVALID_HANDLE) {}
-
 void PointLightList::init()
 {
     LightList::PointLightVertex::init();

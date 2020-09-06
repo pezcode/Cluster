@@ -11,8 +11,6 @@ constexpr bgfx::TextureFormat::Enum DeferredRenderer::gBufferAttachmentFormats[D
 
 DeferredRenderer::DeferredRenderer(const Scene* scene) :
     Renderer(scene),
-    pointLightVertexBuffer(BGFX_INVALID_HANDLE),
-    pointLightIndexBuffer(BGFX_INVALID_HANDLE),
     gBufferTextures { { BGFX_INVALID_HANDLE, "Diffuse + roughness" },
                       { BGFX_INVALID_HANDLE, "Normal" },
                       { BGFX_INVALID_HANDLE, "F0 + metallic" },
@@ -24,14 +22,7 @@ DeferredRenderer::DeferredRenderer(const Scene* scene) :
                           Samplers::DEFERRED_F0_METALLIC,
                           Samplers::DEFERRED_EMISSIVE_OCCLUSION,
                           Samplers::DEFERRED_DEPTH },
-    gBufferSamplerNames { "s_texDiffuseA", "s_texNormal", "s_texF0Metallic", "s_texEmissiveOcclusion", "s_texDepth" },
-    gBuffer(BGFX_INVALID_HANDLE),
-    lightDepthTexture(BGFX_INVALID_HANDLE),
-    accumFrameBuffer(BGFX_INVALID_HANDLE),
-    lightIndexVecUniform(BGFX_INVALID_HANDLE),
-    geometryProgram(BGFX_INVALID_HANDLE),
-    fullscreenProgram(BGFX_INVALID_HANDLE),
-    pointLightProgram(BGFX_INVALID_HANDLE)
+    gBufferSamplerNames { "s_texDiffuseA", "s_texNormal", "s_texF0Metallic", "s_texEmissiveOcclusion", "s_texDepth" }
 {
     for(bgfx::UniformHandle& handle : gBufferSamplers)
     {
@@ -123,8 +114,7 @@ void DeferredRenderer::onReset()
         // at the same time is undefined behaviour in most APIs
         // https://www.khronos.org/opengl/wiki/Memory_Model#Framebuffer_objects
         // we use a different depth texture and just blit it between the geometry and light pass
-        const uint64_t flags = BGFX_TEXTURE_BLIT_DST | BGFX_SAMPLER_MIN_POINT | BGFX_SAMPLER_MAG_POINT |
-                               BGFX_SAMPLER_MIP_POINT | BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP;
+        const uint64_t flags = BGFX_TEXTURE_BLIT_DST | gBufferSamplerFlags;
         bgfx::TextureFormat::Enum depthFormat = findDepthFormat(flags);
         lightDepthTexture = bgfx::createTexture2D(bgfx::BackbufferRatio::Equal, false, 1, depthFormat, flags);
 
@@ -327,20 +317,17 @@ bgfx::FrameBufferHandle DeferredRenderer::createGBuffer()
 {
     bgfx::TextureHandle textures[GBufferAttachment::Count];
 
-    const uint64_t samplerFlags = BGFX_SAMPLER_MIN_POINT | BGFX_SAMPLER_MAG_POINT | BGFX_SAMPLER_MIP_POINT |
-                                  BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP;
+    const uint64_t flags = BGFX_TEXTURE_RT | gBufferSamplerFlags;
 
     for(size_t i = 0; i < GBufferAttachment::Depth; i++)
     {
-        assert(bgfx::isTextureValid(0, false, 1, gBufferAttachmentFormats[i], BGFX_TEXTURE_RT | samplerFlags));
-        textures[i] = bgfx::createTexture2D(
-            bgfx::BackbufferRatio::Equal, false, 1, gBufferAttachmentFormats[i], BGFX_TEXTURE_RT | samplerFlags);
+        assert(bgfx::isTextureValid(0, false, 1, gBufferAttachmentFormats[i], flags));
+        textures[i] = bgfx::createTexture2D(bgfx::BackbufferRatio::Equal, false, 1, gBufferAttachmentFormats[i], flags);
     }
 
-    bgfx::TextureFormat::Enum depthFormat = findDepthFormat(BGFX_TEXTURE_RT | samplerFlags);
+    bgfx::TextureFormat::Enum depthFormat = findDepthFormat(flags);
     assert(depthFormat != bgfx::TextureFormat::Count);
-    textures[Depth] =
-        bgfx::createTexture2D(bgfx::BackbufferRatio::Equal, false, 1, depthFormat, BGFX_TEXTURE_RT | samplerFlags);
+    textures[Depth] = bgfx::createTexture2D(bgfx::BackbufferRatio::Equal, false, 1, depthFormat, flags);
 
     bgfx::FrameBufferHandle gb = bgfx::createFrameBuffer((uint8_t)GBufferAttachment::Count, textures, true);
 

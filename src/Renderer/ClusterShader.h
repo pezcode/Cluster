@@ -46,14 +46,12 @@ private:
         static bgfx::VertexLayout layout;
     };
 
-    bgfx::UniformHandle clusterSizesVecUniform;
-    bgfx::UniformHandle zNearFarVecUniform;
+    bgfx::UniformHandle clusterSizesVecUniform = BGFX_INVALID_HANDLE;
+    bgfx::UniformHandle zNearFarVecUniform = BGFX_INVALID_HANDLE;
 
     // dynamic buffers can be created empty
-    bgfx::DynamicVertexBufferHandle clustersBuffer;
-    bgfx::DynamicIndexBufferHandle lightIndicesBuffer;
-    bgfx::DynamicIndexBufferHandle lightGridBuffer;
-    bgfx::DynamicIndexBufferHandle atomicIndexBuffer;
-
-    uint32_t lightCount;
+    bgfx::DynamicVertexBufferHandle clustersBuffer = BGFX_INVALID_HANDLE;
+    bgfx::DynamicIndexBufferHandle lightIndicesBuffer = BGFX_INVALID_HANDLE;
+    bgfx::DynamicIndexBufferHandle lightGridBuffer = BGFX_INVALID_HANDLE;
+    bgfx::DynamicIndexBufferHandle atomicIndexBuffer = BGFX_INVALID_HANDLE;
 };

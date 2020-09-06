@@ -8,14 +8,7 @@
 
 bgfx::VertexLayout ClusterShader::ClusterVertex::layout;
 
-ClusterShader::ClusterShader() :
-    clusterSizesVecUniform(BGFX_INVALID_HANDLE),
-    zNearFarVecUniform(BGFX_INVALID_HANDLE),
-    clustersBuffer(BGFX_INVALID_HANDLE),
-    lightIndicesBuffer(BGFX_INVALID_HANDLE),
-    lightGridBuffer(BGFX_INVALID_HANDLE),
-    atomicIndexBuffer(BGFX_INVALID_HANDLE),
-    lightCount(0)
+ClusterShader::ClusterShader()
 {
     static_assert(CLUSTERS_Z % CLUSTERS_Z_THREADS == 0,
                   "number of cluster depth slices must be divisible by thread count z-dimension");

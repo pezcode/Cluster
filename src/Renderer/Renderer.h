@@ -55,11 +55,11 @@ public:
         const char* name;
     };
 
-    TextureBuffer* buffers;
+    TextureBuffer* buffers = nullptr;
 
     // final output
-    // used for tonemapping, screenshots
-    bgfx::FrameBufferHandle frameBuffer;
+    // used for tonemapping
+    bgfx::FrameBufferHandle frameBuffer = BGFX_INVALID_HANDLE;
 
 protected:
     struct PosVertex
@@ -89,30 +89,30 @@ protected:
 
     std::unordered_map<std::string, std::string> variables;
 
-    TonemappingMode tonemappingMode;
+    TonemappingMode tonemappingMode = TonemappingMode::NONE;
 
-    const Scene* scene;
+    const Scene* scene = nullptr;
 
-    uint16_t width;
-    uint16_t height;
+    uint16_t width = 0;
+    uint16_t height = 0;
 
     PBRShader pbr;
     LightShader lights;
 
-    uint32_t clearColor;
-    float time;
+    uint32_t clearColor = 0;
+    float time = 0.0f;
 
     // set by setViewProjection()
-    glm::mat4 viewMat;
-    glm::mat4 projMat;
+    glm::mat4 viewMat = glm::mat4(1.0);
+    glm::mat4 projMat = glm::mat4(1.0);
 
-    bgfx::VertexBufferHandle blitTriangleBuffer;
+    bgfx::VertexBufferHandle blitTriangleBuffer = BGFX_INVALID_HANDLE;
 
 private:
-    bgfx::ProgramHandle blitProgram;
-    bgfx::UniformHandle blitSampler;
-    bgfx::UniformHandle camPosUniform;
-    bgfx::UniformHandle normalMatrixUniform;
-    bgfx::UniformHandle exposureVecUniform;
-    bgfx::UniformHandle tonemappingModeVecUniform;
+    bgfx::ProgramHandle blitProgram = BGFX_INVALID_HANDLE;
+    bgfx::UniformHandle blitSampler = BGFX_INVALID_HANDLE;
+    bgfx::UniformHandle camPosUniform = BGFX_INVALID_HANDLE;
+    bgfx::UniformHandle normalMatrixUniform = BGFX_INVALID_HANDLE;
+    bgfx::UniformHandle exposureVecUniform = BGFX_INVALID_HANDLE;
+    bgfx::UniformHandle tonemappingModeVecUniform = BGFX_INVALID_HANDLE;
 };

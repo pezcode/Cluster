@@ -19,13 +19,8 @@ public:
 
 private:
     bool drawBar(float width, float maxWidth, float height, const ImVec4& color);
-    void imageTooltip(ImTextureID tex,
-                      ImVec2 tex_size,
-                      float region_size,
-                      ImVec4 tintColor = ImVec4(1.0f, 1.0f, 1.0f, 1.0f),
-                      ImVec4 borderColor = ImVec4(1.0f, 1.0f, 1.0f, 0.5f));
 
-    spdlog::sink_ptr logUISink;
+    spdlog::sink_ptr logUISink = nullptr;
 
     struct LogEntry
     {
@@ -42,7 +37,7 @@ private:
     static constexpr size_t GRAPH_HISTORY = 100;
 
     Cluster& app;
-    float mTime;
+    float mTime = 0.0f;
 
-    bgfx::TextureHandle fontTexture;
+    bgfx::TextureHandle fontTexture = BGFX_INVALID_HANDLE;
 };

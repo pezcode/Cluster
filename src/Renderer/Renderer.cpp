@@ -14,24 +14,7 @@
 
 bgfx::VertexLayout Renderer::PosVertex::layout;
 
-Renderer::Renderer(const Scene* scene) :
-    buffers(nullptr),
-    frameBuffer(BGFX_INVALID_HANDLE),
-    tonemappingMode(TonemappingMode::NONE),
-    scene(scene),
-    width(0),
-    height(0),
-    clearColor(0),
-    time(0.0f),
-    viewMat(1.0f),
-    projMat(1.0f),
-    blitTriangleBuffer(BGFX_INVALID_HANDLE),
-    blitProgram(BGFX_INVALID_HANDLE),
-    blitSampler(BGFX_INVALID_HANDLE),
-    camPosUniform(BGFX_INVALID_HANDLE),
-    normalMatrixUniform(BGFX_INVALID_HANDLE),
-    exposureVecUniform(BGFX_INVALID_HANDLE),
-    tonemappingModeVecUniform(BGFX_INVALID_HANDLE)
+Renderer::Renderer(const Scene* scene) : scene(scene)
 {
 }
 
@@ -222,9 +205,6 @@ bgfx::FrameBufferHandle Renderer::createFrameBuffer(bool hdr, bool depth)
 {
     bgfx::TextureHandle textures[2];
     uint8_t attachments = 0;
-
-    // BGFX_TEXTURE_READ_BACK is not supported for render targets?
-    // TODO try blitting for screenshots (new texture with BGFX_TEXTURE_BLIT_DST and BGFX_TEXTURE_READ_BACK)
 
     const uint64_t samplerFlags = BGFX_SAMPLER_MIN_POINT | BGFX_SAMPLER_MAG_POINT | BGFX_SAMPLER_MIP_POINT |
                                   BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP;

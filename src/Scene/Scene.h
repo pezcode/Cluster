@@ -25,7 +25,7 @@ public:
     bool load(const char* file);
     void clear();
 
-    bool loaded;
+    bool loaded = false;
     glm::vec3 minBounds;
     glm::vec3 maxBounds;
     glm::vec3 center;

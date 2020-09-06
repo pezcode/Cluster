@@ -14,7 +14,7 @@ Config::Config() :
     sceneFile("assets/models/Sponza/glTF/Sponza.gltf"),
     customScene(false),
     lights(1),
-    maxLights(1000),
+    maxLights(3000),
     movingLights(false),
     fullscreen(false),
     showUI(true),

@@ -3,18 +3,10 @@
 #include "Scene/Scene.h"
 #include <bigg.hpp>
 #include <bx/string.h>
-#include <glm/matrix.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/ext/matrix_relational.hpp>
 
-ClusteredRenderer::ClusteredRenderer(const Scene* scene) :
-    Renderer(scene),
-    oldProjMat(glm::zero<glm::mat4>()),
-    clusterBuildingComputeProgram(BGFX_INVALID_HANDLE),
-    resetCounterComputeProgram(BGFX_INVALID_HANDLE),
-    lightCullingComputeProgram(BGFX_INVALID_HANDLE),
-    lightingProgram(BGFX_INVALID_HANDLE),
-    debugVisProgram(BGFX_INVALID_HANDLE)
+ClusteredRenderer::ClusteredRenderer(const Scene* scene) : Renderer(scene)
 {
 }
 
