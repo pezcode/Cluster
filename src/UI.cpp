@@ -108,10 +108,9 @@ void ClusterUI::update(float dt)
     {
         ImGui::Begin("Settings", &app.config->showConfigWindow, ImGuiWindowFlags_AlwaysAutoResize);
 
-        ImGui::DragInt("No. of lights", &app.config->lights, 1.0f, 0, app.config->maxLights);
-        //ImGui::Checkbox("Moving lights", &app.config->movingLights);
-        if(ImGui::Button(ICON_FK_ARROW_RIGHT "  Apply", { 0, 0 }))
+        if(ImGui::SliderInt("No. of lights", &app.config->lights, 0, app.config->maxLights))
             app.generateLights(app.config->lights);
+        ImGui::Checkbox("Moving lights", &app.config->movingLights);            
 
         ImGui::Separator();
 

@@ -48,6 +48,7 @@ public:
     void saveFrameBuffer(bgfx::FrameBufferHandle frameBuffer, const char* path);
 
     void generateLights(unsigned int count);
+    void moveLights(float t, float dt);
 
 private:
     class BgfxCallbacks : public bgfx::CallbackI

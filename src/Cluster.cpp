@@ -191,6 +191,8 @@ void Cluster::onScroll(double xoffset, double yoffset)
 
 void Cluster::update(float dt)
 {
+    const float t = (float)glfwGetTime();
+
     float velocity = scene->diagonal / 5.0f; // m/s
     // TODO move faster with Shift
     // need to cache mods & GLFW_MOD_SHIFT in onKey
@@ -219,6 +221,9 @@ void Cluster::update(float dt)
             saveData = nullptr;
         }).detach();
     }
+    if(config->movingLights)
+        moveLights(t, dt);
+    scene->pointLights.update();
 
     renderer->render(dt);
     ui->update(dt);
@@ -411,6 +416,17 @@ void Cluster::generateLights(unsigned int count)
         glm::vec3 power = color * (dist(mt) * (POWER_MAX - POWER_MIN) + POWER_MIN);
         lights[i] = { position, power };
     }
+}
 
-    scene->pointLights.update();
+void Cluster::moveLights(float t, float dt)
+{
+    const float angularVelocity = glm::radians(10.0f);
+    const float angle = angularVelocity * dt;
+    //const glm::vec3 translationExtent = glm::abs(scene->maxBounds - scene->minBounds) * glm::vec3( 0.1f, 0.0f, 0.1f ); // { 1.0f, 0.0f, 1.0f };
+
+    for(PointLight& light : scene->pointLights.lights)
+    {
+        light.position = glm::mat3(glm::rotate(glm::identity<glm::mat4>(), angle, glm::vec3(0.0f, 1.0f, 0.0f))) * light.position;
+        //light.position += glm::sin(glm::vec3(t) * glm::vec3(1.0f, 2.0f, 3.0f)) * translationExtent * dt;
+    }
 }
