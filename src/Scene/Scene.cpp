@@ -95,8 +95,7 @@ bool Scene::load(const char* file)
     importer.SetPropertyInteger(AI_CONFIG_PP_SBP_REMOVE, aiPrimitiveType_LINE | aiPrimitiveType_POINT);
     // Settings for aiProcess_SplitLargeMeshes
     // Limit vertices to 65k (we use 16-bit indices)
-    importer.SetPropertyInteger(AI_CONFIG_PP_SLM_VERTEX_LIMIT,
-                                static_cast<int>(std::numeric_limits<uint16_t>::max()) + 1);
+    importer.SetPropertyInteger(AI_CONFIG_PP_SLM_VERTEX_LIMIT, std::numeric_limits<uint16_t>::max());
 
     unsigned int flags =
         aiProcessPreset_TargetRealtime_Quality |                     // some optimizations and safety checks
