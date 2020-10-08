@@ -47,6 +47,7 @@ Very simple implementation, might be useful to start reading the code
 - Cook-Torrance microfacet specular BRDF
     - [GGX](https://www.cs.cornell.edu/~srm/publications/EGSR07-btdf.pdf) normal distribution function
     - Smith-GGX geometric shadowing function
+    - [multiple scattering correction](https://blog.selfshadow.com/publications/turquin/ms_comp_final.pdf)
 - Lambertian diffuse BRDF
 - [specular antialiasing](http://www.jp.square-enix.com/tech/library/pdf/ImprovedGeometricSpecularAA.pdf)
 - windowed light attenuation

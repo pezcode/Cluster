@@ -207,6 +207,7 @@ void DeferredRenderer::onRender(float dt)
     // excluding BGFX_DISCARD_TEXTURE_SAMPLERS from the discard flags passed to submit makes sure
     // they don't get unbound
     bindGBuffer();
+    pbr.bindAlbedoLUT();
     lights.bindLights(scene);
 
     // ambient light + emissive

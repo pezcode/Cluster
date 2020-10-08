@@ -39,9 +39,13 @@ void Renderer::initialize()
     blitProgram = bigg::loadProgram(vsName, fsName);
 
     pbr.initialize();
+    pbr.generateAlbedoLUT();
     lights.initialize();
 
     onInitialize();
+
+    // finish any queued precomputations before rendering the scene
+    bgfx::frame();
 }
 
 void Renderer::reset(uint16_t width, uint16_t height)
@@ -116,6 +120,11 @@ void Renderer::setVariable(const std::string& name, const std::string& val)
 void Renderer::setTonemappingMode(TonemappingMode mode)
 {
     tonemappingMode = mode;
+}
+
+void Renderer::setMultipleScattering(bool enabled)
+{
+    pbr.setMultipleScattering(enabled);
 }
 
 bool Renderer::supported()

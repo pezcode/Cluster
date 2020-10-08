@@ -43,6 +43,7 @@ void ForwardRenderer::onRender(float dt)
 
     uint64_t state = BGFX_STATE_DEFAULT & ~BGFX_STATE_CULL_MASK;
 
+    pbr.bindAlbedoLUT();
     lights.bindLights(scene);
 
     for(const Mesh& mesh : scene->meshes)

@@ -408,6 +408,7 @@ bgfx::TextureHandle Scene::loadTexture(const char* file, bool sRGB)
             image);
         BX_FREE(&allocator, data);
 
+        // default wrap mode is repeat, there's no flag for it
         uint64_t textureFlags = BGFX_TEXTURE_NONE | BGFX_SAMPLER_MIN_ANISOTROPIC | BGFX_SAMPLER_MAG_ANISOTROPIC;
         if(sRGB)
             textureFlags |= BGFX_TEXTURE_SRGB;

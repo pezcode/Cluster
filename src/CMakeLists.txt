@@ -43,6 +43,7 @@ set(SOURCES
 
 set(SHADERS
     Renderer/Shaders/varying.def.sc
+    Renderer/Shaders/cs_multiple_scattering_lut.sc
     Renderer/Shaders/vs_clustered.sc
     Renderer/Shaders/fs_clustered.sc
     Renderer/Shaders/fs_clustered_debug_vis.sc

@@ -133,6 +133,7 @@ void ClusteredRenderer::onRender(float dt)
 
     uint64_t state = BGFX_STATE_DEFAULT & ~BGFX_STATE_CULL_MASK;
 
+    pbr.bindAlbedoLUT();
     lights.bindLights(scene);
     clusters.bindBuffers(true /*lightingPass*/); // read access, only light grid and indices
 

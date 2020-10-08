@@ -87,8 +87,9 @@ void Cluster::initialize(int _argc, char* _argv[])
     if(glfwRawMouseMotionSupported())
         glfwSetInputMode(mWindow, GLFW_RAW_MOUSE_MOTION, GLFW_TRUE);
 
-    renderer->initialize();
+    // renderer has already been created in onReset
     renderer->setTonemappingMode(config->tonemappingMode);
+    renderer->setMultipleScattering(config->multipleScattering);
     ui->initialize();
 
     Scene::init();

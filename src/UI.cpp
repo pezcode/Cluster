@@ -131,6 +131,9 @@ void ClusterUI::update(float dt)
         app.config->tonemappingMode = (Renderer::TonemappingMode)tonemappingMode;
         app.renderer->setTonemappingMode(app.config->tonemappingMode);
 
+        ImGui::Checkbox("Multiple scattering", &app.config->multipleScattering);
+        app.renderer->setMultipleScattering(app.config->multipleScattering);
+
         ImGui::Separator();
 
         ImGui::Text("Render path:");

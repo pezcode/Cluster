@@ -35,8 +35,10 @@ public:
     };
 
     void setTonemappingMode(TonemappingMode mode);
+    void setMultipleScattering(bool enabled);
 
     static bool supported();
+    static const char* shaderDir();
 
     // subclasses should override these
 
@@ -85,7 +87,6 @@ protected:
 
     static bgfx::TextureFormat::Enum findDepthFormat(uint64_t textureFlags, bool stencil = false);
     static bgfx::FrameBufferHandle createFrameBuffer(bool hdr = true, bool depth = true);
-    static const char* shaderDir();
 
     std::unordered_map<std::string, std::string> variables;
 

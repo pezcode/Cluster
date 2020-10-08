@@ -24,6 +24,8 @@ public:
     Cluster::RenderPath renderPath;
     Renderer::TonemappingMode tonemappingMode;
 
+    bool multipleScattering;
+
     bool profile; // enable bgfx view profiling *
     bool vsync;   // *
 

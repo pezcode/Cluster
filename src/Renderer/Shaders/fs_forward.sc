@@ -25,7 +25,10 @@ void main()
 
     vec3 camPos = u_camPos.xyz;
     vec3 fragPos = v_worldpos;
+
     vec3 V = normalize(camPos - fragPos);
+    float NoV = abs(dot(N, V)) + 1e-5;
+    vec3 msFactor = multipleScatteringFactor(mat, NoV);
 
     vec3 radianceOut = vec3_splat(0.0);
 
@@ -40,7 +43,7 @@ void main()
             vec3 L = normalize(light.position - fragPos);
             vec3 radianceIn = light.intensity * attenuation;
             float NoL = saturate(dot(N, L));
-            radianceOut += BRDF(V, L, N, mat) * radianceIn * NoL;
+            radianceOut += BRDF(V, L, N, NoV, NoL, mat) * msFactor * radianceIn * NoL;
         }
     }
 

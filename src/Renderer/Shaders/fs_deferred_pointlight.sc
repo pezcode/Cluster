@@ -47,10 +47,13 @@ void main()
     if(attenuation > 0.0)
     {
         vec3 V = normalize(-fragPos);
+        float NoV = abs(dot(N, V)) + 1e-5;
+        vec3 msFactor = multipleScatteringFactor(mat, NoV);
+
         vec3 L = normalize(light.position - fragPos);
         vec3 radianceIn = light.intensity * attenuation;
         float NoL = saturate(dot(N, L));
-        radianceOut += BRDF(V, L, N, mat) * radianceIn * NoL;
+        radianceOut += BRDF(V, L, N, NoV, NoL, mat) * msFactor * radianceIn * NoL;
     }
 
     gl_FragColor = vec4(radianceOut, 1.0);
