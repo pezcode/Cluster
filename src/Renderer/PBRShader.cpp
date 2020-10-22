@@ -114,11 +114,10 @@ void PBRShader::generateAlbedoLUT()
             bgfx::blit(1, readbackTexture, 0, 0, albedoLUTTexture);
 
             char* mem = new char[w * h * 4];
-            bgfx::readTexture(readbackTexture, mem, 0);
+            uint64_t frame = bgfx::readTexture(readbackTexture, mem, 0);
 
-            // wait two frames for result to be available and write it to a file
-            bgfx::frame();
-            bgfx::frame();
+            // wait for result to be available and write it to a file
+            while(bgfx::frame() < frame) { }
 
             bx::FileWriter writer;
             if(writer.open(file, false, &err))

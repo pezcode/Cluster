@@ -161,6 +161,8 @@ PBRMaterial pbrInitMaterial(PBRMaterial mat)
     mat.F0 = mix(dielectricSpecular, mat.albedo.rgb, mat.metallic);
     // perceptual roughness to roughness
     mat.a = mat.roughness * mat.roughness;
+    // prevent division by 0
+    mat.a = max(mat.a, 0.01);
 
     return mat;
 }
@@ -185,11 +187,7 @@ float specularAntiAliasing(vec3 N, float a)
     vec3 dndv = dFdy(N);
     float variance = SIGMA2 * (dot(dndu, dndu) + dot(dndv, dndv));
     float kernelRoughness2 = min(2.0 * variance, KAPPA);
-    float filteredRoughness2 = saturate(a + kernelRoughness2);
-    a = filteredRoughness2;
-
-    // Frostbite clamps roughness to 0.045 (0.045^2 = 0.002025)
-    return max(a, 0.002025);
+    return saturate(a + kernelRoughness2);
 }
 
 #endif
@@ -266,20 +264,20 @@ float Fd_Lambert()
 // https://blog.selfshadow.com/publications/turquin/ms_comp_final.pdf
 vec3 multipleScatteringFactor(PBRMaterial mat, float NoV)
 {
-    // E is the albedo for single scattering, ie. the total reflectance for a viewing direction
-    float E = texture2D(s_texAlbedoLUT, vec2(NoV, mat.a)).x;
-    vec3 factor = vec3_splat(1.0) + mat.F0 * (1.0/E - 1.0);
+    // Turquin approximates the multiple scattering portion of the BRDF using a scaled down version of the single scattering BRDF
+    // That scale factor is E: the directional albedo for single scattering, ie. the total reflectance for a viewing direction
+    vec2 E = texture2D(s_texAlbedoLUT, vec2(NoV, mat.a)).xy;
 
-    // TODO implement for dielectrics
-    // requires an extra dimension in the LUT texture
-
-    // for metals, the albedo value is calculated with F = 1
+    // for metals, the albedo value is calculated with F = 1 (perfect reflection)
     // fresnel determines whether light is reflected or absorbed
+    vec3 factorMetallic = vec3_splat(1.0) + mat.F0 * (1.0 / E.x - 1.0);
 
-    // for dielectrics, fresnel determines the ratio between two different albedos
+    // for dielectrics, fresnel determines the ratio between specular and diffuse energy
     // so the albedo depends on F as a variable
+    // however, dielectrics in GLTF have a fixed F0 of 0.04 so we can do this with a second LUT
+    vec3 factorDielectric = vec3_splat(1.0 / E.y);
 
-    return mix(vec3_splat(1.0), factor, mat.metallic);
+    return mix(factorDielectric, factorMetallic, mat.metallic);
 }
 
 #endif
