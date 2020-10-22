@@ -33,6 +33,7 @@ private:
         // RGB = F0 (Fresnel at normal incidence)
         // A = metallic
         // TODO? don't use F0, calculate from diffuse and metallic in shader
+        //       where do we store metallic?
         F0_Metallic,
 
         // RGB = emissive radiance

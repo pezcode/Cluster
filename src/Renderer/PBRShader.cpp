@@ -33,12 +33,10 @@ void PBRShader::initialize()
                                              samplerFlags | BGFX_TEXTURE_COMPUTE_WRITE);
 
     // LUT with all 1s = no multiple scattering
-    const bgfx::Memory* mem = bgfx::alloc(ALBEDO_LUT_SIZE * ALBEDO_LUT_SIZE * 4 * sizeof(float));
-    //memset(mem->data, 0xFF, mem->size);
-    float* data = (float*)mem->data;
-    std::fill(data, data + (ALBEDO_LUT_SIZE * ALBEDO_LUT_SIZE * 4), 1.0f);
+    const bgfx::Memory* mem = bgfx::alloc(ALBEDO_LUT_SIZE * ALBEDO_LUT_SIZE * 4);
+    memset(mem->data, 0xFF, mem->size);
     albedoLUTNoMSTexture = bgfx::createTexture2D(
-        ALBEDO_LUT_SIZE, ALBEDO_LUT_SIZE, false, 1, bgfx::TextureFormat::RGBA32F, samplerFlags, mem);
+        ALBEDO_LUT_SIZE, ALBEDO_LUT_SIZE, false, 1, bgfx::TextureFormat::RGBA8, samplerFlags, mem);
 
     defaultTexture = bgfx::createTexture2D(1, 1, false, 1, bgfx::TextureFormat::RGBA8);
 
@@ -78,66 +76,8 @@ void PBRShader::setMultipleScattering(bool enabled)
 
 void PBRShader::generateAlbedoLUT()
 {
-    const size_t w = ALBEDO_LUT_SIZE, h = ALBEDO_LUT_SIZE;
-
-    bx::Error err;
-    static const char* file = "albedo.tga";
-
-    bool generate = true;
-    bx::FileReader reader;
-    if(reader.open(file, &err))
-    {
-        // TODO load cached albedo
-        // can we blit to a compute texture?
-        //generate = false;
-
-        reader.close();
-    }
-
-    if(generate)
-    {
-        bindAlbedoLUT(true /* compute */);
-        bgfx::dispatch(
-            0, albedoLUTProgram, w / ALBEDO_LUT_THREADS, h / ALBEDO_LUT_THREADS, 1);
-
-        // this code is for RGBA8
-        /*
-
-        // read-back is not supported on Vulkan
-        const bgfx::Caps* caps = bgfx::getCaps();       
-        if((caps->supported & BGFX_CAPS_TEXTURE_BLIT)      != 0 &&
-           (caps->supported & BGFX_CAPS_TEXTURE_READ_BACK) != 0)
-        {
-            bgfx::TextureHandle readbackTexture = bgfx::createTexture2D(
-                w, h, false, 1, bgfx::TextureFormat::RGBA8, BGFX_TEXTURE_BLIT_DST | BGFX_TEXTURE_READ_BACK);
-
-            bgfx::blit(1, readbackTexture, 0, 0, albedoLUTTexture);
-
-            char* mem = new char[w * h * 4];
-            uint64_t frame = bgfx::readTexture(readbackTexture, mem, 0);
-
-            // wait for result to be available and write it to a file
-            while(bgfx::frame() < frame) { }
-
-            bx::FileWriter writer;
-            if(writer.open(file, false, &err))
-            {
-                bimg::imageWriteTga(&writer,
-                                    w,
-                                    h,
-                                    w * 4, // stride
-                                    mem,
-                                    false, // not grayscale
-                                    false, // don't flip y
-                                    &err);
-                writer.close();
-            }
-
-            delete[] mem;
-            bgfx::destroy(readbackTexture);
-        }
-        */
-    }
+    bindAlbedoLUT(true /* compute */);
+    bgfx::dispatch(0, albedoLUTProgram, ALBEDO_LUT_SIZE / ALBEDO_LUT_THREADS, ALBEDO_LUT_SIZE / ALBEDO_LUT_THREADS, 1);
 }
 
 uint64_t PBRShader::bindMaterial(const Material& material)
