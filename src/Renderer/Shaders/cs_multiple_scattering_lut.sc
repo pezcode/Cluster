@@ -149,7 +149,7 @@ void main()
     vec2 values = (vec2(coords) + 0.5) / LUT_SIZE;
 
     float NoV = values.x;
-    float roughness = values.y;
+    float roughness = sqrt(values.y); // LUT is indexed by a = roughness^2
 
     vec3 V;
     V.x = sqrt(1.0 - NoV * NoV); // sin
