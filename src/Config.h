@@ -33,7 +33,7 @@ public:
     // Scene
 
     const char* sceneFile; // gltf file to load *
-    bool customScene; // not the standard Sponza scene, don't place debug lights/camera *
+    bool customScene;      // not the standard Sponza scene, don't place debug lights/camera *
     int lights;
     int maxLights; // *
     bool movingLights;

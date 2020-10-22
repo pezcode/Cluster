@@ -46,7 +46,8 @@ private:
     };
 
     static constexpr uint64_t gBufferSamplerFlags = BGFX_SAMPLER_MIN_POINT | BGFX_SAMPLER_MAG_POINT |
-        BGFX_SAMPLER_MIP_POINT | BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP;
+                                                    BGFX_SAMPLER_MIP_POINT | BGFX_SAMPLER_U_CLAMP |
+                                                    BGFX_SAMPLER_V_CLAMP;
 
     static constexpr bgfx::TextureFormat::Enum gBufferAttachmentFormats[GBufferAttachment::Count - 1] = {
         bgfx::TextureFormat::BGRA8,

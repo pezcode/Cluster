@@ -37,7 +37,7 @@ void Config::readArgv(int argc, char* argv[])
 
     if(cmdLine.hasArg("noop"))
         renderer = bgfx::RendererType::Noop;
-	else if(cmdLine.hasArg("gl"))
+    else if(cmdLine.hasArg("gl"))
         renderer = bgfx::RendererType::OpenGL;
     else if(cmdLine.hasArg("vk"))
         renderer = bgfx::RendererType::Vulkan;

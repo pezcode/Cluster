@@ -12,7 +12,7 @@ template<typename Mutex, typename Func>
 class clusterui_sink : public sinks::base_sink<Mutex>
 {
 public:
-    clusterui_sink(Func func) : func(func) {}
+    clusterui_sink(Func func) : func(func) { }
 
 protected:
     Func func;
@@ -25,7 +25,7 @@ protected:
         func(fmt::to_string(formatted).c_str(), msg.level);
     }
 
-    virtual void flush_() override {}
+    virtual void flush_() override { }
 };
 
 template<typename Func>

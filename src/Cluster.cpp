@@ -346,7 +346,8 @@ void Cluster::moveLights(float t, float dt)
 
     for(PointLight& light : scene->pointLights.lights)
     {
-        light.position = glm::mat3(glm::rotate(glm::identity<glm::mat4>(), angle, glm::vec3(0.0f, 1.0f, 0.0f))) * light.position;
+        light.position =
+            glm::mat3(glm::rotate(glm::identity<glm::mat4>(), angle, glm::vec3(0.0f, 1.0f, 0.0f))) * light.position;
         //light.position += glm::sin(glm::vec3(t) * glm::vec3(1.0f, 2.0f, 3.0f)) * translationExtent * dt;
     }
 }

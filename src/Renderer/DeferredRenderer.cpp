@@ -7,7 +7,8 @@
 #include <glm/matrix.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-constexpr bgfx::TextureFormat::Enum DeferredRenderer::gBufferAttachmentFormats[DeferredRenderer::GBufferAttachment::Count - 1];
+constexpr bgfx::TextureFormat::Enum
+    DeferredRenderer::gBufferAttachmentFormats[DeferredRenderer::GBufferAttachment::Count - 1];
 
 DeferredRenderer::DeferredRenderer(const Scene* scene) :
     Renderer(scene),

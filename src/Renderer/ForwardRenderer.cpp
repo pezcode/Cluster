@@ -6,9 +6,7 @@
 #include <glm/matrix.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-ForwardRenderer::ForwardRenderer(const Scene* scene) : Renderer(scene)
-{
-}
+ForwardRenderer::ForwardRenderer(const Scene* scene) : Renderer(scene) { }
 
 bool ForwardRenderer::supported()
 {

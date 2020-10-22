@@ -15,9 +15,7 @@
 
 using namespace std::placeholders;
 
-ClusterUI::ClusterUI(Cluster& app) : app(app)
-{
-}
+ClusterUI::ClusterUI(Cluster& app) : app(app) { }
 
 void ClusterUI::initialize()
 {

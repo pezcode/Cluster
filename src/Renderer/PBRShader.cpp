@@ -55,9 +55,8 @@ void PBRShader::shutdown()
     bgfx::destroy(albedoLUTProgram);
 
     baseColorFactorUniform = metallicRoughnessNormalOcclusionFactorUniform = emissiveFactorUniform =
-        hasTexturesUniform = multipleScatteringUniform = albedoLUTSampler = baseColorSampler = metallicRoughnessSampler =
-            normalSampler =
-            occlusionSampler = emissiveSampler = BGFX_INVALID_HANDLE;
+        hasTexturesUniform = multipleScatteringUniform = albedoLUTSampler = baseColorSampler =
+            metallicRoughnessSampler = normalSampler = occlusionSampler = emissiveSampler = BGFX_INVALID_HANDLE;
     albedoLUTTexture = defaultTexture = BGFX_INVALID_HANDLE;
     albedoLUTProgram = BGFX_INVALID_HANDLE;
 }

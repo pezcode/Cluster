@@ -14,9 +14,7 @@
 
 bgfx::VertexLayout Renderer::PosVertex::layout;
 
-Renderer::Renderer(const Scene* scene) : scene(scene)
-{
-}
+Renderer::Renderer(const Scene* scene) : scene(scene) { }
 
 void Renderer::initialize()
 {

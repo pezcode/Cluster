@@ -6,9 +6,7 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/ext/matrix_relational.hpp>
 
-ClusteredRenderer::ClusteredRenderer(const Scene* scene) : Renderer(scene)
-{
-}
+ClusteredRenderer::ClusteredRenderer(const Scene* scene) : Renderer(scene) { }
 
 bool ClusteredRenderer::supported()
 {
@@ -112,11 +110,7 @@ void ClusteredRenderer::onRender(float dt)
     // reset atomic counter for light grid generation
     // buffers created with BGFX_BUFFER_COMPUTE_WRITE can't be updated from the CPU
     // this used to happen during cluster building when it was still run every frame
-    bgfx::dispatch(vLightCulling,
-                   resetCounterComputeProgram,
-                   1,
-                   1,
-                   1);
+    bgfx::dispatch(vLightCulling, resetCounterComputeProgram, 1, 1, 1);
 
     lights.bindLights(scene);
     clusters.bindBuffers(false);
@@ -165,6 +159,5 @@ void ClusteredRenderer::onShutdown()
     bgfx::destroy(debugVisProgram);
 
     clusterBuildingComputeProgram = resetCounterComputeProgram = lightCullingComputeProgram = lightingProgram =
-        debugVisProgram =
-        BGFX_INVALID_HANDLE;
+        debugVisProgram = BGFX_INVALID_HANDLE;
 }

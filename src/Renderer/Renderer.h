@@ -13,7 +13,7 @@ class Renderer
 {
 public:
     Renderer(const Scene* scene);
-    virtual ~Renderer() {}
+    virtual ~Renderer() { }
 
     void initialize();
     void reset(uint16_t width, uint16_t height);
@@ -44,11 +44,11 @@ public:
     // subclasses should override these
 
     // the first reset happens before initialize
-    virtual void onInitialize() {}
+    virtual void onInitialize() { }
     // window resize/flags changed (MSAA, V-Sync, ...)
-    virtual void onReset() {}
+    virtual void onReset() { }
     virtual void onRender(float dt) = 0;
-    virtual void onShutdown() {}
+    virtual void onShutdown() { }
 
     // buffers for debug output (display in the UI)
 

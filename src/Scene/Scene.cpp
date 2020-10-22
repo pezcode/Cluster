@@ -415,14 +415,13 @@ bgfx::TextureHandle Scene::loadTexture(const char* file, bool sRGB)
 
         if(bgfx::isTextureValid(0, false, image->m_numLayers, (bgfx::TextureFormat::Enum)image->m_format, textureFlags))
         {
-            bgfx::TextureHandle tex =
-                bgfx::createTexture2D((uint16_t)image->m_width,
-                                      (uint16_t)image->m_height,
-                                      image->m_numMips > 1,
-                                      image->m_numLayers,
-                                      (bgfx::TextureFormat::Enum)image->m_format,
-                                      textureFlags,
-                                      mem);
+            bgfx::TextureHandle tex = bgfx::createTexture2D((uint16_t)image->m_width,
+                                                            (uint16_t)image->m_height,
+                                                            image->m_numMips > 1,
+                                                            image->m_numLayers,
+                                                            (bgfx::TextureFormat::Enum)image->m_format,
+                                                            textureFlags,
+                                                            mem);
             //bgfx::setName(tex, file); // causes debug errors with DirectX SetPrivateProperty duplicate
             return tex;
         }
