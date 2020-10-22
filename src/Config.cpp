@@ -10,6 +10,7 @@ Config::Config() :
     renderPath(Cluster::RenderPath::Clustered),
     tonemappingMode(Renderer::TonemappingMode::ACES),
     multipleScattering(true),
+    whiteFurnace(false),
     profile(true),
     vsync(false),
     sceneFile("assets/models/Sponza/Sponza.gltf"),

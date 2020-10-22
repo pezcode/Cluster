@@ -37,6 +37,11 @@ uniform vec4 u_hasTextures;
 
 #endif
 
+uniform vec4 u_multipleScatteringVec;
+#define u_multipleScattering      (u_multipleScatteringVec.x != 0.0)
+#define u_whiteFurnaceRadiance    (u_multipleScatteringVec.y)
+#define u_whiteFurnace            (u_whiteFurnaceRadiance > 0.0)
+
 #define PI     (3.14159265359)
 #define INV_PI (0.31830988618)
 
@@ -264,20 +269,40 @@ float Fd_Lambert()
 // https://blog.selfshadow.com/publications/turquin/ms_comp_final.pdf
 vec3 multipleScatteringFactor(PBRMaterial mat, float NoV)
 {
-    // Turquin approximates the multiple scattering portion of the BRDF using a scaled down version of the single scattering BRDF
-    // That scale factor is E: the directional albedo for single scattering, ie. the total reflectance for a viewing direction
-    vec2 E = texture2D(s_texAlbedoLUT, vec2(NoV, mat.a)).xy;
+    if(u_multipleScattering)
+    {
+        // Turquin approximates the multiple scattering portion of the BRDF using a scaled down version of the single scattering BRDF
+        // That scale factor is E: the directional albedo for single scattering, ie. the total reflectance for a viewing direction
+        vec2 E = texture2D(s_texAlbedoLUT, vec2(NoV, mat.a)).xy;
 
-    // for metals, the albedo value is calculated with F = 1 (perfect reflection)
-    // fresnel determines whether light is reflected or absorbed
-    vec3 factorMetallic = vec3_splat(1.0) + mat.F0 * (1.0 / E.x - 1.0);
+        // for metals, the albedo value is calculated with F = 1 (perfect reflection)
+        // fresnel determines whether light is reflected or absorbed
+        vec3 factorMetallic = vec3_splat(1.0) + mat.F0 * (1.0 / E.x - 1.0);
 
-    // for dielectrics, fresnel determines the ratio between specular and diffuse energy
-    // so the albedo depends on F as a variable
-    // however, dielectrics in GLTF have a fixed F0 of 0.04 so we can do this with a second LUT
-    vec3 factorDielectric = vec3_splat(1.0 / E.y);
+        // for dielectrics, fresnel determines the ratio between specular and diffuse energy
+        // so the albedo depends on F as a variable
+        // however, dielectrics in GLTF have a fixed F0 of 0.04 so we can do this with a second LUT
+        vec3 factorDielectric = vec3_splat(1.0 / E.y);
 
-    return mix(factorDielectric, factorMetallic, mat.metallic);
+        return mix(factorDielectric, factorMetallic, mat.metallic);
+    }
+    else
+        return vec3_splat(1.0);
+}
+
+bool whiteFurnaceEnabled()
+{
+    return u_whiteFurnace;
+}
+
+// White furnace test: lighting integral against a constant white environment
+// Used to visualize energy loss/gain
+// This is exactly what the multiple scattering LUT calculates
+vec3 whiteFurnace(float NoV, PBRMaterial mat)
+{
+    vec2 Es = texture2D(s_texAlbedoLUT, vec2(NoV, mat.a)).xy;
+    float E = mix(Es.y, Es.x, mat.metallic);
+    return E * vec3_splat(u_whiteFurnaceRadiance);
 }
 
 #endif

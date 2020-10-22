@@ -22,13 +22,12 @@
 
 #define MAX_LIGHTS_PER_CLUSTER 100
 
-// cluster size in screen coordinates (pixels)
-uniform vec4 u_clusterSizesVec;
-#define u_clusterSizes u_clusterSizesVec.xy
-
+uniform vec4 u_clusterSizesVec; // cluster size in screen coordinates (pixels)
 uniform vec4 u_zNearFarVec;
-#define u_zNear u_zNearFarVec.x
-#define u_zFar u_zNearFarVec.y
+
+#define u_clusterSizes u_clusterSizesVec.xy
+#define u_zNear        u_zNearFarVec.x
+#define u_zFar         u_zNearFarVec.y
 
 #ifdef WRITE_CLUSTERS
     #define CLUSTER_BUFFER BUFFER_RW

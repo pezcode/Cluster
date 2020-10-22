@@ -16,6 +16,7 @@ void PBRShader::initialize()
         bgfx::createUniform("u_metallicRoughnessNormalOcclusionFactor", bgfx::UniformType::Vec4);
     emissiveFactorUniform = bgfx::createUniform("u_emissiveFactorVec", bgfx::UniformType::Vec4);
     hasTexturesUniform = bgfx::createUniform("u_hasTextures", bgfx::UniformType::Vec4);
+    multipleScatteringUniform = bgfx::createUniform("u_multipleScatteringVec", bgfx::UniformType::Vec4);
     albedoLUTSampler = bgfx::createUniform("s_texAlbedoLUT", bgfx::UniformType::Sampler);
     baseColorSampler = bgfx::createUniform("s_texBaseColor", bgfx::UniformType::Sampler);
     metallicRoughnessSampler = bgfx::createUniform("s_texMetallicRoughness", bgfx::UniformType::Sampler);
@@ -23,22 +24,13 @@ void PBRShader::initialize()
     occlusionSampler = bgfx::createUniform("s_texOcclusion", bgfx::UniformType::Sampler);
     emissiveSampler = bgfx::createUniform("s_texEmissive", bgfx::UniformType::Sampler);
 
-    const uint64_t samplerFlags = BGFX_SAMPLER_UVW_CLAMP;
-
+    defaultTexture = bgfx::createTexture2D(1, 1, false, 1, bgfx::TextureFormat::RGBA8);
     albedoLUTTexture = bgfx::createTexture2D(ALBEDO_LUT_SIZE,
                                              ALBEDO_LUT_SIZE,
                                              false,
                                              1,
                                              bgfx::TextureFormat::RGBA32F,
-                                             samplerFlags | BGFX_TEXTURE_COMPUTE_WRITE);
-
-    // LUT with all 1s = no multiple scattering
-    const bgfx::Memory* mem = bgfx::alloc(ALBEDO_LUT_SIZE * ALBEDO_LUT_SIZE * 4);
-    memset(mem->data, 0xFF, mem->size);
-    albedoLUTNoMSTexture = bgfx::createTexture2D(
-        ALBEDO_LUT_SIZE, ALBEDO_LUT_SIZE, false, 1, bgfx::TextureFormat::RGBA8, samplerFlags, mem);
-
-    defaultTexture = bgfx::createTexture2D(1, 1, false, 1, bgfx::TextureFormat::RGBA8);
+                                             BGFX_SAMPLER_UVW_CLAMP | BGFX_TEXTURE_COMPUTE_WRITE);
 
     char csName[128];
     bx::snprintf(csName, BX_COUNTOF(csName), "%s%s", Renderer::shaderDir(), "cs_multiple_scattering_lut.bin");
@@ -51,6 +43,7 @@ void PBRShader::shutdown()
     bgfx::destroy(metallicRoughnessNormalOcclusionFactorUniform);
     bgfx::destroy(emissiveFactorUniform);
     bgfx::destroy(hasTexturesUniform);
+    bgfx::destroy(multipleScatteringUniform);
     bgfx::destroy(albedoLUTSampler);
     bgfx::destroy(baseColorSampler);
     bgfx::destroy(metallicRoughnessSampler);
@@ -58,20 +51,15 @@ void PBRShader::shutdown()
     bgfx::destroy(occlusionSampler);
     bgfx::destroy(emissiveSampler);
     bgfx::destroy(albedoLUTTexture);
-    bgfx::destroy(albedoLUTNoMSTexture);
     bgfx::destroy(defaultTexture);
     bgfx::destroy(albedoLUTProgram);
 
     baseColorFactorUniform = metallicRoughnessNormalOcclusionFactorUniform = emissiveFactorUniform =
-        hasTexturesUniform = albedoLUTSampler = baseColorSampler = metallicRoughnessSampler = normalSampler =
+        hasTexturesUniform = multipleScatteringUniform = albedoLUTSampler = baseColorSampler = metallicRoughnessSampler =
+            normalSampler =
             occlusionSampler = emissiveSampler = BGFX_INVALID_HANDLE;
-    albedoLUTTexture = albedoLUTNoMSTexture = defaultTexture = BGFX_INVALID_HANDLE;
+    albedoLUTTexture = defaultTexture = BGFX_INVALID_HANDLE;
     albedoLUTProgram = BGFX_INVALID_HANDLE;
-}
-
-void PBRShader::setMultipleScattering(bool enabled)
-{
-    multipleScatteringEnabled = enabled;
 }
 
 void PBRShader::generateAlbedoLUT()
@@ -110,6 +98,11 @@ uint64_t PBRShader::bindMaterial(const Material& material)
 
     bgfx::setUniform(hasTexturesUniform, hasTexturesValues);
 
+    float multipleScatteringValues[4] = {
+        multipleScatteringEnabled ? 1.0f : 0.0f, whiteFurnaceEnabled ? WHITE_FURNACE_RADIANCE : 0.0f, 0.0f, 0.0f
+    };
+    bgfx::setUniform(multipleScatteringUniform, multipleScatteringValues);
+
     uint64_t state = 0;
     if(material.blend)
         state |= BGFX_STATE_BLEND_ALPHA;
@@ -120,9 +113,8 @@ uint64_t PBRShader::bindMaterial(const Material& material)
 
 void PBRShader::bindAlbedoLUT(bool compute)
 {
-    bgfx::TextureHandle tex = (multipleScatteringEnabled || compute) ? albedoLUTTexture : albedoLUTNoMSTexture;
     if(compute)
-        bgfx::setImage(Samplers::PBR_ALBEDO_LUT, tex, 0, bgfx::Access::Write);
+        bgfx::setImage(Samplers::PBR_ALBEDO_LUT, albedoLUTTexture, 0, bgfx::Access::Write);
     else
-        bgfx::setTexture(Samplers::PBR_ALBEDO_LUT, albedoLUTSampler, tex);
+        bgfx::setTexture(Samplers::PBR_ALBEDO_LUT, albedoLUTSampler, albedoLUTTexture);
 }

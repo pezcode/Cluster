@@ -25,6 +25,7 @@ public:
     Renderer::TonemappingMode tonemappingMode;
 
     bool multipleScattering;
+    bool whiteFurnace;
 
     bool profile; // enable bgfx view profiling *
     bool vsync;   // *

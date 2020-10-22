@@ -70,16 +70,14 @@ void Renderer::render(float dt)
         glm::vec4 camPos = glm::vec4(scene->camera.position(), 1.0f);
         bgfx::setUniform(camPosUniform, glm::value_ptr(camPos));
 
-        // tonemapping expects linear colors
-        glm::vec3 linear = glm::convertSRGBToLinear(scene->skyColor);
+        glm::vec3 linear = pbr.whiteFurnaceEnabled
+                               ? glm::vec3(PBRShader::WHITE_FURNACE_RADIANCE)
+                               : glm::convertSRGBToLinear(scene->skyColor); // tonemapping expects linear colors
         glm::u8vec3 result = glm::u8vec3(glm::round(glm::clamp(linear, 0.0f, 1.0f) * 255.0f));
         clearColor = (result[0] << 24) | (result[1] << 16) | (result[2] << 8) | 255;
     }
     else
-    {
-        // gray
-        clearColor = 0x303030FF;
-    }
+        clearColor = 0x303030FF; // gray
 
     onRender(dt);
     blitToScreen(MAX_VIEW);
@@ -124,7 +122,12 @@ void Renderer::setTonemappingMode(TonemappingMode mode)
 
 void Renderer::setMultipleScattering(bool enabled)
 {
-    pbr.setMultipleScattering(enabled);
+    pbr.multipleScatteringEnabled = enabled;
+}
+
+void Renderer::setWhiteFurnace(bool enabled)
+{
+    pbr.whiteFurnaceEnabled = enabled;
 }
 
 bool Renderer::supported()

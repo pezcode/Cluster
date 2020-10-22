@@ -29,6 +29,16 @@ void main()
 
     vec3 V = normalize(camPos - fragPos);
     float NoV = abs(dot(N, V)) + 1e-5;
+
+    if(whiteFurnaceEnabled())
+    {
+        mat.F0 = vec3_splat(1.0);
+        vec3 msFactor = multipleScatteringFactor(mat, NoV);
+        vec3 radianceOut = whiteFurnace(NoV, mat) * msFactor;
+        gl_FragColor = vec4(radianceOut, 1.0);
+        return;
+    }
+
     vec3 msFactor = multipleScatteringFactor(mat, NoV);
 
     vec3 radianceOut = vec3_splat(0.0);

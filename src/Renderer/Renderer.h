@@ -36,6 +36,7 @@ public:
 
     void setTonemappingMode(TonemappingMode mode);
     void setMultipleScattering(bool enabled);
+    void setWhiteFurnace(bool enabled);
 
     static bool supported();
     static const char* shaderDir();

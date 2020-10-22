@@ -131,8 +131,17 @@ void ClusterUI::update(float dt)
         app.config->tonemappingMode = (Renderer::TonemappingMode)tonemappingMode;
         app.renderer->setTonemappingMode(app.config->tonemappingMode);
 
+        ImGui::Separator();
+
         ImGui::Checkbox("Multiple scattering", &app.config->multipleScattering);
         app.renderer->setMultipleScattering(app.config->multipleScattering);
+
+        ImGui::Checkbox("White furnace", &app.config->whiteFurnace);
+        ImGui::SameLine();
+        ImGui::Text(ICON_FK_INFO_CIRCLE);
+        if(ImGui::IsItemHovered())
+            ImGui::SetTooltip("Not implemented in the deferred renderer");
+        app.renderer->setWhiteFurnace(app.config->whiteFurnace);
 
         ImGui::Separator();
 
