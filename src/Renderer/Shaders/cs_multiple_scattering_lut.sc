@@ -1,6 +1,5 @@
 #define WRITE_LUT
 
-#include "common.sh"
 #include <bgfx_compute.sh>
 #include "pbr.sh"
 

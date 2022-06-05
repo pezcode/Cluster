@@ -9,7 +9,7 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtc/color_space.hpp>
 #include <bx/string.h>
-#include <IconsForkAwesome_c.h>
+#include <IconsForkAwesome.h>
 #include <functional>
 #include <cctype>
 
@@ -68,7 +68,7 @@ void ClusterUI::initialize()
 
     // Load and merge icon font
     const char* iconFontFile = "assets/fonts/ForkAwesome/forkawesome-webfont.ttf";
-    static const ImWchar iconsRanges[] = { ICON_MIN_FK, ICON_MAX_FK, 0 }; // must persist for font lifetime
+    static const ImWchar iconsRanges[] = { ICON_MIN_FK, ICON_MAX_16_FK, 0 }; // must persist for font lifetime
     ImFontConfig iconsConfig;
     iconsConfig.MergeMode = true;
     iconsConfig.GlyphRanges = iconsRanges;
@@ -114,7 +114,7 @@ void ClusterUI::update(float dt)
 
         ImGui::Separator();
 
-        ImGui::SliderFloat("Exposure", &app.scene->camera.exposure, 0.0f, 30.0f, "%.3f", 5.0f);
+        ImGui::SliderFloat("Exposure", &app.scene->camera.exposure, 0.0f, 30.0f, "%.3f");
 
         const char* operators[] = { "None",
                                     "Exponential",
@@ -284,9 +284,10 @@ void ClusterUI::update(float dt)
                 const float itemHeightWithSpacing = ImGui::GetFrameHeightWithSpacing();
                 const float scale = 2.0f;
 
-                if(ImGui::ListBoxHeader("", ImVec2(overlayWidth, stats->numViews * itemHeightWithSpacing)))
+                if(ImGui::BeginListBox("##ViewStats", ImVec2(overlayWidth, stats->numViews * itemHeightWithSpacing)))
                 {
-                    ImGuiListClipper clipper(stats->numViews, itemHeight);
+                    ImGuiListClipper clipper;
+                    clipper.Begin(stats->numViews, itemHeight);
 
                     while(clipper.Step())
                     {
@@ -304,21 +305,23 @@ void ClusterUI::update(float dt)
 
                             ImGui::SameLine(overlayWidth * 0.3f);
 
-                            if(drawBar(cpuWidth, maxWidth, itemHeight, cpuColor))
+                            if(drawBar("CPU", cpuWidth, maxWidth, itemHeight, cpuColor))
                             {
                                 ImGui::SetTooltip("%s -- CPU: %.2f ms", viewStats.name, cpuElapsed);
                             }
 
                             ImGui::SameLine();
 
-                            if(drawBar(gpuWidth, maxWidth, itemHeight, gpuColor))
+                            if(drawBar("GPU", gpuWidth, maxWidth, itemHeight, gpuColor))
                             {
                                 ImGui::SetTooltip("%s -- GPU: %.2f ms", viewStats.name, gpuElapsed);
                             }
                         }
                     }
 
-                    ImGui::ListBoxFooter();
+                    clipper.End();
+
+                    ImGui::EndListBox();
                 }
             }
             else
@@ -445,7 +448,7 @@ void ClusterUI::log(const char* message, spdlog::level::level_enum level)
     logEntries.push_back({ level, vecLen });
 }
 
-bool ClusterUI::drawBar(float width, float maxWidth, float height, const ImVec4& color)
+bool ClusterUI::drawBar(const char* id, float width, float maxWidth, float height, const ImVec4& color)
 {
     const ImGuiStyle& style = ImGui::GetStyle();
 
@@ -459,12 +462,16 @@ bool ClusterUI::drawBar(float width, float maxWidth, float height, const ImVec4&
 
     bool itemHovered = false;
 
-    ImGui::Button("", ImVec2(width, height));
+    ImGui::PushID(id);
+
+    ImGui::Button("##Visible", ImVec2(width, height));
     itemHovered = itemHovered || ImGui::IsItemHovered();
 
     ImGui::SameLine();
-    ImGui::InvisibleButton("", ImVec2(std::max(1.0f, maxWidth - width), height));
+    ImGui::InvisibleButton("##Invisible", ImVec2(std::max(1.0f, maxWidth - width), height));
     itemHovered = itemHovered || ImGui::IsItemHovered();
+
+    ImGui::PopID();
 
     ImGui::PopStyleVar(2);
     ImGui::PopStyleColor(3);

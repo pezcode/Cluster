@@ -142,7 +142,7 @@ void ClusteredRenderer::onRender(float dt)
         uint64_t materialState = pbr.bindMaterial(mat);
         bgfx::setState(state | materialState);
         // preserve buffer bindings between submit calls
-        bgfx::submit(vLighting, program, 0, ~BGFX_DISCARD_TEXTURE_SAMPLERS);
+        bgfx::submit(vLighting, program, 0, ~BGFX_DISCARD_BINDINGS);
     }
 
     bgfx::discard(BGFX_DISCARD_ALL);

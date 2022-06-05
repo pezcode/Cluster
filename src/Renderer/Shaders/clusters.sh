@@ -1,7 +1,6 @@
 #ifndef CLUSTERS_SH_HEADER_GUARD
 #define CLUSTERS_SH_HEADER_GUARD
 
-#include <bgfx_shader.sh>
 #include <bgfx_compute.sh>
 #include "samplers.sh"
 #include "util.sh"

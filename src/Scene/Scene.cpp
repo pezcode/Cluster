@@ -6,7 +6,7 @@
 #include <assimp/scene.h>
 #include <assimp/mesh.h>
 #include <assimp/material.h>
-#include <assimp/pbrmaterial.h>
+#include <assimp/GltfMaterial.h>
 #include <assimp/camera.h>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/trigonometric.hpp>
@@ -264,9 +264,11 @@ Material Scene::loadMaterial(const aiMaterial* material, const char* dir)
     // texture files
 
     aiString fileBaseColor, fileMetallicRoughness, fileNormals, fileOcclusion, fileEmissive;
-    material->GetTexture(AI_MATKEY_GLTF_PBRMETALLICROUGHNESS_BASE_COLOR_TEXTURE, &fileBaseColor);
+    material->GetTexture(AI_MATKEY_BASE_COLOR_TEXTURE, &fileBaseColor);
+    // TODO AI_MATKEY_METALLIC_TEXTURE + AI_MATKEY_ROUGHNESS_TEXTURE
     material->GetTexture(AI_MATKEY_GLTF_PBRMETALLICROUGHNESS_METALLICROUGHNESS_TEXTURE, &fileMetallicRoughness);
     material->GetTexture(aiTextureType_NORMALS, 0, &fileNormals);
+    // TODO aiTextureType_AMBIENT_OCCLUSION, what's the difference?
     material->GetTexture(aiTextureType_LIGHTMAP, 0, &fileOcclusion);
     material->GetTexture(aiTextureType_EMISSIVE, 0, &fileEmissive);
 
@@ -281,7 +283,7 @@ Material Scene::loadMaterial(const aiMaterial* material, const char* dir)
     }
 
     aiColor4D baseColorFactor;
-    if(AI_SUCCESS == material->Get(AI_MATKEY_GLTF_PBRMETALLICROUGHNESS_BASE_COLOR_FACTOR, baseColorFactor))
+    if(AI_SUCCESS == material->Get(AI_MATKEY_BASE_COLOR, baseColorFactor))
         out.baseColorFactor = { baseColorFactor.r, baseColorFactor.g, baseColorFactor.b, baseColorFactor.a };
     out.baseColorFactor = glm::clamp(out.baseColorFactor, 0.0f, 1.0f);
 
@@ -296,10 +298,10 @@ Material Scene::loadMaterial(const aiMaterial* material, const char* dir)
     }
 
     ai_real metallicFactor;
-    if(AI_SUCCESS == material->Get(AI_MATKEY_GLTF_PBRMETALLICROUGHNESS_METALLIC_FACTOR, metallicFactor))
+    if(AI_SUCCESS == material->Get(AI_MATKEY_METALLIC_FACTOR, metallicFactor))
         out.metallicFactor = glm::clamp(metallicFactor, 0.0f, 1.0f);
     ai_real roughnessFactor;
-    if(AI_SUCCESS == material->Get(AI_MATKEY_GLTF_PBRMETALLICROUGHNESS_ROUGHNESS_FACTOR, roughnessFactor))
+    if(AI_SUCCESS == material->Get(AI_MATKEY_ROUGHNESS_FACTOR, roughnessFactor))
         out.roughnessFactor = glm::clamp(roughnessFactor, 0.0f, 1.0f);
 
     // normal map
@@ -346,13 +348,8 @@ Material Scene::loadMaterial(const aiMaterial* material, const char* dir)
         out.emissiveTexture = loadTexture(pathEmissive.C_Str(), true /* sRGB */);
     }
 
-// assimp doesn't define this
-#ifndef AI_MATKEY_GLTF_EMISSIVE_FACTOR
-#define AI_MATKEY_GLTF_EMISSIVE_FACTOR AI_MATKEY_COLOR_EMISSIVE
-#endif
-
     aiColor3D emissiveFactor;
-    if(AI_SUCCESS == material->Get(AI_MATKEY_GLTF_EMISSIVE_FACTOR, emissiveFactor))
+    if(AI_SUCCESS == material->Get(AI_MATKEY_COLOR_EMISSIVE, emissiveFactor))
         out.emissiveFactor = { emissiveFactor.r, emissiveFactor.g, emissiveFactor.b };
     out.emissiveFactor = glm::clamp(out.emissiveFactor, 0.0f, 1.0f);
 

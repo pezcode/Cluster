@@ -1,4 +1,3 @@
-#include "common.sh"
 #include <bgfx_shader.sh>
 #include "samplers.sh"
 #include "lights.sh"

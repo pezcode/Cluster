@@ -2,7 +2,6 @@ $input v_worldpos, v_normal, v_tangent, v_texcoord0
 
 #define READ_MATERIAL
 
-#include "common.sh"
 #include <bgfx_shader.sh>
 #include <bgfx_compute.sh>
 #include "util.sh"

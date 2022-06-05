@@ -1,6 +1,5 @@
 $input v_worldpos, v_normal, v_tangent, v_texcoord0
 
-#include "common.sh"
 #include <bgfx_shader.sh>
 #include "clusters.sh"
 #include "colormap.sh"

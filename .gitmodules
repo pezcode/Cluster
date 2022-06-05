@@ -1,6 +1,6 @@
 [submodule "3rdparty/bigg"]
 	path = 3rdparty/bigg
-	url = https://github.com/JoshuaBrookover/bigg.git
+	url = https://github.com/pezcode/bigg.git
 	branch = master
 [submodule "3rdparty/IconFontCppHeaders"]
 	path = 3rdparty/IconFontCppHeaders

@@ -1,4 +1,3 @@
-#include "common.sh"
 #include <bgfx_shader.sh>
 #include "tonemapping.sh"
 

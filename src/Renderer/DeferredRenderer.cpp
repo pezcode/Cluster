@@ -224,7 +224,7 @@ void DeferredRenderer::onRender(float dt)
     bgfx::setTransform(glm::value_ptr(model));
     bgfx::setVertexBuffer(0, blitTriangleBuffer);
     bgfx::setState(BGFX_STATE_WRITE_RGB | BGFX_STATE_DEPTH_TEST_GREATER | BGFX_STATE_CULL_CW);
-    bgfx::submit(vFullscreenLight, fullscreenProgram, 0, ~BGFX_DISCARD_TEXTURE_SAMPLERS);
+    bgfx::submit(vFullscreenLight, fullscreenProgram, 0, ~BGFX_DISCARD_BINDINGS);
 
     // point lights
 
@@ -262,7 +262,7 @@ void DeferredRenderer::onRender(float dt)
         bgfx::submit(vLight,
                      pointLightProgram,
                      0,
-                     ~(BGFX_DISCARD_VERTEX_STREAMS | BGFX_DISCARD_INDEX_BUFFER | BGFX_DISCARD_TEXTURE_SAMPLERS));
+                     ~(BGFX_DISCARD_VERTEX_STREAMS | BGFX_DISCARD_INDEX_BUFFER | BGFX_DISCARD_BINDINGS));
     }
 
     // transparent
@@ -279,7 +279,7 @@ void DeferredRenderer::onRender(float dt)
             bgfx::setIndexBuffer(mesh.indexBuffer);
             uint64_t materialState = pbr.bindMaterial(mat);
             bgfx::setState(state | materialState);
-            bgfx::submit(vTransparent, transparencyProgram, 0, ~BGFX_DISCARD_TEXTURE_SAMPLERS);
+            bgfx::submit(vTransparent, transparencyProgram, 0, ~BGFX_DISCARD_BINDINGS);
         }
     }
 

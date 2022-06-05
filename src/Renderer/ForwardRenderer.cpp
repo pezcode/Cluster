@@ -54,7 +54,7 @@ void ForwardRenderer::onRender(float dt)
         const Material& mat = scene->materials[mesh.material];
         uint64_t materialState = pbr.bindMaterial(mat);
         bgfx::setState(state | materialState);
-        bgfx::submit(vDefault, program, 0, ~BGFX_DISCARD_TEXTURE_SAMPLERS);
+        bgfx::submit(vDefault, program, 0, ~BGFX_DISCARD_BINDINGS);
     }
 
     bgfx::discard(BGFX_DISCARD_ALL);

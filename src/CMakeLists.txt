@@ -66,7 +66,6 @@ set(SHADERS
     Renderer/Shaders/clusters.sh
     Renderer/Shaders/colormap.sh
     Renderer/Shaders/util.sh
-    Renderer/Shaders/common.sh
 )
 
 if(MSVC)

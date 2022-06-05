@@ -6,6 +6,10 @@
 
 class AssimpLogSource : public Assimp::Logger
 {
+    virtual void OnVerboseDebug(const char* message) override
+    {
+        Log->trace(message);
+    }
     virtual void OnDebug(const char* message) override
     {
         Log->debug(message);
@@ -28,7 +32,7 @@ class AssimpLogSource : public Assimp::Logger
         delete pStream;
         return true;
     }
-    virtual bool detatchStream(Assimp::LogStream* pStream, unsigned int severity) override
+    virtual bool detachStream(Assimp::LogStream* pStream, unsigned int severity) override
     {
         return true;
     }

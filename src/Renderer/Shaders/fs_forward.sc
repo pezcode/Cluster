@@ -5,7 +5,6 @@ $input v_worldpos, v_normal, v_tangent, v_texcoord0
 // define samplers and uniforms for retrieving material parameters
 #define READ_MATERIAL
 
-#include "common.sh"
 #include <bgfx_shader.sh>
 #include <bgfx_compute.sh>
 #include "util.sh"

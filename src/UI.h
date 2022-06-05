@@ -18,7 +18,7 @@ public:
     void log(const char* message, spdlog::level::level_enum level = spdlog::level::info);
 
 private:
-    bool drawBar(float width, float maxWidth, float height, const ImVec4& color);
+    bool drawBar(const char* id, float width, float maxWidth, float height, const ImVec4& color);
 
     spdlog::sink_ptr logUISink = nullptr;
 
