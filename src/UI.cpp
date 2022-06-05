@@ -221,7 +221,7 @@ void ClusterUI::update(float dt)
 
         // title
         ImGui::Text(ICON_FK_TACHOMETER " Stats");
-        ImGui::TextDisabled("right-click to toggle");
+        ImGui::TextDisabled("right-click for options");
         ImGui::Separator();
 
         // general data

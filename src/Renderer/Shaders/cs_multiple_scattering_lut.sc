@@ -103,7 +103,6 @@ float albedo_specular(vec3 V, float NoV, PBRMaterial mat)
 
         float F = F_Schlick(VoH, mat.F0).x;
         float VF = V_SmithGGXCorrelated(NoV, NoL, mat.a);
-        float D = D_GGX(NoH, mat.a);
 
         //float Fr = F * VF * D;
         //float inv_pdf = (4.0 * VoH) / (D * NoH);

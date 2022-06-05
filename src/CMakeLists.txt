@@ -79,6 +79,7 @@ add_executable(Cluster ${PLATFORM} ${SOURCES} ${SHADERS})
 target_include_directories(Cluster PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(Cluster PRIVATE bigg IconFontCppHeaders assimp spdlog)
 target_compile_definitions(Cluster PRIVATE
+    IMGUI_DISABLE_OBSOLETE_FUNCTIONS
     # enable SIMD optimizations
     GLM_FORCE_INTRINSICS
     # inline code where possible

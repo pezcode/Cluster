@@ -106,6 +106,13 @@ void Renderer::shutdown()
         BGFX_INVALID_HANDLE;
     blitTriangleBuffer = BGFX_INVALID_HANDLE;
     frameBuffer = BGFX_INVALID_HANDLE;
+
+    for(bgfx::ViewId i = 0; i < MAX_VIEW; i++)
+    {
+        bgfx::resetView(i);
+    }
+
+    bgfx::discard();
 }
 
 void Renderer::setVariable(const std::string& name, const std::string& val)

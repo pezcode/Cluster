@@ -42,15 +42,15 @@ void Config::readArgv(int argc, char* argv[])
     else if(cmdLine.hasArg("vk"))
         renderer = bgfx::RendererType::Vulkan;
     // missing required features
-    //else if(cmdLine.hasArg("d3d9"))
-    //    renderer = bgfx::RendererType::Direct3D9;
+    else if(cmdLine.hasArg("d3d9"))
+        renderer = bgfx::RendererType::Direct3D9;
     else if(cmdLine.hasArg("d3d11"))
         renderer = bgfx::RendererType::Direct3D11;
     else if(cmdLine.hasArg("d3d12"))
         renderer = bgfx::RendererType::Direct3D12;
     // not tested
-    //else if(cmdLine.hasArg("mtl"))
-    //    renderer = bgfx::RendererType::Metal;
+    else if(cmdLine.hasArg("mtl"))
+        renderer = bgfx::RendererType::Metal;
 
     const char* scene = cmdLine.findOption("scene");
     if(scene)
