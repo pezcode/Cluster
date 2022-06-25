@@ -54,6 +54,7 @@ set(SHADERS
     Renderer/Shaders/fs_deferred_geometry.sc
     Renderer/Shaders/vs_deferred_light.sc
     Renderer/Shaders/fs_deferred_pointlight.sc
+    Renderer/Shaders/vs_deferred_fullscreen.sc
     Renderer/Shaders/fs_deferred_fullscreen.sc
     Renderer/Shaders/vs_forward.sc
     Renderer/Shaders/fs_forward.sc

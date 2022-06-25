@@ -86,7 +86,7 @@ void DeferredRenderer::onInitialize()
     bx::snprintf(fsName, BX_COUNTOF(fsName), "%s%s", shaderDir(), "fs_deferred_geometry.bin");
     geometryProgram = bigg::loadProgram(vsName, fsName);
 
-    bx::snprintf(vsName, BX_COUNTOF(vsName), "%s%s", shaderDir(), "vs_deferred_light.bin");
+    bx::snprintf(vsName, BX_COUNTOF(vsName), "%s%s", shaderDir(), "vs_deferred_fullscreen.bin");
     bx::snprintf(fsName, BX_COUNTOF(fsName), "%s%s", shaderDir(), "fs_deferred_fullscreen.bin");
     fullscreenProgram = bigg::loadProgram(vsName, fsName);
 
@@ -170,11 +170,7 @@ void DeferredRenderer::onRender(float dt)
         return;
 
     setViewProjection(vGeometry);
-    // fullscreen light pass uses a fullscreen triangle for blitting
-    // don't set view or projection matrices (triangle is in clip space coordinates)
-    // have to set identity here, view transforms are kept between renderer switches
-    glm::mat4 identity = glm::identity<glm::mat4>();
-    bgfx::setViewTransform(vFullscreenLight, glm::value_ptr(identity), glm::value_ptr(identity));
+    setViewProjection(vFullscreenLight);
     setViewProjection(vLight);
     setViewProjection(vTransparent);
 
@@ -213,15 +209,8 @@ void DeferredRenderer::onRender(float dt)
 
     // ambient light + emissive
 
-    // full screen triangle
-    // could also attach the accumulation buffer as a render target and write out during the geometry pass
-    // this is a bit cleaner
-
-    // move triangle to far plane (z = 1)
+    // full screen triangle, moved to far plane in the shader
     // only render if the geometry is in front so we leave the background untouched
-    glm::mat4 model = glm::identity<glm::mat4>();
-    model = glm::translate(model, glm::vec3(0.0f, 0.0f, 1.0f));
-    bgfx::setTransform(glm::value_ptr(model));
     bgfx::setVertexBuffer(0, blitTriangleBuffer);
     bgfx::setState(BGFX_STATE_WRITE_RGB | BGFX_STATE_DEPTH_TEST_GREATER | BGFX_STATE_CULL_CW);
     bgfx::submit(vFullscreenLight, fullscreenProgram, 0, ~BGFX_DISCARD_BINDINGS);
