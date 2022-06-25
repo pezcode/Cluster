@@ -15,6 +15,12 @@ struct PointLight
     float calculateRadius() const;
 };
 
+struct SunLight
+{
+    glm::vec3 direction;
+    glm::vec3 radiance;
+};
+
 struct AmbientLight
 {
     glm::vec3 irradiance;

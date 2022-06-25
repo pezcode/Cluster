@@ -42,6 +42,7 @@ void main()
 
     vec3 radianceOut = vec3_splat(0.0);
 
+    // point lights
     uint cluster = getClusterIndex(gl_FragCoord);
     LightGrid grid = getLightGrid(cluster);
     for(uint i = 0; i < grid.pointLights; i++)
@@ -59,6 +60,15 @@ void main()
         }
     }
 
+    // directional light
+    {
+        SunLight light = getSunLight();
+        vec3 L = -light.direction;
+        float NoL = saturate(dot(N, L));
+        radianceOut += BRDF(V, L, N, NoV, NoL, mat) * msFactor * light.radiance * NoL;
+    }
+
+    // ambient lighting
     radianceOut += getAmbientLight().irradiance * mat.diffuseColor * mat.occlusion;
     radianceOut += mat.emissive;
 

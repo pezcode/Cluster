@@ -111,6 +111,7 @@ void ClusterUI::update(float dt)
         if(ImGui::SliderInt("No. of lights", &app.config->lights, 0, app.config->maxLights))
             app.generateLights(app.config->lights);
         ImGui::Checkbox("Moving lights", &app.config->movingLights);
+        ImGui::SliderFloat3("Sun light direction", glm::value_ptr(app.scene->sunLight.direction), -1.0f, 1.0f);
 
         ImGui::Separator();
 

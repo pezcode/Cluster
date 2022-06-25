@@ -18,6 +18,7 @@ Config::Config() :
     lights(1),
     maxLights(3000),
     movingLights(false),
+    sunLight(true),
     fullscreen(false),
     showUI(true),
     showConfigWindow(true),

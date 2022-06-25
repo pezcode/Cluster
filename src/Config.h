@@ -37,6 +37,7 @@ public:
     int lights;
     int maxLights; // *
     bool movingLights;
+    bool sunLight;
 
     // UI
 

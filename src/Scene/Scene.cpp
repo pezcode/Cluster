@@ -18,6 +18,7 @@ bx::DefaultAllocator Scene::allocator;
 
 Scene::Scene() :
     skyColor({ 0.53f, 0.81f, 0.98f }), // https://en.wikipedia.org/wiki/Sky_blue#Light_sky_blue
+    sunLight({ { 0.0f, -1.0f, -1.0f }, {1.0f, 1.0f, 1.0f} }),
     ambientLight({ { 0.03f, 0.03f, 0.03f } })
 {
     clear();

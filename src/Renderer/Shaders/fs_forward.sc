@@ -41,6 +41,7 @@ void main()
 
     vec3 radianceOut = vec3_splat(0.0);
 
+    // point lights
     uint lights = pointLightCount();
     for(uint i = 0; i < lights; i++)
     {
@@ -56,6 +57,15 @@ void main()
         }
     }
 
+    // directional light
+    {
+        SunLight light = getSunLight();
+        vec3 L = -light.direction.xyz;
+        float NoL = saturate(dot(N, L));
+        radianceOut += BRDF(V, L, N, NoV, NoL, mat) * msFactor * light.radiance * NoL;
+    }
+
+    // ambient lighting
     radianceOut += getAmbientLight().irradiance * mat.diffuseColor * mat.occlusion;
     radianceOut += mat.emissive;
 

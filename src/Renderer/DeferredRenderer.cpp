@@ -148,7 +148,7 @@ void DeferredRenderer::onRender(float dt)
     bgfx::setViewFrameBuffer(vGeometry, gBuffer);
     bgfx::touch(vGeometry);
 
-    bgfx::setViewName(vFullscreenLight, "Deferred light pass (ambient + emissive)");
+    bgfx::setViewName(vFullscreenLight, "Deferred light pass (sun + ambient + emissive)");
     bgfx::setViewClear(vFullscreenLight, BGFX_CLEAR_COLOR, clearColor);
     bgfx::setViewRect(vFullscreenLight, 0, 0, width, height);
     bgfx::setViewFrameBuffer(vFullscreenLight, accumFrameBuffer);
@@ -207,7 +207,7 @@ void DeferredRenderer::onRender(float dt)
     pbr.bindAlbedoLUT();
     lights.bindLights(scene);
 
-    // ambient light + emissive
+    // sun light + ambient + emissive
 
     // full screen triangle, moved to far plane in the shader
     // only render if the geometry is in front so we leave the background untouched

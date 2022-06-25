@@ -36,8 +36,9 @@ public:
 
     // these are not populated by load
     glm::vec3 skyColor;
-    AmbientLight ambientLight;
     PointLightList pointLights;
+    SunLight sunLight;
+    AmbientLight ambientLight;
 
 private:
     static bx::DefaultAllocator allocator;
