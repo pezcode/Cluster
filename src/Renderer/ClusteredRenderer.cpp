@@ -52,16 +52,11 @@ void ClusteredRenderer::onRender(float dt)
     };
 
     bgfx::setViewName(vClusterBuilding, "Cluster building pass (compute)");
-    bgfx::setViewClear(vClusterBuilding, BGFX_CLEAR_NONE);
     // set u_viewRect for screen2Eye to work correctly
     bgfx::setViewRect(vClusterBuilding, 0, 0, width, height);
-    // this could still be set from a different renderer, reset it (D3D12 cares and crashes)
-    bgfx::setViewFrameBuffer(vClusterBuilding, BGFX_INVALID_HANDLE);
 
     bgfx::setViewName(vLightCulling, "Clustered light culling pass (compute)");
-    bgfx::setViewClear(vLightCulling, BGFX_CLEAR_NONE);
     bgfx::setViewRect(vLightCulling, 0, 0, width, height);
-    bgfx::setViewFrameBuffer(vLightCulling, BGFX_INVALID_HANDLE);
 
     bgfx::setViewName(vLighting, "Clustered lighting pass");
     bgfx::setViewClear(vLighting, BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH, clearColor, 1.0f, 0);
